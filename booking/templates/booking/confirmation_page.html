@@ -1,0 +1,62 @@
+{% extends 'booking/base.html' %}
+{% load booking_filters %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .center-container {
+        max-width: 700px;
+        margin: 2rem auto;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        padding: 2rem;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .success-icon {
+        color: #28a745;
+        font-size: 4rem;
+        line-height: 1;
+        margin-bottom: 1rem;
+    }
+    .details {
+        text-align: right;
+        margin-top: 2rem;
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
+    .details p {
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+    }
+    .home-link {
+        background-color: #007bff;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 5px;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 2rem;
+        font-weight: bold;
+    }
+</style>
+<div class="center-container">
+    <div class="success-icon">✔</div>
+    <h1>{{ page_title }}</h1>
+    <p>اطلاعات نوبت شما به شماره همراهتان پیامک خواهد شد.</p>
+
+    <div class="details">
+        <h3>جزئیات نوبت:</h3>
+        <p><strong>بیمار:</strong> {{ appointment.patient_name }}</p>
+        <p><strong>پزشک:</strong> دکتر {{ appointment.doctor.user.get_full_name }} ({{ appointment.doctor.specialty.name }})</p>
+        <p><strong>زمان:</strong> {{ appointment.appointment_datetime|to_jalali:"%A, %d %B %Y" }} - ساعت {{ appointment.appointment_datetime|time:"H:i" }}</p>
+        <p><strong>آدرس مطب:</strong> {{ appointment.doctor.address }}</p>
+        <p><strong>شماره مطب:</strong> {{ appointment.doctor.phone_number }}</p>
+    </div>
+
+    <a href="{% url 'booking:doctor_list' %}" class="home-link">بازگشت به صفحه اصلی</a>
+</div>
+{% endblock %}

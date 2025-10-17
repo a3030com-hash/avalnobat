@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AvalNobat{% endblock %}</title>
+    <style>
+        :root {
+            --primary-color: #345C9A;
+            --secondary-color: #6c757d;
+            --light-gray: #f8f9fa;
+            --dark-gray: #343a40;
+            --white: #ffffff;
+            --border-color: #dee2e6;
+            --font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-Regular.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            font-family: var(--font-family);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+        }
+        header {
+            background-color: var(--white);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        header .logo {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        header .logo a {
+            text-decoration: none;
+            color: inherit;
+        }
+        header .logo .icon {
+            margin-left: 10px;
+            color: #ff6f61; /* A nice coral color for the icon */
+        }
+        header nav a, header nav .nav-item {
+            margin-right: 20px;
+            text-decoration: none;
+            color: var(--secondary-color);
+            font-weight: 500;
+            transition: color 0.2s;
+            display: inline-flex;
+            align-items: center;
+        }
+        header nav a:hover {
+            color: var(--primary-color);
+        }
+
+        /* Dropdown Styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            left: 0; /* Align with the left of the button */
+        }
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            margin: 0;
+        }
+        .dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        .dropdown .dropbtn {
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--secondary-color);
+        }
+
+        .link-button {
+            background: none;
+            border: none;
+            color: black;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: 500;
+            padding: 12px 16px;
+            width: 100%;
+            text-align: right;
+        }
+        .link-button:hover {
+            background-color: #f1f1f1;
+        }
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        footer {
+            background-color: var(--dark-gray);
+            color: var(--white);
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: auto;
+        }
+
+        h1, h2, h3 {
+            color: var(--dark-gray);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            header nav {
+                margin-top: 1rem;
+            }
+            header nav a {
+                margin: 0 10px;
+            }
+            .main-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <i class="fas fa-heartbeat icon"></i>
+            <a href="{% url 'booking:doctor_list' %}">اول نوبت</a>
+        </div>
+        <nav>
+            {% if user.is_authenticated and user.user_type == 'DOCTOR' %}
+                <!-- Icons for main pages -->
+                <a href="{% url 'booking:daily_patients' %}" title="لیست بیماران روزانه"><i class="fas fa-users"></i></a>
+                <a href="{% url 'booking:secretary_panel' %}" title="نوبت‌دهی توسط منشی"><i class="fas fa-calendar-plus"></i></a>
+                <a href="{% url 'booking:secretary_payments' %}" title="پرداخت‌های منشی"><i class="fas fa-money-bill-wave"></i></a>
+                <a href="{% url 'booking:financial_report' %}" title="گزارش مالی"><i class="fas fa-chart-bar"></i></a>
+
+                <!-- Dropdown Menu -->
+                <div class="dropdown">
+                    <span class="dropbtn nav-item">
+                        <i class="fas fa-user-cog" style="margin-left: 8px;"></i> مدیریت
+                    </span>
+                    <div class="dropdown-content">
+                        <a href="{% url 'booking:doctor_dashboard' %}">مدیریت برنامه کاری</a>
+                        <a href="{% url 'booking:edit_profile' %}">ویرایش پروفایل پزشک</a>
+                        <a href="{% url 'signup' %}">ثبت نام پزشک جدید</a>
+                        <form action="{% url 'logout' %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="link-button">خروج پزشک</button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{% url 'signup' %}">ثبت نام پزشک</a>
+                <a href="{% url 'login' %}">ورود پزشک</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="main-content">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; {% now "Y" %} - وب‌سایت نوبت‌دهی اول نوبت. تمام حقوق محفوظ است.</p>
+    </footer>
+
+</body>
+</html>

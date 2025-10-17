@@ -1,0 +1,45 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .submit-btn {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+</style>
+
+<div class="form-container">
+    <h1>{{ page_title }}</h1>
+    <p>در این صفحه می‌توانید اطلاعات پروفایل خود را که به بیماران نمایش داده می‌شود، ویرایش کنید.</p>
+    <hr>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <h3>اطلاعات پایه</h3>
+        {{ user_form.as_p }}
+
+        <hr style="margin: 2rem 0;">
+
+        <h3>اطلاعات پروفایل تخصصی</h3>
+        {{ profile_form.as_p }}
+
+        <button type="submit" class="submit-btn">ذخیره تغییرات</button>
+    </form>
+</div>
+{% endblock %}

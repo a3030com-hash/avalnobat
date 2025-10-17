@@ -1,0 +1,112 @@
+{% extends 'booking/base.html' %}
+{% load booking_filters %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .report-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .report-table td {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+    }
+    .report-table .label {
+        font-weight: bold;
+        color: #495057;
+    }
+    .report-table .amount {
+        font-family: monospace;
+        text-align: left;
+    }
+    .total-row td {
+        border-top: 2px solid #343a40;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    .positive { color: #28a745; }
+    .negative { color: #dc3545; }
+    .settle-btn {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 1.5rem;
+    }
+</style>
+
+<div class="report-container">
+    <a href="{% url 'booking:secretary_panel' %}"> &larr; بازگشت به پنل مدیریت</a>
+    <hr>
+    <h1>{{ page_title }}</h1>
+    <p><strong>تاریخ:</strong> {{ today|to_jalali:"%A, %d %B %Y" }}</p>
+
+    <table class="report-table">
+        <!-- Balance from yesterday -->
+        <tr>
+            <td class="label">
+                {% if balance_from_yesterday < 0 %}
+                    طلب منشی از روز قبل
+                {% else %}
+                    مانده وجه نقد از روز قبل
+                {% endif %}
+            </td>
+            <td class="amount {% if balance_from_yesterday < 0 %}negative{% else %}positive{% endif %}">
+                {{ balance_from_yesterday|intcomma }} ریال
+            </td>
+        </tr>
+        <!-- Today's cash income -->
+        <tr>
+            <td class="label">اضافه می‌شود: ویزیت‌های نقدی امروز</td>
+            <td class="amount positive">+ {{ todays_cash_visits|intcomma }} ریال</td>
+        </tr>
+        <!-- Today's expenses -->
+        {% if todays_expenses %}
+            <tr>
+                <td class="label" colspan="2">کسر می‌شود: هزینه‌های انجام شده امروز</td>
+            </tr>
+            {% for expense in todays_expenses %}
+                <tr>
+                    <td style="padding-right: 30px;">{{ expense.description }}</td>
+                    <td class="amount negative">{{ expense.amount|intcomma }} ریال</td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+        <!-- Final Balance -->
+        <tr class="total-row">
+            <td class="label">
+                {% if final_balance < 0 %}
+                    مانده طلب منشی
+                {% else %}
+                    مانده وجه نقد نزد منشی
+                {% endif %}
+            </td>
+            <td class="amount {% if final_balance < 0 %}negative{% else %}positive{% endif %}">
+                {{ final_balance|intcomma }} ریال
+            </td>
+        </tr>
+    </table>
+
+    {% if final_balance != 0 %}
+        <form method="post" style="text-align: center;">
+            {% csrf_token %}
+            <button type="submit" name="settle_up" class="settle-btn">تسویه شد</button>
+        </form>
+    {% else %}
+        <p style="text-align: center; color: green; margin-top: 1.5rem; font-weight: bold;">حساب امروز تسویه شده است.</p>
+    {% endif %}
+</div>
+{% endblock %}

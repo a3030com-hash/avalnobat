@@ -1,0 +1,40 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .confirm-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        text-align: center;
+    }
+    .confirm-btn {
+        background-color: #dc3545;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+</style>
+
+<div class="confirm-container">
+    <h1>{{ page_title }}</h1>
+    <hr>
+    <p>آیا از حذف برنامه کاری زیر اطمینان دارید؟</p>
+    <p><strong>{{ availability.get_day_of_week_display }} - شیفت {{ availability.get_shift_display }} ({{ availability.start_time|time:"H:i" }} تا {{ availability.end_time|time:"H:i" }})</strong></p>
+    <br>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="confirm-btn">بله، حذف کن</button>
+        <a href="{% url 'booking:doctor_dashboard' %}" style="margin-left: 15px;">خیر، بازگشت</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'booking/base.html' %}
+{% load booking_filters %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .panel-container {
+        background-color: white;
+        padding: 2rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1.5rem;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: right;
+        vertical-align: middle;
+    }
+    th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    .form-table input, .form-table select {
+        width: 95%;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .submit-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 1rem;
+    }
+</style>
+
+<div class="panel-container">
+    <h1>{{ page_title }}</h1>
+    <p><strong>تاریخ:</strong> {{ today|to_jalali:"%A, %d %B %Y" }}</p>
+    <hr>
+
+    <h3>لیست بیماران امروز</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        <table class="form-table">
+            <thead>
+                <tr>
+                    <th>ساعت</th>
+                    <th>نام بیمار</th>
+                    <th>مبلغ دریافتی</th>
+                    <th>شرح خدمات</th>
+                    <th>نحوه پرداخت</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for form in formset %}
+                    <tr>
+                        <td>{{ form.instance.appointment_datetime|time:"H:i" }}</td>
+                        <td>{{ form.instance.patient_name }}</td>
+                        <td>{{ form.visit_fee_paid }}</td>
+                        <td>{{ form.service_description }}</td>
+                        <td>{{ form.payment_method }}</td>
+                        {{ form.id }}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" name="update_appointments" class="submit-btn">ذخیره تغییرات نوبت‌ها</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .doctor-card {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+    }
+    .doctor-photo {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #f0f0f0;
+    }
+    .doctor-info {
+        flex: 1;
+    }
+    .doctor-info h2 {
+        margin-top: 0;
+        font-size: 1.5rem;
+    }
+    .doctor-info h2 a {
+        text-decoration: none;
+        color: #007bff;
+    }
+    .doctor-info p {
+        color: #6c757d;
+        margin: 0.5rem 0;
+    }
+    .doctor-info .icon {
+        margin-left: 8px;
+        color: #868e96;
+    }
+</style>
+
+<style>
+    .search-container {
+        background-color: #f8f9fa;
+        padding: 2rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    .search-form {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    .search-form input, .search-form select {
+        padding: 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        font-size: 1rem;
+        flex: 1;
+    }
+    .search-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+</style>
+
+<h1>{{ page_title }}</h1>
+
+<div class="search-container">
+    <form method="get" action="{% url 'booking:doctor_list' %}" class="search-form">
+        <input type="text" name="q" id="main-search-input" placeholder="جستجو تخصص/نام پزشک/ منطقه" value="{{ request.GET.q }}" style="text-align: right;">
+        <button type="submit" class="search-btn">جستجو</button>
+    </form>
+</div>
+
+<hr style="margin-bottom: 2rem;">
+
+{% if doctors %}
+    {% for doctor in doctors %}
+        <div class="doctor-card">
+            <div class="doctor-photo-container">
+                {% if doctor.photo %}
+                    <img src="{{ doctor.photo.url }}" alt="عکس دکتر {{ doctor.user.get_full_name }}" class="doctor-photo">
+                {% else %}
+                    <!-- Placeholder image -->
+                    <img src="https://via.placeholder.com/100" alt="عکس موجود نیست" class="doctor-photo">
+                {% endif %}
+            </div>
+            <div class="doctor-info">
+                <h2>
+                    <a href="{% url 'booking:doctor_detail' pk=doctor.pk %}">
+                        دکتر {{ doctor.user.get_full_name }}
+                    </a>
+                </h2>
+                <p><i class="fas fa-stethoscope icon"></i><strong>تخصص:</strong> {{ doctor.specialty.name|default:"-" }}</p>
+                <p><i class="fas fa-map-marker-alt icon"></i><strong>آدرس:</strong> {{ doctor.address|truncatewords:10 }}</p>
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>در حال حاضر پزشکی برای نمایش وجود ندارد.</p>
+{% endif %}
+
+<script>
+    // Wait for the DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('main-search-input');
+
+        // Ensure the element exists before adding event listeners
+        if (searchInput) {
+            const originalPlaceholder = searchInput.getAttribute('placeholder');
+
+            searchInput.addEventListener('focus', function() {
+                this.setAttribute('placeholder', '');
+            });
+
+            searchInput.addEventListener('blur', function() {
+                if (this.value === '') {
+                    this.setAttribute('placeholder', originalPlaceholder);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

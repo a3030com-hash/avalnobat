@@ -1,0 +1,649 @@
+import datetime
+import jdatetime
+from django.db import transaction, OperationalError
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from .models import DoctorProfile, DoctorAvailability, Appointment, TimeSlotException
+from .forms import DoctorAvailabilityForm, AppointmentBookingForm
+
+from django.db.models import Q
+
+def doctor_list(request):
+    """
+    نمایش لیست تمام پزشکان با قابلیت جستجو.
+    """
+    queryset = DoctorProfile.objects.select_related('user', 'specialty').all()
+    query = request.GET.get('q')
+
+    if query:
+        # Split the search query into individual, non-empty words
+        search_terms = [term for term in query.split() if term]
+        for term in search_terms:
+            # For each term, filter the queryset cumulatively
+            queryset = queryset.filter(
+                Q(user__first_name__icontains=term) |
+                Q(user__last_name__icontains=term) |
+                Q(specialty__name__icontains=term) |
+                Q(address__icontains=term)
+            )
+
+    context = {
+        'doctors': queryset,
+        'page_title': 'لیست پزشکان'
+    }
+    return render(request, 'booking/doctor_list.html', context)
+
+def doctor_detail(request, pk):
+    """
+    نمایش جزئیات یک پزشک خاص و تقویم نوبت‌دهی او بر اساس تاریخ شمسی.
+    """
+    doctor = get_object_or_404(DoctorProfile.objects.select_related('user', 'specialty'), pk=pk)
+    availabilities = doctor.availabilities.filter(is_active=True)
+
+    # محاسبه تقویم برای 45 روز آینده
+    today = datetime.date.today()
+    jalali_today = jdatetime.date.fromgregorian(date=today)
+
+    # محاسبه روز هفته شمسی برای اولین روز (شنبه=0, یکشنبه=1, ...)
+    # jdatetime.weekday(): Sat=0, ..., Fri=6
+    # Model: Sat=5, Sun=6, Mon=0, Tue=1, Wed=2, Thu=3, Fri=4
+    # We need to map jdatetime weekday to our model's weekday.
+    j_to_model_weekday_map = {
+        0: 5, # j(Sat)=0 -> m(Sat)=5
+        1: 6, # j(Sun)=1 -> m(Sun)=6
+        2: 0, # j(Mon)=2 -> m(Mon)=0
+        3: 1, # j(Tue)=3 -> m(Tue)=1
+        4: 2, # j(Wed)=4 -> m(Wed)=2
+        5: 3, # j(Thu)=5 -> m(Thu)=3
+        6: 4, # j(Fri)=6 -> m(Fri)=4
+    }
+
+    # Calculate the offset for the first day to align the calendar grid correctly
+    # The offset is the number of empty cells before the first day (today).
+    # jdatetime.weekday(): Sat=0, ..., Fri=6
+    calendar_offset = jalali_today.weekday()
+
+    days = []
+    for i in range(45):
+        current_gregorian_date = today + datetime.timedelta(days=i)
+        current_jalali_date = jdatetime.date.fromgregorian(date=current_gregorian_date)
+
+        model_weekday = j_to_model_weekday_map[current_jalali_date.weekday()]
+        daily_availabilities = availabilities.filter(day_of_week=model_weekday)
+
+        day_info = {'date': current_gregorian_date, 'status': 'unavailable', 'booked_percentage': 0}
+
+        if daily_availabilities.exists():
+            total_capacity = sum(da.visit_count for da in daily_availabilities)
+            if total_capacity > 0:
+                booked_count = Appointment.objects.filter(
+                    doctor=doctor,
+                    appointment_datetime__date=current_gregorian_date,
+                    status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
+                ).count()
+
+                booked_percentage = (booked_count / total_capacity) * 100
+                day_info['booked_percentage'] = booked_percentage
+
+                if booked_percentage >= 100:
+                    day_info['status'] = 'full'
+                else:
+                    day_info['status'] = 'available'
+            else:
+                day_info['status'] = 'unavailable' # No capacity
+
+        days.append(day_info)
+
+    context = {
+        'doctor': doctor,
+        'days': days,
+        'calendar_offset': range(calendar_offset),
+        'page_title': f'پروفایل دکتر {doctor.user.get_full_name()}'
+    }
+    return render(request, 'booking/doctor_detail.html', context)
+
+@login_required
+def doctor_dashboard(request):
+    """
+    داشبورد پزشک برای مدیریت زمان‌بندی کاری.
+    """
+    try:
+        doctor_profile = request.user.doctor_profile
+    except DoctorProfile.DoesNotExist:
+        # اگر کاربر پروفایل پزشک نداشته باشد، به صفحه‌ای راهنمایی می‌شود
+        # این بخش در آینده می‌تواند کامل‌تر شود
+        return redirect('booking:doctor_list')
+
+    if request.method == 'POST':
+        form = DoctorAvailabilityForm(request.POST)
+        if form.is_valid():
+            availability = form.save(commit=False)
+            availability.doctor = doctor_profile
+            availability.save()
+            return redirect('booking:doctor_dashboard')
+    else:
+        form = DoctorAvailabilityForm()
+
+    availabilities = DoctorAvailability.objects.filter(doctor=doctor_profile).order_by('day_of_week', 'start_time')
+
+    context = {
+        'form': form,
+        'availabilities': availabilities,
+        'page_title': 'داشبورد مدیریت زمان‌بندی'
+    }
+    return render(request, 'booking/doctor_dashboard.html', context)
+
+@login_required
+def edit_availability(request, pk):
+    availability = get_object_or_404(DoctorAvailability, pk=pk, doctor=request.user.doctor_profile)
+    if request.method == 'POST':
+        form = DoctorAvailabilityForm(request.POST, instance=availability)
+        if form.is_valid():
+            form.save()
+            return redirect('booking:doctor_dashboard')
+    else:
+        form = DoctorAvailabilityForm(instance=availability)
+
+    context = {
+        'form': form,
+        'page_title': 'ویرایش برنامه کاری'
+    }
+    return render(request, 'booking/edit_availability.html', context)
+
+@login_required
+def delete_availability(request, pk):
+    availability = get_object_or_404(DoctorAvailability, pk=pk, doctor=request.user.doctor_profile)
+    if request.method == 'POST':
+        availability.delete()
+        return redirect('booking:doctor_dashboard')
+
+    context = {
+        'availability': availability,
+        'page_title': 'تایید حذف برنامه کاری'
+    }
+    return render(request, 'booking/delete_availability.html', context)
+
+@login_required
+def toggle_availability(request, pk):
+    availability = get_object_or_404(DoctorAvailability, pk=pk, doctor=request.user.doctor_profile)
+    availability.is_active = not availability.is_active
+    availability.save()
+    return redirect('booking:doctor_dashboard')
+
+def book_appointment(request, pk, date):
+    """
+    نمایش تمام ساعات (خالی و پر) و پردازش رزرو نوبت.
+    """
+    doctor = get_object_or_404(DoctorProfile, pk=pk)
+    try:
+        jalali_date = jdatetime.datetime.strptime(date, '%Y-%m-%d').date()
+        target_date = jalali_date.togregorian()
+    except ValueError:
+        return redirect('booking:doctor_detail', pk=doctor.pk)
+
+    day_of_week = target_date.weekday()
+    availabilities = DoctorAvailability.objects.filter(doctor=doctor, day_of_week=day_of_week, is_active=True)
+
+    if not availabilities.exists():
+        return redirect('booking:doctor_detail', pk=doctor.pk)
+
+    all_slots = []
+    booked_datetimes = list(Appointment.objects.filter(
+        doctor=doctor,
+        appointment_datetime__date=target_date,
+        status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
+    ).values_list('appointment_datetime', flat=True))
+
+    canceled_slots = list(TimeSlotException.objects.filter(
+        doctor=doctor,
+        datetime_slot__date=target_date
+    ).values_list('datetime_slot', flat=True))
+
+    for avail in availabilities:
+        duration = (datetime.datetime.combine(target_date, avail.end_time) - datetime.datetime.combine(target_date, avail.start_time))
+        interval = duration / avail.visit_count if avail.visit_count > 1 else duration
+        current_time_naive = datetime.datetime.combine(target_date, avail.start_time)
+        for i in range(avail.visit_count):
+            current_time_aware = timezone.make_aware(current_time_naive)
+            if current_time_aware in booked_datetimes:
+                status = 'booked'
+            elif current_time_aware in canceled_slots:
+                status = 'canceled'
+            else:
+                status = 'available'
+            all_slots.append({'time': current_time_aware, 'status': status})
+            current_time_naive += interval
+
+    if request.method == 'POST':
+        form = AppointmentBookingForm(request.POST)
+        selected_slot_str = request.POST.get('selected_slot')
+
+        if form.is_valid() and selected_slot_str:
+            appointment_datetime = datetime.datetime.fromisoformat(selected_slot_str)
+
+            try:
+                with transaction.atomic():
+                    if Appointment.objects.filter(doctor=doctor, appointment_datetime=appointment_datetime, status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']).exists():
+                        raise ValueError("این نوبت لحظاتی پیش رزرو شد.")
+
+                    appointment = form.save(commit=False)
+                    appointment.doctor = doctor
+                    appointment.appointment_datetime = appointment_datetime
+                    appointment.status = 'PENDING_PAYMENT'
+                    appointment.save()
+
+                    request.session['pending_appointment_id'] = appointment.id
+
+                    return redirect('booking:verify_appointment')
+
+            except ValueError as e:
+                error_message = str(e)
+                context = {
+                    'doctor': doctor, 'date': target_date, 'all_slots': all_slots,
+                    'form': form, 'page_title': 'خطا در رزرو نوبت', 'error': error_message
+                }
+                return render(request, 'booking/book_appointment.html', context)
+            except OperationalError as e:
+                error_message = "سیستم در حال حاضر قادر به پردازش رزرو شما نیست. لطفاً بعداً دوباره تلاش کنید."
+                if "attempt to write a readonly database" in str(e):
+                    error_message = "مشکل فنی: پایگاه داده در حالت فقط-خواندنی قرار دارد و امکان ثبت نوبت جدید وجود ندارد. لطفاً به پشتیبانی اطلاع دهید."
+
+                context = {
+                    'doctor': doctor, 'date': target_date, 'all_slots': all_slots,
+                    'form': form, 'page_title': 'خطای سیستمی', 'error': error_message
+                }
+                return render(request, 'booking/book_appointment.html', context)
+    else:
+        form = AppointmentBookingForm()
+
+    context = {
+        'doctor': doctor, 'date': target_date, 'all_slots': all_slots,
+        'form': form
+    }
+    return render(request, 'booking/book_appointment.html', context)
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+def verify_appointment(request):
+    """
+    تایید شماره همراه با کد یک‌بار مصرف (شبیه‌سازی شده) با استفاده از session.
+    """
+    pending_appointment_id = request.session.get('pending_appointment_id')
+    if not pending_appointment_id:
+        return redirect('booking:doctor_list') # اگر نوبتی در حال رزرو نباشد
+
+    appointment = get_object_or_404(Appointment, pk=pending_appointment_id)
+
+    if request.method == 'POST':
+        otp = request.POST.get('otp')
+        if otp == '123456': # کد ثابت برای مرحله آزمایشی
+            # Find or create a patient user with the phone number
+            patient_user, created = User.objects.get_or_create(
+                username=appointment.patient_phone,
+                defaults={
+                    'first_name': appointment.patient_name,
+                    'user_type': 'PATIENT'
+                }
+            )
+            # Assign the patient to the appointment
+            appointment.patient = patient_user
+            appointment.save()
+
+            return redirect('booking:payment_page')
+        else:
+            # کد اشتباه است
+            return render(request, 'booking/verify_appointment.html', {'error': 'کد وارد شده صحیح نمی‌باشد.'})
+
+    return render(request, 'booking/verify_appointment.html', {'page_title': 'تأیید نوبت'})
+
+def payment_page(request):
+    """
+    صفحه شبیه‌سازی شده پرداخت با استفاده از session.
+    """
+    pending_appointment_id = request.session.get('pending_appointment_id')
+    if not pending_appointment_id:
+        return redirect('booking:doctor_list')
+
+    appointment = get_object_or_404(Appointment, pk=pending_appointment_id)
+    context = {
+        'appointment': appointment,
+        'payment_amount': 100000,
+        'page_title': 'صفحه پرداخت'
+    }
+    return render(request, 'booking/payment_page.html', context)
+
+def confirm_payment(request):
+    """
+    پردازش پرداخت شبیه‌سازی شده و نهایی کردن نوبت با استفاده از session.
+    """
+    pending_appointment_id = request.session.get('pending_appointment_id')
+    if not pending_appointment_id:
+        return redirect('booking:doctor_list')
+
+    appointment = get_object_or_404(Appointment, pk=pending_appointment_id)
+
+    appointment.status = 'BOOKED'
+    appointment.save()
+
+    # Clear the session variable after successful booking
+    del request.session['pending_appointment_id']
+
+    context = {
+        'appointment': appointment,
+        'page_title': 'نوبت شما با موفقیت ثبت شد'
+    }
+    return render(request, 'booking/confirmation_page.html', context)
+
+from django.contrib.auth import login
+from django.http import JsonResponse
+from django.forms import modelformset_factory
+from .forms import AppointmentUpdateForm, DailyExpenseForm, DoctorRegistrationForm, UserUpdateForm, DoctorProfileUpdateForm
+from .models import DailyExpense
+
+@login_required
+def secretary_panel(request):
+    """
+    پنل مدیریت منشی (داشبورد).
+    """
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    try:
+        doctor_profile = request.user.doctor_profile
+    except DoctorProfile.DoesNotExist:
+        return redirect('booking:doctor_list')
+
+    today = datetime.date.today()
+
+    # Get future available days for manual booking
+    future_days = []
+    for i in range(0, 46):  # From today for the next 45 days
+        future_date = today + datetime.timedelta(days=i)
+        if doctor_profile.availabilities.filter(day_of_week=future_date.weekday(), is_active=True).exists():
+            future_days.append(future_date)
+
+    context = {
+        'today': today,
+        'future_days': future_days,
+        'page_title': 'پنل مدیریت روزانه'
+    }
+    return render(request, 'booking/secretary_panel.html', context)
+
+
+@login_required
+def daily_patients(request):
+    """
+    نمایش و مدیریت لیست بیماران امروز.
+    """
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    try:
+        doctor_profile = request.user.doctor_profile
+    except DoctorProfile.DoesNotExist:
+        return redirect('booking:doctor_list')
+
+    today = datetime.date.today()
+
+    AppointmentFormSet = modelformset_factory(Appointment, form=AppointmentUpdateForm, extra=0)
+
+    if request.method == 'POST':
+        formset = AppointmentFormSet(request.POST, queryset=Appointment.objects.filter(
+            doctor=doctor_profile, appointment_datetime__date=today, status='BOOKED'))
+        if formset.is_valid():
+            formset.save()
+            return redirect('booking:daily_patients')
+
+    queryset = Appointment.objects.filter(
+        doctor=doctor_profile, appointment_datetime__date=today, status='BOOKED'
+    ).order_by('appointment_datetime')
+    formset = AppointmentFormSet(queryset=queryset)
+
+    context = {
+        'formset': formset,
+        'today': today,
+        'page_title': 'لیست بیماران امروز'
+    }
+    return render(request, 'booking/daily_patients.html', context)
+
+
+@login_required
+def secretary_payments(request):
+    """
+    نمایش و ثبت هزینه‌های روزانه منشی.
+    """
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    try:
+        doctor_profile = request.user.doctor_profile
+    except DoctorProfile.DoesNotExist:
+        return redirect('booking:doctor_list')
+
+    today = datetime.date.today()
+
+    if request.method == 'POST':
+        expense_form = DailyExpenseForm(request.POST)
+        if expense_form.is_valid():
+            expense = expense_form.save(commit=False)
+            expense.doctor = doctor_profile
+            expense.save()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'description': expense.description,
+                    'amount': expense.amount
+                })
+            return redirect('booking:secretary_payments')
+        elif request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'errors': expense_form.errors})
+
+    expense_form = DailyExpenseForm()
+    daily_expenses = DailyExpense.objects.filter(doctor=doctor_profile, date=today)
+
+    context = {
+        'expense_form': expense_form,
+        'daily_expenses': daily_expenses,
+        'today': today,
+        'page_title': 'پرداخت‌های منشی'
+    }
+    return render(request, 'booking/secretary_payments.html', context)
+
+@login_required
+def manual_booking(request, date):
+    """
+    صفحه ثبت نوبت دستی توسط منشی.
+    """
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    doctor_profile = request.user.doctor_profile
+    try:
+        jalali_date = jdatetime.datetime.strptime(date, '%Y-%m-%d').date()
+        target_date = jalali_date.togregorian()
+    except ValueError:
+        return redirect('booking:secretary_panel')
+
+    # منطق محاسبه نوبت‌های موجود (مشابه book_appointment)
+    all_slots = []
+    booked_datetimes = list(Appointment.objects.filter(doctor=doctor_profile, appointment_datetime__date=target_date).values_list('appointment_datetime', flat=True))
+    canceled_slots = list(TimeSlotException.objects.filter(doctor=doctor_profile, datetime_slot__date=target_date).values_list('datetime_slot', flat=True))
+    availabilities = DoctorAvailability.objects.filter(doctor=doctor_profile, day_of_week=target_date.weekday(), is_active=True)
+
+    for avail in availabilities:
+        duration = (datetime.datetime.combine(target_date, avail.end_time) - datetime.datetime.combine(target_date, avail.start_time))
+        interval = duration / avail.visit_count if avail.visit_count > 1 else duration
+        current_time_naive = datetime.datetime.combine(target_date, avail.start_time)
+        for i in range(avail.visit_count):
+            current_time_aware = timezone.make_aware(current_time_naive)
+            if current_time_aware in booked_datetimes:
+                status = 'booked'
+            elif current_time_aware in canceled_slots:
+                status = 'canceled'
+            else:
+                status = 'available'
+            all_slots.append({'time': current_time_aware, 'status': status})
+            current_time_naive += interval
+
+    if request.method == 'POST':
+        form = AppointmentBookingForm(request.POST)
+        selected_slot_str = request.POST.get('selected_slot')
+
+        if form.is_valid() and selected_slot_str:
+            appointment_datetime = datetime.datetime.fromisoformat(selected_slot_str)
+
+            with transaction.atomic():
+                if Appointment.objects.filter(doctor=doctor_profile, appointment_datetime=appointment_datetime).exists():
+                    # این حالت نباید زیاد رخ دهد چون منشی تنها کاربر است
+                    pass # میتوان یک پیام خطا اضافه کرد
+                else:
+                    # Find or create a patient user with the phone number
+                    patient_user, created = User.objects.get_or_create(
+                        username=form.cleaned_data['patient_phone'],
+                        defaults={
+                            'first_name': form.cleaned_data['patient_name'],
+                            'user_type': 'PATIENT'
+                        }
+                    )
+                    appointment = form.save(commit=False)
+                    appointment.doctor = doctor_profile
+                    appointment.patient = patient_user
+                    appointment.appointment_datetime = appointment_datetime
+                    appointment.status = 'BOOKED' # نوبت دستی مستقیما رزرو می‌شود
+                    appointment.save()
+                    return redirect('booking:secretary_panel')
+
+    form = AppointmentBookingForm()
+    context = {
+        'doctor': doctor_profile,
+        'date': target_date,
+        'all_slots': all_slots,
+        'form': form
+    }
+    return render(request, 'booking/manual_booking.html', context)
+
+def doctor_signup(request):
+    if request.method == 'POST':
+        form = DoctorRegistrationForm(request.POST, request.FILES)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('booking:doctor_dashboard')
+    else:
+        form = DoctorRegistrationForm()
+
+    context = {
+        'form': form,
+        'page_title': 'ثبت نام پزشک'
+    }
+    return render(request, 'booking/signup.html', context)
+
+@login_required
+def edit_profile(request):
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    doctor_profile = request.user.doctor_profile
+
+    if request.method == 'POST':
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        profile_form = DoctorProfileUpdateForm(request.POST, request.FILES, instance=doctor_profile)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            return redirect('booking:edit_profile') # Redirect back to the same page to show success
+    else:
+        user_form = UserUpdateForm(instance=request.user)
+        profile_form = DoctorProfileUpdateForm(instance=doctor_profile)
+
+    context = {
+        'user_form': user_form,
+        'profile_form': profile_form,
+        'page_title': 'ویرایش پروفایل'
+    }
+    return render(request, 'booking/edit_profile.html', context)
+
+@login_required
+def cancel_slot(request, slot):
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    if request.method == 'POST':
+        slot_datetime = datetime.datetime.fromisoformat(slot)
+        TimeSlotException.objects.get_or_create(
+            doctor=request.user.doctor_profile,
+            datetime_slot=slot_datetime
+        )
+        # Redirect back to the manual booking page for the same day
+        return redirect('booking:manual_booking', date=slot_datetime.strftime('%Y-%m-%d'))
+
+from django.db.models import Sum, Q
+
+# ... (other code)
+
+@login_required
+def financial_report(request):
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    doctor_profile = request.user.doctor_profile
+    today = datetime.date.today()
+
+    if request.method == 'POST' and 'settle_up' in request.POST:
+        # Logic for settling up the balance
+        # This will be based on the final balance calculated below
+        pass # We will complete this after calculating the balance
+
+    # 1. Calculate balance from previous days
+    # This is a simplified approach. A more robust solution would involve daily snapshots.
+    # For now, we calculate the cumulative balance up to yesterday.
+    previous_cash_visits = Appointment.objects.filter(
+        doctor=doctor_profile,
+        appointment_datetime__date__lt=today,
+        payment_method=2 # 2: نقدی
+    ).aggregate(total=Sum('visit_fee_paid'))['total'] or 0
+
+    previous_expenses = DailyExpense.objects.filter(
+        doctor=doctor_profile,
+        date__lt=today
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
+    balance_from_yesterday = (previous_cash_visits or 0) + (previous_expenses or 0)
+
+    # 2. Calculate today's cash income
+    todays_cash_visits = Appointment.objects.filter(
+        doctor=doctor_profile,
+        appointment_datetime__date=today,
+        payment_method=2
+    ).aggregate(total=Sum('visit_fee_paid'))['total'] or 0
+
+    # 3. Get today's expenses
+    todays_expenses = DailyExpense.objects.filter(doctor=doctor_profile, date=today)
+    total_todays_expenses_val = todays_expenses.aggregate(total=Sum('amount'))['total'] or 0
+
+    # 4. Calculate final balance
+    final_balance = balance_from_yesterday + todays_cash_visits + total_todays_expenses_val
+
+    # Complete the settle up logic from above
+    if request.method == 'POST' and 'settle_up' in request.POST:
+        if final_balance != 0:
+            description = "تسویه حساب با منشی" if final_balance > 0 else "پرداخت به منشی بابت طلب"
+            DailyExpense.objects.create(
+                doctor=doctor_profile,
+                description=description,
+                amount=-final_balance # Create an expense to zero out the balance
+            )
+        return redirect('booking:financial_report')
+
+    context = {
+        'balance_from_yesterday': balance_from_yesterday,
+        'todays_cash_visits': todays_cash_visits,
+        'todays_expenses': todays_expenses,
+        'final_balance': final_balance,
+        'today': today,
+        'page_title': 'گزارش مالی روزانه'
+    }
+    return render(request, 'booking/financial_report.html', context)

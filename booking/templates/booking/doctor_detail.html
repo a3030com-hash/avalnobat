@@ -1,0 +1,130 @@
+{% extends 'booking/base.html' %}
+{% load booking_filters %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .profile-container {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .profile-container img {
+        max-width: 150px;
+        border-radius: 50%;
+        margin-bottom: 1rem;
+    }
+    .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .day {
+        padding: 15px;
+        border: 1px solid #ddd;
+        text-align: center;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+    .day.available {
+        background: linear-gradient(to left, #f8d7da 0%, #f8d7da var(--booked-percentage, 0%), #d4edda var(--booked-percentage, 0%), #d4edda 100%);
+        color: #155724;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .day.available:hover {
+        transform: scale(1.05);
+    }
+    .day.full {
+        background-color: #f8d7da;
+        color: #721c24;
+        opacity: 0.7;
+    }
+    .day.unavailable {
+        background-color: #e9ecef;
+        color: #6c757d;
+    }
+    .day-empty {
+        border: 1px solid #f8f9fa;
+        background-color: #f8f9fa;
+    }
+    .day-name {
+        font-weight: bold;
+        text-align: center;
+        padding: 10px;
+        color: #6c757d;
+    }
+    .legend {
+        margin-top: 15px;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        font-size: 14px;
+    }
+    .legend span {
+        display: flex;
+        align-items: center;
+    }
+    .legend .color-box {
+        width: 15px;
+        height: 15px;
+        margin-left: 5px;
+        border-radius: 3px;
+    }
+</style>
+
+<div class="profile-container">
+    <h1>{{ page_title }}</h1>
+    {% if doctor.photo %}
+        <img src="{{ doctor.photo.url }}" alt="عکس دکتر {{ doctor.user.get_full_name }}">
+    {% endif %}
+    <p><strong>نام کامل:</strong> دکتر {{ doctor.user.get_full_name }}</p>
+    <p><strong>تخصص:</strong> {{ doctor.specialty.name|default:"-" }}</p>
+    <p><strong>شماره تلفن مطب:</strong> {{ doctor.phone_number }}</p>
+    <p><strong>آدرس:</strong> {{ doctor.address }}</p>
+    <p><strong>بیوگرافی:</strong></p>
+    <p>{{ doctor.biography|linebreaks|default:"بیوگرافی ثبت نشده است." }}</p>
+
+    <hr>
+
+    <h3>تقویم نوبت‌دهی (۴۵ روز آینده)</h3>
+    <div class="calendar">
+        <!-- Header for days of week -->
+        <div class="day-name">شنبه</div>
+        <div class="day-name">یکشنبه</div>
+        <div class="day-name">دوشنبه</div>
+        <div class="day-name">سه‌شنبه</div>
+        <div class="day-name">چهارشنبه</div>
+        <div class="day-name">پنجشنبه</div>
+        <div class="day-name">جمعه</div>
+
+            <!-- Add empty cells for offset -->
+            {% for i in calendar_offset %}
+                <div class="day day-empty"></div>
+            {% endfor %}
+
+        {% for day in days %}
+            {% if day.status == 'available' %}
+                    <a href="{% url 'booking:book_appointment' pk=doctor.pk date=day.date|to_jalali:'%Y-%m-%d' %}" style="text-decoration: none;">
+                        <div class="day {{ day.status }}" style="--booked-percentage: {{ day.booked_percentage }}%;">
+                        {{ day.date|to_jalali:"%d %B" }}
+                    </div>
+                </a>
+            {% else %}
+                <div class="day {{ day.status }}">
+                    {{ day.date|to_jalali:"%d %B" }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <div class="legend">
+        <span><div class="color-box" style="background-color: #d4edda;"></div> نوبت موجود</span>
+        <span><div class="color-box" style="background-color: #f8d7da;"></div> نوبت تکمیل شده</span>
+        <span><div class="color-box" style="background-color: #e9ecef;"></div> روز غیرفعال</span>
+    </div>
+</div>
+{% endblock %}

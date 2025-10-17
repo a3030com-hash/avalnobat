@@ -1,0 +1,82 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}ورود پزشک - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .login-container {
+        max-width: 500px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .login-container h1 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    .form-group input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+    }
+    .login-btn {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    .error-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1rem 0;
+        color: #721c24;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        padding: 1rem;
+        border-radius: 5px;
+    }
+</style>
+
+<div class="login-container">
+    <h1>ورود پزشک</h1>
+    <p style="text-align: center; color: #6c757d;">این صفحه برای ورود پزشکان و منشی‌ها می‌باشد.</p>
+
+    {% if form.errors %}
+        <ul class="error-list">
+        {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_username">نام کاربری:</label>
+            <input type="text" name="username" id="id_username" required>
+        </div>
+        <div class="form-group">
+            <label for="id_password">رمز عبور:</label>
+            <input type="password" name="password" id="id_password" required>
+        </div>
+        <button type="submit" class="login-btn">ورود</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends 'booking/base.html' %}
+{% load booking_filters %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .booking-container {
+        background-color: white;
+        padding: 2rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .time-slots {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 2rem;
+    }
+    .slot {
+        padding: 10px 15px;
+        border: 1px solid;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+    .slot-available { border-color: #007bff; color: #007bff; cursor: pointer; }
+    .slot-booked { border-color: #6c757d; color: #6c757d; background-color: #f1f3f5; text-decoration: line-through; cursor: not-allowed; }
+    .slot-canceled { border-color: #dc3545; color: #dc3545; background-color: #f8d7da; text-decoration: line-through; cursor: not-allowed; }
+
+    .booking-form {
+        display: none;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #dee2e6;
+    }
+    .submit-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 1rem;
+    }
+    .cancel-btn {
+        background-color: #dc3545;
+    }
+</style>
+
+<div class="booking-container">
+    <a href="{% url 'booking:secretary_panel' %}"> &larr; بازگشت به پنل مدیریت</a>
+    <hr>
+    <h1>{{ page_title }}</h1>
+    <p>یک ساعت خالی را برای ثبت نوبت بیمار یا مسدود کردن آن انتخاب کنید.</p>
+
+    <div class="time-slots" id="time-slots-container">
+        {% for slot in all_slots %}
+            {% if slot.status == 'available' %}
+                <div class="slot slot-available" onclick="showForm('{{ slot.time.isoformat }}')">
+                    {{ slot.time|time:"H:i" }}
+                </div>
+            {% elif slot.status == 'booked' %}
+                <div class="slot slot-booked">{{ slot.time|time:"H:i" }}</div>
+            {% elif slot.status == 'canceled' %}
+                <div class="slot slot-canceled">{{ slot.time|time:"H:i" }}</div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Hidden forms -->
+    <form method="post" id="booking-form" class="booking-form">
+        {% csrf_token %}
+        <h3>ثبت نوبت برای ساعت <span id="form-time-book"></span></h3>
+        <input type="hidden" name="selected_slot" id="hidden-selected-slot-book">
+        {{ form.as_p }}
+        <button type="submit" class="submit-btn">ثبت نهایی نوبت</button>
+    </form>
+
+    <form action="" method="post" id="cancel-form" class="booking-form">
+        {% csrf_token %}
+        <h3>مسدود کردن نوبت ساعت <span id="form-time-cancel"></span></h3>
+        <p>آیا از مسدود کردن این بازه زمانی اطمینان دارید؟ این نوبت دیگر توسط بیماران قابل رزرو نخواهد بود.</p>
+        <button type="submit" class="submit-btn cancel-btn">بله، مسدود کن</button>
+    </form>
+</div>
+
+<script>
+    const bookingForm = document.getElementById('booking-form');
+    const cancelForm = document.getElementById('cancel-form');
+    const hiddenSlotInputBook = document.getElementById('hidden-selected-slot-book');
+    const formTimeBook = document.getElementById('form-time-book');
+    const formTimeCancel = document.getElementById('form-time-cancel');
+
+    function showForm(slot_iso) {
+        const slot_time = new Date(slot_iso).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+
+        // Show booking form
+        bookingForm.style.display = 'block';
+        hiddenSlotInputBook.value = slot_iso;
+        formTimeBook.textContent = slot_time;
+
+        // Show cancel form
+        cancelForm.style.display = 'block';
+        cancelForm.action = `/cancel-slot/${slot_iso}/`;
+        formTimeCancel.textContent = slot_time;
+
+        // Scroll to the forms
+        bookingForm.scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+{% endblock %}

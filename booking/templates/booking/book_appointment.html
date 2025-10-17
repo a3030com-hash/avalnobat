@@ -1,0 +1,115 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .form-container {
+        background-color: white;
+        padding: 2rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .time-slots {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .slot {
+        padding: 10px 15px;
+        border: 1px solid;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background-color 0.2s, color 0.2s;
+    }
+    .slot.available {
+        border-color: #007bff;
+        color: #007bff;
+        cursor: pointer;
+    }
+    .slot.available:hover {
+        background-color: #e7f3ff;
+    }
+    .slot.booked {
+        border-color: #dc3545;
+        color: #dc3545;
+        background-color: #f8d7da;
+        text-decoration: line-through;
+        cursor: not-allowed;
+    }
+    .slot input { display: none; }
+    .slot.selected {
+        background-color: #007bff;
+        color: white;
+    }
+    button {
+        background-color: #28a745;
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+    .error-message {
+        color: #721c24;
+        font-weight: bold;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        padding: 1rem;
+        border-radius: 5px;
+        margin-bottom: 1rem;
+    }
+</style>
+
+{% load booking_filters %}
+<div class="form-container">
+    <a href="{% url 'booking:doctor_detail' pk=doctor.pk %}"> &larr; بازگشت به پروفایل دکتر {{ doctor.user.get_full_name }}</a>
+    <hr>
+    <h1>انتخاب ساعت نوبت برای {{ date|to_jalali }}</h1>
+    <p>لطفاً یکی از ساعات زیر را انتخاب کرده و اطلاعات خود را وارد نمایید.</p>
+
+    {% if error %}
+        <p class="error-message">{{ error }}</p>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <h3>۱. انتخاب ساعت</h3>
+        <div class="time-slots" id="time-slots-container">
+            {% for slot in all_slots %}
+                {% if slot.status == 'available' %}
+                    <label class="slot available">
+                        <input type="radio" name="selected_slot" value="{{ slot.time.isoformat }}" required>
+                        {{ slot.time|time:"H:i" }}
+                    </label>
+                {% else %}
+                    <div class="slot booked">
+                        {{ slot.time|time:"H:i" }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <h3>۲. ورود اطلاعات</h3>
+        {{ form.as_p }}
+
+        <button type="submit">ثبت و ادامه برای پرداخت</button>
+    </form>
+</div>
+
+<script>
+    const slotsContainer = document.getElementById('time-slots-container');
+    slotsContainer.addEventListener('change', function(e) {
+        if (e.target.type === 'radio') {
+            slotsContainer.querySelectorAll('label.slot').forEach(label => label.classList.remove('selected'));
+            e.target.parentElement.classList.add('selected');
+        }
+    });
+</script>
+{% endblock %}
