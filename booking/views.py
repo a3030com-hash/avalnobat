@@ -341,9 +341,7 @@ from django.http import JsonResponse
 from django.forms import modelformset_factory
 from .forms import AppointmentUpdateForm, DailyExpenseForm, DoctorRegistrationForm, UserUpdateForm, DoctorProfileUpdateForm
 from .models import DailyExpense
-
 from django.db.models import Count
-from collections import defaultdict
 
 @login_required
 def secretary_panel(request):
