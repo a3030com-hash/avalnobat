@@ -31,15 +31,27 @@
             background-color: var(--light-gray);
             color: var(--dark-gray);
         }
+        
         header {
             background-color: var(--white);
             padding: 1rem 2rem;
             border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        header nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            width: 100%;
         }
+
+        header .nav-items {
+            display: flex;
+            align-items: center;
+            margin-left: auto; /* لوگو را به سمت راست می‌برد */
+        }
+
         header .logo {
             font-size: 1.7rem;
             font-weight: 700;
@@ -47,16 +59,19 @@
             display: flex;
             align-items: center;
         }
+
         header .logo a {
             text-decoration: none;
             color: inherit;
         }
+
         header .logo .icon {
             margin-left: 10px;
-            color: #ff6f61; /* A nice coral color for the icon */
+            color: #ff6f61; /* رنگ برای آیکن */
         }
+
         header nav a, header nav .nav-item {
-            margin-right: 20px;
+            margin-left: 20px; /* فاصله بین آیکن‌ها */
             text-decoration: none;
             color: var(--secondary-color);
             font-weight: 500;
@@ -64,15 +79,16 @@
             display: inline-flex;
             align-items: center;
         }
+        
         header nav a:hover {
             color: var(--primary-color);
         }
 
-        /* Dropdown Styles */
         .dropdown {
             position: relative;
             display: inline-block;
         }
+
         .dropdown-content {
             display: none;
             position: absolute;
@@ -82,8 +98,9 @@
             z-index: 1;
             border-radius: 8px;
             overflow: hidden;
-            left: 0; /* Align with the left of the button */
+            left: 0;
         }
+
         .dropdown-content a {
             color: black;
             padding: 12px 16px;
@@ -91,12 +108,15 @@
             display: block;
             margin: 0;
         }
+
         .dropdown-content a:hover {
             background-color: #f1f1f1;
         }
+
         .dropdown:hover .dropdown-content {
             display: block;
         }
+
         .dropdown .dropbtn {
             cursor: pointer;
             font-weight: 500;
@@ -115,9 +135,11 @@
             width: 100%;
             text-align: right;
         }
+
         .link-button:hover {
             background-color: #f1f1f1;
         }
+
         .main-content {
             flex: 1;
             padding: 2rem;
@@ -125,6 +147,7 @@
             margin: 0 auto;
             width: 100%;
         }
+
         footer {
             background-color: var(--dark-gray);
             color: var(--white);
@@ -161,37 +184,63 @@
 <body>
 
     <header>
-        <div class="logo">
-            <i class="fas fa-heartbeat icon"></i>
-            <a href="{% url 'booking:doctor_list' %}">اول نوبت</a>
-        </div>
         <nav>
-            {% if user.is_authenticated and user.user_type == 'DOCTOR' %}
-                <!-- Icons for main pages -->
-                <a href="{% url 'booking:daily_patients' %}" title="لیست بیماران روزانه"><i class="fas fa-users"></i></a>
-                <a href="{% url 'booking:secretary_panel' %}" title="نوبت‌دهی توسط منشی"><i class="fas fa-calendar-plus"></i></a>
-                <a href="{% url 'booking:secretary_payments' %}" title="پرداخت‌های منشی"><i class="fas fa-money-bill-wave"></i></a>
-                <a href="{% url 'booking:financial_report' %}" title="گزارش مالی"><i class="fas fa-chart-bar"></i></a>
-
-                <!-- Dropdown Menu -->
-                <div class="dropdown">
-                    <span class="dropbtn nav-item">
-                        <i class="fas fa-user-cog" style="margin-left: 8px;"></i> مدیریت
-                    </span>
-                    <div class="dropdown-content">
-                        <a href="{% url 'booking:doctor_dashboard' %}">مدیریت برنامه کاری</a>
-                        <a href="{% url 'booking:edit_profile' %}">ویرایش پروفایل پزشک</a>
-                        <a href="{% url 'signup' %}">ثبت نام پزشک جدید</a>
-                        <form action="{% url 'logout' %}" method="post">
-                            {% csrf_token %}
-                            <button type="submit" class="link-button">خروج پزشک</button>
-                        </form>
+            <div class="nav-items">
+                {% if user.is_authenticated and user.user_type == 'DOCTOR' %}
+                    <div class="horizontal-layout">
+                        <div class="logo">
+                               <a  href="{% url 'booking:doctor_list' %}" title="صفحه اصلی">
+                            <i class="fas fa-heartbeat icon"></i>
+                        </a>
                     </div>
-                </div>
-            {% else %}
-                <a href="{% url 'signup' %}">ثبت نام پزشک</a>
-                <a href="{% url 'login' %}">ورود پزشک</a>
-            {% endif %}
+
+                     <div>
+                        <button type="submit"  title="تاریخ">روزقبل</button>
+                        <button type="submit"  title="تاریخ">روز بعد</button>
+                       
+                        <a href="{% url 'booking:daily_patients' %}" title="لیست بیماران روزانه">
+                            <i class="fas fa-users"></i>
+                        </a>
+                        <a href="{% url 'booking:secretary_panel' %}" title="نوبت‌دهی توسط منشی">
+                            <i class="fas fa-calendar-plus"></i>
+                        </a>
+                        <a href="{% url 'booking:secretary_payments' %}" title="پرداخت‌های منشی">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </a>
+                        <a href="{% url 'booking:financial_report' %}" title="گزارش مالی">
+                            <i class="fas fa-chart-bar"></i>
+                        </a>
+              
+                        <div class="dropdown">
+                            <span class="dropbtn nav-item">
+                                <i class="fas fa-user-cog" style="margin-left: 8px;"></i>
+                            </span>
+                            <div class="dropdown-content">
+                                <a href="{% url 'booking:doctor_dashboard' %}">مدیریت برنامه کاری</a>
+                                <a href="{% url 'booking:edit_profile' %}">ویرایش پروفایل پزشک</a>
+                                <a href="{% url 'signup' %}">ثبت نام پزشک جدید</a>
+                                <form action="{% url 'logout' %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="link-button">خروج پزشک</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                {% else %}
+                <div class="flex-row flex-between flex-gap-15">
+                    <div class="logo">
+                       <a href="{% url 'booking:doctor_list' %}">اول نوبت</a> <i class="fas fa-heartbeat icon logo"></i>
+                   </div>
+                       <div>
+                        <a href="{% url 'signup' %}" title="ثبت نام پزشک"><i class="fas fa-user-plus"></i></a>
+                        <a href="{% url 'login' %}" title="ورود پزشک"><i class="fas fa-sign-in-alt"></i></a>
+             
+                      </div>
+                 </div>
+                 </div>
+                {% endif %}
+            </div>
         </nav>
     </header>
 
@@ -203,6 +252,6 @@
     <footer>
         <p>&copy; {% now "Y" %} - وب‌سایت نوبت‌دهی اول نوبت. تمام حقوق محفوظ است.</p>
     </footer>
-
+      
 </body>
 </html>
