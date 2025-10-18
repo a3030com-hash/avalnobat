@@ -342,6 +342,9 @@ from django.forms import modelformset_factory
 from .forms import AppointmentUpdateForm, DailyExpenseForm, DoctorRegistrationForm, UserUpdateForm, DoctorProfileUpdateForm
 from .models import DailyExpense
 
+from django.db.models import Count
+from collections import defaultdict
+
 @login_required
 def secretary_panel(request):
     """
@@ -356,17 +359,38 @@ def secretary_panel(request):
         return redirect('booking:doctor_list')
 
     today = datetime.date.today()
+    end_date = today + datetime.timedelta(days=45)
+    availabilities = doctor_profile.availabilities.filter(is_active=True)
+
+    # Optimize appointment counting
+    booked_appointments = Appointment.objects.filter(
+        doctor=doctor_profile,
+        appointment_datetime__date__range=[today, end_date],
+        status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
+    ).values('appointment_datetime__date').annotate(count=Count('id'))
+
+    booked_counts = {item['appointment_datetime__date']: item['count'] for item in booked_appointments}
 
     # Get future available days for manual booking
-    future_days = []
+    future_days_info = []
     for i in range(0, 46):  # From today for the next 45 days
         future_date = today + datetime.timedelta(days=i)
-        if doctor_profile.availabilities.filter(day_of_week=future_date.weekday(), is_active=True).exists():
-            future_days.append(future_date)
+        daily_availabilities = availabilities.filter(day_of_week=future_date.weekday())
+
+        if daily_availabilities.exists():
+            total_capacity = sum(da.visit_count for da in daily_availabilities)
+            day_info = {'date': future_date, 'booked_percentage': 0}
+
+            if total_capacity > 0:
+                booked_count = booked_counts.get(future_date, 0)
+                booked_percentage = (booked_count / total_capacity) * 100
+                day_info['booked_percentage'] = booked_percentage
+
+            future_days_info.append(day_info)
 
     context = {
         'today': today,
-        'future_days': future_days,
+        'future_days': future_days_info,
         'page_title': 'پنل مدیریت روزانه'
     }
     return render(request, 'booking/secretary_panel.html', context)
