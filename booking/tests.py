@@ -125,7 +125,9 @@ class BookingAppTestCase(TestCase):
         """Test the financial report for accuracy."""
         self.client.login(username='doctor', password='password123')
 
-        yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        today = datetime.date.today()
+        yesterday = today - datetime.timedelta(days=1)
+
         Appointment.objects.create(
             doctor=self.doctor_profile, patient=self.patient_user,
             appointment_datetime=timezone.make_aware(datetime.datetime.combine(yesterday, datetime.time(10, 0))),
@@ -135,12 +137,13 @@ class BookingAppTestCase(TestCase):
 
         Appointment.objects.create(
             doctor=self.doctor_profile, patient=self.patient_user,
-            appointment_datetime=timezone.make_aware(datetime.datetime.combine(datetime.date.today(), datetime.time(11, 0))),
+            appointment_datetime=timezone.make_aware(datetime.datetime.combine(today, datetime.time(11, 0))),
             status='COMPLETED', payment_method=2, visit_fee_paid=150000
         )
-        DailyExpense.objects.create(doctor=self.doctor_profile, date=datetime.date.today(), description="هزینه تست امروز", amount=-30000)
+        DailyExpense.objects.create(doctor=self.doctor_profile, date=today, description="هزینه تست امروز", amount=-30000)
 
-        response = self.client.get(reverse('booking:financial_report'))
+        report_url = reverse('booking:financial_report', kwargs={'date': today.strftime('%Y-%m-%d')})
+        response = self.client.get(report_url)
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(response.context['balance_from_yesterday'], 80000)
@@ -148,7 +151,7 @@ class BookingAppTestCase(TestCase):
         self.assertEqual(response.context['final_balance'], 200000)
 
         # Test the settle up functionality
-        response = self.client.post(reverse('booking:financial_report'), {'settle_up': 'true'}, follow=True)
+        response = self.client.post(report_url, {'settle_up': 'true'}, follow=True)
         self.assertEqual(response.status_code, 200)
 
         # After settling up, the final balance should be 0

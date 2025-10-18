@@ -344,7 +344,7 @@ from .models import DailyExpense
 from django.db.models import Count
 
 @login_required
-def secretary_panel(request):
+def secretary_panel(request, date=None):
     """
     پنل مدیریت منشی (داشبورد).
     """
@@ -356,14 +356,22 @@ def secretary_panel(request):
     except DoctorProfile.DoesNotExist:
         return redirect('booking:doctor_list')
 
-    today = datetime.date.today()
-    end_date = today + datetime.timedelta(days=45)
+    if date:
+        try:
+            current_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+        except ValueError:
+            current_date = datetime.date.today()
+    else:
+        current_date = datetime.date.today()
+
+
+    end_date = current_date + datetime.timedelta(days=45)
     availabilities = doctor_profile.availabilities.filter(is_active=True)
 
     # Optimize appointment counting
     booked_appointments = Appointment.objects.filter(
         doctor=doctor_profile,
-        appointment_datetime__date__range=[today, end_date],
+        appointment_datetime__date__range=[current_date, end_date],
         status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
     ).values('appointment_datetime__date').annotate(count=Count('id'))
 
@@ -372,7 +380,7 @@ def secretary_panel(request):
     # Get future available days for manual booking
     future_days_info = []
     for i in range(0, 46):  # From today for the next 45 days
-        future_date = today + datetime.timedelta(days=i)
+        future_date = current_date + datetime.timedelta(days=i)
         daily_availabilities = availabilities.filter(day_of_week=future_date.weekday())
 
         if daily_availabilities.exists():
@@ -387,7 +395,7 @@ def secretary_panel(request):
             future_days_info.append(day_info)
 
     context = {
-        'today': today,
+        'today': current_date,
         'future_days': future_days_info,
         'page_title': 'پنل مدیریت روزانه'
     }
@@ -395,7 +403,7 @@ def secretary_panel(request):
 
 
 @login_required
-def daily_patients(request):
+def daily_patients(request, date=None):
     """
     نمایش و مدیریت لیست بیماران امروز.
     """
@@ -407,32 +415,38 @@ def daily_patients(request):
     except DoctorProfile.DoesNotExist:
         return redirect('booking:doctor_list')
 
-    today = datetime.date.today()
+    if date:
+        try:
+            current_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+        except ValueError:
+            current_date = datetime.date.today()
+    else:
+        current_date = datetime.date.today()
 
     AppointmentFormSet = modelformset_factory(Appointment, form=AppointmentUpdateForm, extra=0)
 
     if request.method == 'POST':
         formset = AppointmentFormSet(request.POST, queryset=Appointment.objects.filter(
-            doctor=doctor_profile, appointment_datetime__date=today, status='BOOKED'))
+            doctor=doctor_profile, appointment_datetime__date=current_date, status='BOOKED'))
         if formset.is_valid():
             formset.save()
-            return redirect('booking:daily_patients')
+            return redirect('booking:daily_patients', date=date)
 
     queryset = Appointment.objects.filter(
-        doctor=doctor_profile, appointment_datetime__date=today, status='BOOKED'
+        doctor=doctor_profile, appointment_datetime__date=current_date, status='BOOKED'
     ).order_by('appointment_datetime')
     formset = AppointmentFormSet(queryset=queryset)
 
     context = {
         'formset': formset,
-        'today': today,
+        'today': current_date,
         'page_title': 'لیست بیماران امروز'
     }
     return render(request, 'booking/daily_patients.html', context)
 
 
 @login_required
-def secretary_payments(request):
+def secretary_payments(request, date=None):
     """
     نمایش و ثبت هزینه‌های روزانه منشی.
     """
@@ -444,13 +458,21 @@ def secretary_payments(request):
     except DoctorProfile.DoesNotExist:
         return redirect('booking:doctor_list')
 
-    today = datetime.date.today()
+    if date:
+        try:
+            current_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+        except ValueError:
+            current_date = datetime.date.today()
+    else:
+        current_date = datetime.date.today()
+
 
     if request.method == 'POST':
         expense_form = DailyExpenseForm(request.POST)
         if expense_form.is_valid():
             expense = expense_form.save(commit=False)
             expense.doctor = doctor_profile
+            expense.date = current_date
             expense.save()
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({
@@ -458,17 +480,17 @@ def secretary_payments(request):
                     'description': expense.description,
                     'amount': expense.amount
                 })
-            return redirect('booking:secretary_payments')
+            return redirect('booking:secretary_payments', date=date)
         elif request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'errors': expense_form.errors})
 
     expense_form = DailyExpenseForm()
-    daily_expenses = DailyExpense.objects.filter(doctor=doctor_profile, date=today)
+    daily_expenses = DailyExpense.objects.filter(doctor=doctor_profile, date=current_date)
 
     context = {
         'expense_form': expense_form,
         'daily_expenses': daily_expenses,
-        'today': today,
+        'today': current_date,
         'page_title': 'پرداخت‌های منشی'
     }
     return render(request, 'booking/secretary_payments.html', context)
@@ -607,12 +629,19 @@ from django.db.models import Sum, Q
 # ... (other code)
 
 @login_required
-def financial_report(request):
+def financial_report(request, date=None):
     if not request.user.user_type == 'DOCTOR':
         return redirect('booking:doctor_list')
 
     doctor_profile = request.user.doctor_profile
-    today = datetime.date.today()
+    if date:
+        try:
+            current_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+        except ValueError:
+            current_date = datetime.date.today()
+    else:
+        current_date = datetime.date.today()
+
 
     if request.method == 'POST' and 'settle_up' in request.POST:
         # Logic for settling up the balance
@@ -624,13 +653,13 @@ def financial_report(request):
     # For now, we calculate the cumulative balance up to yesterday.
     previous_cash_visits = Appointment.objects.filter(
         doctor=doctor_profile,
-        appointment_datetime__date__lt=today,
+        appointment_datetime__date__lt=current_date,
         payment_method=2 # 2: نقدی
     ).aggregate(total=Sum('visit_fee_paid'))['total'] or 0
 
     previous_expenses = DailyExpense.objects.filter(
         doctor=doctor_profile,
-        date__lt=today
+        date__lt=current_date
     ).aggregate(total=Sum('amount'))['total'] or 0
 
     balance_from_yesterday = (previous_cash_visits or 0) + (previous_expenses or 0)
@@ -638,12 +667,12 @@ def financial_report(request):
     # 2. Calculate today's cash income
     todays_cash_visits = Appointment.objects.filter(
         doctor=doctor_profile,
-        appointment_datetime__date=today,
+        appointment_datetime__date=current_date,
         payment_method=2
     ).aggregate(total=Sum('visit_fee_paid'))['total'] or 0
 
     # 3. Get today's expenses
-    todays_expenses = DailyExpense.objects.filter(doctor=doctor_profile, date=today)
+    todays_expenses = DailyExpense.objects.filter(doctor=doctor_profile, date=current_date)
     total_todays_expenses_val = todays_expenses.aggregate(total=Sum('amount'))['total'] or 0
 
     # 4. Calculate final balance
@@ -655,17 +684,18 @@ def financial_report(request):
             description = "تسویه حساب با منشی" if final_balance > 0 else "پرداخت به منشی بابت طلب"
             DailyExpense.objects.create(
                 doctor=doctor_profile,
+                date=current_date,
                 description=description,
                 amount=-final_balance # Create an expense to zero out the balance
             )
-        return redirect('booking:financial_report')
+        return redirect('booking:financial_report', date=date)
 
     context = {
         'balance_from_yesterday': balance_from_yesterday,
         'todays_cash_visits': todays_cash_visits,
         'todays_expenses': todays_expenses,
         'final_balance': final_balance,
-        'today': today,
+        'today': current_date,
         'page_title': 'گزارش مالی روزانه'
     }
     return render(request, 'booking/financial_report.html', context)

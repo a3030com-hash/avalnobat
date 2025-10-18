@@ -84,6 +84,26 @@
             color: var(--primary-color);
         }
 
+        .btn-date-nav {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary-color);
+            transition: all 0.2s;
+        }
+
+        .btn-date-nav:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
         .dropdown {
             position: relative;
             display: inline-block;
@@ -194,20 +214,21 @@
                         </a>
                     </div>
 
-                     <div>
-                        <button type="submit"  title="تاریخ">روزقبل</button>
-                        <button type="submit"  title="تاریخ">روز بعد</button>
-                       
-                        <a href="{% url 'booking:daily_patients' %}" title="لیست بیماران روزانه">
+                     <div style="display: flex; align-items: center; gap: 15px;">
+                        <button id="prev-day-btn" title="روز قبل" class="btn-date-nav"><i class="fas fa-chevron-right"></i></button>
+                        <span id="date-display" style="font-weight: bold; font-size: 1.1rem; color: var(--primary-color); min-width: 180px; text-align: center;"></span>
+                        <button id="next-day-btn" title="روز بعد" class="btn-date-nav"><i class="fas fa-chevron-left"></i></button>
+
+                        <a id="daily-patients-link" href="#" title="لیست بیماران روزانه">
                             <i class="fas fa-users"></i>
                         </a>
-                        <a href="{% url 'booking:secretary_panel' %}" title="نوبت‌دهی توسط منشی">
+                        <a id="secretary-panel-link" href="#" title="نوبت‌دهی توسط منشی">
                             <i class="fas fa-calendar-plus"></i>
                         </a>
-                        <a href="{% url 'booking:secretary_payments' %}" title="پرداخت‌های منشی">
+                        <a id="secretary-payments-link" href="#" title="پرداخت‌های منشی">
                             <i class="fas fa-money-bill-wave"></i>
                         </a>
-                        <a href="{% url 'booking:financial_report' %}" title="گزارش مالی">
+                        <a id="financial-report-link" href="#" title="گزارش مالی">
                             <i class="fas fa-chart-bar"></i>
                         </a>
               
@@ -252,6 +273,86 @@
     <footer>
         <p>&copy; {% now "Y" %} - وب‌سایت نوبت‌دهی اول نوبت. تمام حقوق محفوظ است.</p>
     </footer>
-      
+
+    <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.js"></script>
+    {% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we are on a doctor's authenticated page by looking for the nav buttons
+            const prevDayBtn = document.getElementById('prev-day-btn');
+            if (!prevDayBtn) return;
+
+            const nextDayBtn = document.getElementById('next-day-btn');
+            const dateDisplay = document.getElementById('date-display');
+
+            const links = {
+                daily_patients: { el: document.getElementById('daily-patients-link'), base: "{% url 'booking:daily_patients' %}" },
+                secretary_panel: { el: document.getElementById('secretary-panel-link'), base: "{% url 'booking:secretary_panel' %}" },
+                secretary_payments: { el: document.getElementById('secretary-payments-link'), base: "{% url 'booking:secretary_payments' %}" },
+                financial_report: { el: document.getElementById('financial-report-link'), base: "{% url 'booking:financial_report' %}" }
+            };
+
+            let userDate;
+
+            function initializeDate() {
+                const savedDate = localStorage.getItem('userDate');
+                if (savedDate) {
+                    userDate = new Date(savedDate);
+                } else {
+                    userDate = new Date(); // Today
+                }
+                updateDisplayAndLinks();
+            }
+
+            function updateDisplayAndLinks() {
+                localStorage.setItem('userDate', userDate.toISOString().split('T')[0]);
+
+                const gDate = { gy: userDate.getFullYear(), gm: userDate.getMonth() + 1, gd: userDate.getDate() };
+                const jDate = jalaali.toJalaali(gDate.gy, gDate.gm, gDate.gd);
+                const today = new Date();
+                let dayName = '';
+
+                if (userDate.toDateString() === today.toDateString()) {
+                    dayName = ' (امروز)';
+                } else {
+                    const weekdays = ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"];
+                    dayName = ` (${weekdays[userDate.getDay()]})`;
+                }
+
+                dateDisplay.textContent = `${jDate.jy}/${String(jDate.jm).padStart(2, '0')}/${String(jDate.jd).padStart(2, '0')}${dayName}`;
+
+                const urlDate = userDate.toISOString().split('T')[0];
+
+                for (const key in links) {
+                    if (links[key].el) {
+                        let baseUrl = links[key].base;
+                        if (!baseUrl.endsWith('/')) {
+                            baseUrl += '/';
+                        }
+                        links[key].el.href = `${baseUrl}${urlDate}/`;
+                    }
+                }
+            }
+
+            function handleDateChange(days) {
+                userDate.setDate(userDate.getDate() + days);
+                updateDisplayAndLinks();
+
+                const currentPath = window.location.pathname;
+                for (const key in links) {
+                    if (links[key].base && currentPath.startsWith(links[key].base)) {
+                        window.location.href = links[key].el.href;
+                        return;
+                    }
+                }
+            }
+
+            prevDayBtn.addEventListener('click', () => handleDateChange(-1));
+            nextDayBtn.addEventListener('click', () => handleDateChange(1));
+
+            initializeDate();
+        });
+    </script>
+    {% endblock %}
 </body>
 </html>
