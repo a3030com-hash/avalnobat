@@ -82,11 +82,12 @@ class AppointmentBookingForm(forms.ModelForm):
 class AppointmentUpdateForm(forms.ModelForm):
     class Meta:
         model = Appointment
-        fields = ['visit_fee_paid', 'service_description', 'payment_method']
+        fields = ['visit_fee_paid', 'service_description', 'payment_method', 'insurance_type']
         labels = {
             'visit_fee_paid': 'مبلغ دریافتی',
             'service_description': 'شرح خدمات',
             'payment_method': 'نحوه پرداخت',
+            'insurance_type': 'نوع بیمه',
         }
 
 from .models import DailyExpense, DoctorProfile

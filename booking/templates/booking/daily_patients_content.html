@@ -26,7 +26,7 @@
                     <td>{{ form.instance.appointment_datetime|time:"H:i" }}</td>
                     <td>{{ form.instance.patient_name }}</td>
                     <td>{{ form.instance.patient_national_id|default:"-" }}</td>
-                    <td>{{ form.instance.get_insurance_type_display }}</td>
+                    <td>{{ form.insurance_type }}</td>
                     <td>{{ form.visit_fee_paid }}</td>
                     <td>{{ form.service_description }}</td>
                     <td>{{ form.payment_method }}</td>
