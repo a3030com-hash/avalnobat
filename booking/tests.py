@@ -147,17 +147,23 @@ class BookingAppTestCase(TestCase):
         response = self.client.get(report_url)
         self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(response.context['balance_from_yesterday'], 80000)
-        self.assertEqual(response.context['todays_cash_visits'], 150000)
-        self.assertEqual(response.context['final_balance'], 200000)
+        # Check today's calculations
+        self.assertEqual(response.context['total_income'], 150000)
+        self.assertEqual(response.context['total_expenses'], 30000)
+        self.assertEqual(response.context['net_income'], 120000)
+        self.assertIn('نقدی', response.context['income_by_payment_method'])
+        self.assertEqual(response.context['income_by_payment_method']['نقدی'], 150000)
 
-        # Test the settle up functionality
+
+        # Test the settle up functionality (based on cash balance)
         response = self.client.post(report_url, {'settle_up': 'true'}, follow=True)
         self.assertEqual(response.status_code, 200)
 
-        # After settling up, the final balance should be 0
-        self.assertEqual(response.context['final_balance'], 0)
+        # After settling up, the net income should reflect the settlement expense
+        self.assertEqual(response.context['net_income'], 0)
+        self.assertEqual(response.context['total_expenses'], 150000) # 30000 original + 120000 settlement
 
-        # Check that a settlement expense was created
+
+        # Check that a settlement expense was created correctly
         settlement_expense = DailyExpense.objects.get(description="تسویه حساب با منشی")
-        self.assertEqual(settlement_expense.amount, -200000)
+        self.assertEqual(settlement_expense.amount, -120000)

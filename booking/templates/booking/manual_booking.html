@@ -23,10 +23,34 @@
         border: 1px solid;
         border-radius: 5px;
         font-weight: bold;
+        background-color: white;
+        transition: all 0.2s ease-in-out;
+        font-family: inherit;
+        font-size: 1rem;
     }
-    .slot-available { border-color: #007bff; color: #007bff; cursor: pointer; }
-    .slot-booked { border-color: #6c757d; color: #6c757d; background-color: #f1f3f5; text-decoration: line-through; cursor: not-allowed; }
-    .slot-canceled { border-color: #dc3545; color: #dc3545; background-color: #f8d7da; text-decoration: line-through; cursor: not-allowed; }
+    .slot-available {
+        border-color: #007bff;
+        color: #007bff;
+        cursor: pointer;
+    }
+    .slot-available:hover {
+        background-color: #007bff;
+        color: white;
+    }
+    .slot-booked {
+        border-color: #dc3545;
+        background-color: #f8d7da;
+        color: #721c24;
+        text-decoration: line-through;
+        cursor: not-allowed;
+    }
+    .slot-canceled {
+        border-color: #6c757d;
+        background-color: #e9ecef;
+        color: #495057;
+        text-decoration: line-through;
+        cursor: not-allowed;
+    }
 
     .booking-form {
         display: none;
@@ -57,13 +81,13 @@
     <div class="time-slots" id="time-slots-container">
         {% for slot in all_slots %}
             {% if slot.status == 'available' %}
-                <div class="slot slot-available" onclick="showForm('{{ slot.time.isoformat }}')">
+                <button type="button" class="slot slot-available" onclick="showForm('{{ slot.time.isoformat }}')">
                     {{ slot.time|time:"H:i" }}
-                </div>
+                </button>
             {% elif slot.status == 'booked' %}
-                <div class="slot slot-booked">{{ slot.time|time:"H:i" }}</div>
+                <button type="button" class="slot slot-booked" disabled>{{ slot.time|time:"H:i" }}</button>
             {% elif slot.status == 'canceled' %}
-                <div class="slot slot-canceled">{{ slot.time|time:"H:i" }}</div>
+                <button type="button" class="slot slot-canceled" disabled>{{ slot.time|time:"H:i" }}</button>
             {% endif %}
         {% endfor %}
     </div>

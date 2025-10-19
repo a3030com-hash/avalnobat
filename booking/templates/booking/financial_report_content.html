@@ -1,38 +1,81 @@
 {% load booking_filters humanize %}
 
-<h1>{{ page_title }}</h1>
+<h1 class="report-title">{{ page_title }}</h1>
 <p><strong>تاریخ:</strong> {{ today|to_jalali:"%A, %d %B %Y" }}</p>
 <hr>
 
-<div class="financial-summary">
-    <div class="summary-item">
-        <span>مانده از روز قبل</span>
-        <strong>{{ balance_from_yesterday|intcomma }} تومان</strong>
-    </div>
-    <div class="summary-item">
-        <span>درآمد نقدی امروز</span>
-        <strong>{{ todays_cash_visits|intcomma }} تومان</strong>
-    </div>
-    <div class="summary-item total">
-        <span>جمع کل</span>
-        <strong>{{ final_balance|intcomma }} تومان</strong>
-    </div>
+<div class="report-section">
+    <h3 class="section-title">خلاصه درآمد</h3>
+    <table class="report-table">
+        <tr>
+            <td class="label">درآمد کل از ویزیت‌ها:</td>
+            <td class="amount positive">{{ total_income|intcomma }} تومان</td>
+        </tr>
+        <tr>
+            <td class="label">جمع هزینه‌ها:</td>
+            <td class="amount negative">{{ total_expenses|intcomma }} تومان</td>
+        </tr>
+        {% if total_payments_received > 0 %}
+        <tr>
+            <td class="label">سایر دریافتی‌ها:</td>
+            <td class="amount positive">{{ total_payments_received|intcomma }} تومان</td>
+        </tr>
+        {% endif %}
+        <tr class="total-row">
+            <td class="label">درآمد خالص روز:</td>
+            <td class="amount">{{ net_income|intcomma }} تومان</td>
+        </tr>
+    </table>
 </div>
 
-<div class="details-section">
-    <h4>جزئیات هزینه‌ها و پرداخت‌های امروز</h4>
-    <table>
+<div class="report-section">
+    <h3 class="section-title">جزئیات درآمد بر اساس نوع پرداخت</h3>
+    <table class="report-table">
+        {% for method, total in income_by_payment_method.items %}
+        <tr>
+            <td class="label">{{ method }}:</td>
+            <td class="amount">{{ total|intcomma }} تومان</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">هیچ درآمدی ثبت نشده است.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="report-section">
+    <h3 class="section-title">جزئیات درآمد بر اساس نوع بیمه</h3>
+    <table class="report-table">
+        {% for insurance, total in income_by_insurance.items %}
+        <tr>
+            <td class="label">{{ insurance }}:</td>
+            <td class="amount">{{ total|intcomma }} تومان</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">هیچ درآمدی ثبت نشده است.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="report-section">
+    <h3 class="section-title">جزئیات هزینه‌ها و پرداخت‌های متفرقه</h3>
+    <table class="report-table">
         <thead>
             <tr>
                 <th>شرح</th>
-                <th>مبلغ (تومان)</th>
+                <th style="text-align: left;">مبلغ (تومان)</th>
             </tr>
         </thead>
         <tbody>
-            {% for expense in todays_expenses %}
+            {% for item in todays_expenses_queryset %}
             <tr>
-                <td>{{ expense.description }}</td>
-                <td>{{ expense.amount|intcomma }}</td>
+                <td>{{ item.description }}</td>
+                <td class="amount {% if item.amount < 0 %}negative{% else %}positive{% endif %}">
+                    {{ item.amount|intcomma }}
+                </td>
             </tr>
             {% empty %}
             <tr>
@@ -46,6 +89,6 @@
 <div class="settle-up-section">
     <form method="post" action="{% url 'booking:financial_report' date=today|date:'Y-m-d' %}">
         {% csrf_token %}
-        <button type="submit" name="settle_up" class="settle-btn">تسویه حساب با منشی</button>
+        <button type="submit" name="settle_up" class="settle-btn">تسویه حساب صندوق</button>
     </form>
 </div>

@@ -669,61 +669,78 @@ def financial_report(request, date=None):
     else:
         current_date = datetime.date.today()
 
-
-    if request.method == 'POST' and 'settle_up' in request.POST:
-        # Logic for settling up the balance
-        # This will be based on the final balance calculated below
-        pass # We will complete this after calculating the balance
-
-    # 1. Calculate balance from previous days
-    # This is a simplified approach. A more robust solution would involve daily snapshots.
-    # For now, we calculate the cumulative balance up to yesterday.
-    previous_cash_visits = Appointment.objects.filter(
-        doctor=doctor_profile,
-        appointment_datetime__date__lt=current_date,
-        payment_method=2 # 2: نقدی
-    ).aggregate(total=Sum('visit_fee_paid'))['total'] or 0
-
-    previous_expenses = DailyExpense.objects.filter(
-        doctor=doctor_profile,
-        date__lt=current_date
-    ).aggregate(total=Sum('amount'))['total'] or 0
-
-    balance_from_yesterday = (previous_cash_visits or 0) + (previous_expenses or 0)
-
-    # 2. Calculate today's cash income
-    todays_cash_visits = Appointment.objects.filter(
+    # Get all appointments for the day with paid visit fees
+    todays_appointments = Appointment.objects.filter(
         doctor=doctor_profile,
         appointment_datetime__date=current_date,
-        payment_method=2
-    ).aggregate(total=Sum('visit_fee_paid'))['total'] or 0
+        visit_fee_paid__isnull=False
+    )
 
-    # 3. Get today's expenses
-    todays_expenses = DailyExpense.objects.filter(doctor=doctor_profile, date=current_date)
-    total_todays_expenses_val = todays_expenses.aggregate(total=Sum('amount'))['total'] or 0
+    # Get all daily expenses/payments for the day
+    todays_expenses_queryset = DailyExpense.objects.filter(
+        doctor=doctor_profile,
+        date=current_date
+    )
 
-    # 4. Calculate final balance
-    final_balance = balance_from_yesterday + todays_cash_visits + total_todays_expenses_val
+    # --- Calculations ---
+    total_income = todays_appointments.aggregate(total=Sum('visit_fee_paid'))['total'] or 0
 
-    # Complete the settle up logic from above
+    # Calculate income by payment method
+    income_by_payment_method = {
+        key: value for key, value in Appointment.PAYMENT_METHOD_CHOICES
+    }
+    income_by_payment_method_values = todays_appointments.values('payment_method').annotate(total=Sum('visit_fee_paid'))
+    income_by_payment_method_dict = {
+        income_by_payment_method.get(item['payment_method'], 'نامشخص'): item['total']
+        for item in income_by_payment_method_values
+    }
+
+    # Calculate income by insurance type
+    income_by_insurance = {
+        key: value for key, value in Appointment.INSURANCE_CHOICES
+    }
+    income_by_insurance_values = todays_appointments.values('insurance_type').annotate(total=Sum('visit_fee_paid'))
+    income_by_insurance_dict = {
+        income_by_insurance.get(item['insurance_type'], 'نامشخص'): item['total']
+        for item in income_by_insurance_values
+    }
+
+    # Total expenses and payments from the DailyExpense model
+    total_daily_entries = todays_expenses_queryset.aggregate(total=Sum('amount'))['total'] or 0
+    total_expenses = abs(sum(item.amount for item in todays_expenses_queryset if item.amount < 0))
+    total_payments_received = sum(item.amount for item in todays_expenses_queryset if item.amount > 0)
+
+
+    net_income = total_income + total_daily_entries
+
+
     if request.method == 'POST' and 'settle_up' in request.POST:
-        if final_balance != 0:
-            description = "تسویه حساب با منشی" if final_balance > 0 else "پرداخت به منشی بابت طلب"
+        # The settle up logic should ideally consider the cash balance
+        cash_income = income_by_payment_method_dict.get('نقدی', 0)
+        # We assume expenses are paid in cash unless specified otherwise.
+        # This is a simplification.
+        cash_balance = cash_income - total_expenses + total_payments_received
+
+        if cash_balance != 0:
+            description = "تسویه حساب با منشی" if cash_balance > 0 else "پرداخت به منشی بابت طلب"
             DailyExpense.objects.create(
                 doctor=doctor_profile,
                 date=current_date,
                 description=description,
-                amount=-final_balance # Create an expense to zero out the balance
+                amount=-cash_balance # Create an entry to zero out the cash balance
             )
-        return redirect('booking:financial_report', date=date)
+            return redirect('booking:financial_report', date=date)
 
     context = {
-        'balance_from_yesterday': balance_from_yesterday,
-        'todays_cash_visits': todays_cash_visits,
-        'todays_expenses': todays_expenses,
-        'final_balance': final_balance,
         'today': current_date,
-        'page_title': 'گزارش مالی روزانه'
+        'page_title': 'گزارش مالی روزانه',
+        'total_income': total_income,
+        'income_by_payment_method': income_by_payment_method_dict,
+        'income_by_insurance': income_by_insurance_dict,
+        'todays_expenses_queryset': todays_expenses_queryset,
+        'total_expenses': total_expenses,
+        'total_payments_received': total_payments_received,
+        'net_income': net_income,
     }
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
