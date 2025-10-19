@@ -97,7 +97,7 @@ class DailyExpenseForm(forms.ModelForm):
         fields = ['description', 'amount']
         labels = {
             'description': 'شرح هزینه/پرداخت',
-            'amount': 'مبلغ (دریافت مبلغ از پزشک را ، عدد منفی وارد کنید)',
+            'amount': 'مبلغ (برای هزینه، عدد منفی وارد کنید)',
         }
 
 class UserUpdateForm(forms.ModelForm):
