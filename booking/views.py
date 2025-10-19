@@ -696,12 +696,15 @@ def financial_report(request, date=None):
     }
 
     # Calculate income by insurance type
-    income_by_insurance = {
+    income_by_insurance_choices = {
         key: value for key, value in Appointment.INSURANCE_CHOICES
     }
-    income_by_insurance_values = todays_appointments.values('insurance_type').annotate(total=Sum('visit_fee_paid'))
-    income_by_insurance_dict = {
-        income_by_insurance.get(item['insurance_type'], 'نامشخص'): item['total']
+    income_by_insurance_values = todays_appointments.values('insurance_type').annotate(total=Sum('visit_fee_paid'), count=Count('id'))
+    income_by_insurance_data = {
+        income_by_insurance_choices.get(item['insurance_type'], 'نامشخص'): {
+            'total': item['total'],
+            'count': item['count']
+        }
         for item in income_by_insurance_values
     }
 
@@ -736,7 +739,7 @@ def financial_report(request, date=None):
         'page_title': 'گزارش مالی روزانه',
         'total_income': total_income,
         'income_by_payment_method': income_by_payment_method_dict,
-        'income_by_insurance': income_by_insurance_dict,
+        'income_by_insurance': income_by_insurance_data,
         'todays_expenses_queryset': todays_expenses_queryset,
         'total_expenses': total_expenses,
         'total_payments_received': total_payments_received,

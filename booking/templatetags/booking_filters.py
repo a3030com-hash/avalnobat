@@ -33,3 +33,13 @@ def intcomma(value):
         return f"{value:,}"
     except (ValueError, TypeError):
         return value
+
+@register.filter(name='div')
+def div(value, arg):
+    """
+    Divides the value by the arg.
+    """
+    try:
+        return float(value) / float(arg)
+    except (ValueError, ZeroDivisionError):
+        return None

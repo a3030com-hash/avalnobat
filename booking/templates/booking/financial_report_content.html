@@ -47,10 +47,12 @@
 <div class="report-section">
     <h3 class="section-title">جزئیات درآمد بر اساس نوع بیمه</h3>
     <table class="report-table">
-        {% for insurance, total in income_by_insurance.items %}
+        {% for insurance, data in income_by_insurance.items %}
         <tr>
             <td class="label">{{ insurance }}:</td>
-            <td class="amount">{{ total|intcomma }} تومان</td>
+            <td class="amount">
+                {{ data.count }} نفر - هر نفر {{ data.total|div:data.count|floatformat:0|intcomma }} تومان - جمعا {{ data.total|intcomma }} تومان
+            </td>
         </tr>
         {% empty %}
         <tr>
