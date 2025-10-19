@@ -196,6 +196,58 @@
                 padding: 1rem;
             }
         }
+
+        /* Table Styles */
+        .report-table, .form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            background-color: var(--white);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .report-table th, .report-table td,
+        .form-table th, .form-table td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: right;
+            vertical-align: middle;
+        }
+
+        .report-table th, .form-table th {
+            background-color: var(--light-gray);
+            font-weight: bold;
+        }
+
+        .form-table input, .form-table select {
+            width: 95%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* Panel/Container Styles */
+        .panel-container, .expense-container {
+            background-color: var(--white);
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+
+        /* Button Styles */
+        .submit-btn {
+            background-color: #28a745;
+            color: var(--white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-family: var(--font-family);
+            font-size: 1rem;
+        }
     </style>
     <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">

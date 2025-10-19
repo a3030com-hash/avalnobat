@@ -4,47 +4,6 @@
 {% block title %}{{ page_title }} - AvalNobat{% endblock %}
 
 {% block content %}
-<style>
-    .panel-container {
-        background-color: white;
-        padding: 2rem;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        margin-bottom: 2rem;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 1.5rem;
-    }
-    th, td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: right;
-        vertical-align: middle;
-    }
-    th {
-        background-color: #f8f9fa;
-        font-weight: bold;
-    }
-    .form-table input, .form-table select {
-        width: 95%;
-        padding: 5px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-    .submit-btn {
-        background-color: #28a745;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-top: 1rem;
-    }
-</style>
-
 <div class="panel-container">
     {% include 'booking/daily_patients_content.html' %}
 </div>
