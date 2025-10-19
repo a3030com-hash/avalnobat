@@ -67,10 +67,12 @@ from .models import DailyExpense
 class AppointmentBookingForm(forms.ModelForm):
     class Meta:
         model = Appointment
-        fields = ['patient_name', 'patient_phone', 'problem_description']
+        fields = ['patient_name', 'patient_phone', 'patient_national_id', 'insurance_type', 'problem_description']
         labels = {
             'patient_name': 'نام و نام خانوادگی',
             'patient_phone': 'شماره همراه',
+            'patient_national_id': 'کد ملی',
+            'insurance_type': 'نوع بیمه',
             'problem_description': 'شرح مختصر مشکل',
         }
         widgets = {

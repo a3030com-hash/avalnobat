@@ -100,6 +100,7 @@ class BookingAppTestCase(TestCase):
 
         response = self.client.post(book_url, {
             'patient_name': 'بیمار تستی', 'patient_phone': '09150000000',
+            'patient_national_id': '0000000000', 'insurance_type': 'AZAD',
             'problem_description': 'تست', 'selected_slot': selected_slot
         })
 

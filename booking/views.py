@@ -399,8 +399,13 @@ def secretary_panel(request, date=None):
         'future_days': future_days_info,
         'page_title': 'پنل مدیریت روزانه'
     }
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'booking/secretary_panel_content.html', context)
     return render(request, 'booking/secretary_panel.html', context)
 
+
+from .models import InsuranceFee
 
 @login_required
 def daily_patients(request, date=None):
@@ -425,23 +430,42 @@ def daily_patients(request, date=None):
 
     AppointmentFormSet = modelformset_factory(Appointment, form=AppointmentUpdateForm, extra=0)
 
-    if request.method == 'POST':
-        formset = AppointmentFormSet(request.POST, queryset=Appointment.objects.filter(
-            doctor=doctor_profile, appointment_datetime__date=current_date, status='BOOKED'))
-        if formset.is_valid():
-            formset.save()
-            return redirect('booking:daily_patients', date=date)
-
     queryset = Appointment.objects.filter(
         doctor=doctor_profile, appointment_datetime__date=current_date, status='BOOKED'
     ).order_by('appointment_datetime')
-    formset = AppointmentFormSet(queryset=queryset)
+
+    if request.method == 'POST':
+        formset = AppointmentFormSet(request.POST, queryset=queryset)
+        if formset.is_valid():
+            appointments = formset.save()
+            for appointment in appointments:
+                if appointment.visit_fee_paid is not None:
+                    InsuranceFee.objects.update_or_create(
+                        doctor=doctor_profile,
+                        insurance_type=appointment.insurance_type,
+                        defaults={'fee': appointment.visit_fee_paid}
+                    )
+            return redirect('booking:daily_patients', date=date)
+    else:
+        # Pre-fill visit fee based on insurance
+        insurance_fees = {
+            fee.insurance_type: fee.fee
+            for fee in InsuranceFee.objects.filter(doctor=doctor_profile)
+        }
+        for appointment in queryset:
+            if not appointment.visit_fee_paid:
+                appointment.visit_fee_paid = insurance_fees.get(appointment.insurance_type)
+
+        formset = AppointmentFormSet(queryset=queryset)
 
     context = {
         'formset': formset,
         'today': current_date,
         'page_title': 'لیست بیماران امروز'
     }
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'booking/daily_patients_content.html', context)
     return render(request, 'booking/daily_patients.html', context)
 
 
@@ -493,6 +517,9 @@ def secretary_payments(request, date=None):
         'today': current_date,
         'page_title': 'پرداخت‌های منشی'
     }
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'booking/secretary_payments_content.html', context)
     return render(request, 'booking/secretary_payments.html', context)
 
 @login_required
@@ -698,4 +725,7 @@ def financial_report(request, date=None):
         'today': current_date,
         'page_title': 'گزارش مالی روزانه'
     }
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'booking/financial_report_content.html', context)
     return render(request, 'booking/financial_report.html', context)

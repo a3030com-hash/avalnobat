@@ -1,0 +1,51 @@
+{% load booking_filters humanize %}
+
+<h1>{{ page_title }}</h1>
+<p><strong>تاریخ:</strong> {{ today|to_jalali:"%A, %d %B %Y" }}</p>
+<hr>
+
+<div class="financial-summary">
+    <div class="summary-item">
+        <span>مانده از روز قبل</span>
+        <strong>{{ balance_from_yesterday|intcomma }} تومان</strong>
+    </div>
+    <div class="summary-item">
+        <span>درآمد نقدی امروز</span>
+        <strong>{{ todays_cash_visits|intcomma }} تومان</strong>
+    </div>
+    <div class="summary-item total">
+        <span>جمع کل</span>
+        <strong>{{ final_balance|intcomma }} تومان</strong>
+    </div>
+</div>
+
+<div class="details-section">
+    <h4>جزئیات هزینه‌ها و پرداخت‌های امروز</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>شرح</th>
+                <th>مبلغ (تومان)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for expense in todays_expenses %}
+            <tr>
+                <td>{{ expense.description }}</td>
+                <td>{{ expense.amount|intcomma }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2">موردی برای نمایش وجود ندارد.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="settle-up-section">
+    <form method="post" action="{% url 'booking:financial_report' date=today|date:'Y-m-d' %}">
+        {% csrf_token %}
+        <button type="submit" name="settle_up" class="settle-btn">تسویه حساب با منشی</button>
+    </form>
+</div>

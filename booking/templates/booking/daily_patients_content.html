@@ -1,0 +1,39 @@
+{% load booking_filters %}
+
+<h1>{{ page_title }}</h1>
+<p><strong>تاریخ:</strong> {{ today|to_jalali:"%A, %d %B %Y" }}</p>
+<hr>
+
+<h3>لیست بیماران امروز</h3>
+<form method="post">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    <table class="form-table">
+        <thead>
+            <tr>
+                <th>ساعت</th>
+                <th>نام بیمار</th>
+                <th>کد ملی</th>
+                <th>نوع بیمه</th>
+                <th>مبلغ دریافتی</th>
+                <th>شرح خدمات</th>
+                <th>نحوه پرداخت</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for form in formset %}
+                <tr>
+                    <td>{{ form.instance.appointment_datetime|time:"H:i" }}</td>
+                    <td>{{ form.instance.patient_name }}</td>
+                    <td>{{ form.instance.patient_national_id|default:"-" }}</td>
+                    <td>{{ form.instance.get_insurance_type_display }}</td>
+                    <td>{{ form.visit_fee_paid }}</td>
+                    <td>{{ form.service_description }}</td>
+                    <td>{{ form.payment_method }}</td>
+                    {{ form.id }}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit" name="update_appointments" class="submit-btn">ذخیره تغییرات نوبت‌ها</button>
+</form>

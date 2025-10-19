@@ -55,6 +55,16 @@
         display: flex;
         gap: 1rem;
         align-items: center;
+        position: relative;
+    }
+    .clear-search {
+        position: absolute;
+        left: 80px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #aaa;
+        display: none; /* Hidden by default */
     }
     .search-form input, .search-form select {
         padding: 0.75rem;
@@ -77,8 +87,9 @@
 <h1>{{ page_title }}</h1>
 
 <div class="search-container">
-    <form method="get" action="{% url 'booking:doctor_list' %}" class="search-form">
+    <form method="get" action="{% url 'booking:doctor_list' %}" class="search-form" id="search-form">
         <input type="text" name="q" id="main-search-input" placeholder="جستجو تخصص/نام پزشک/ منطقه" value="{{ request.GET.q }}" style="text-align: right;">
+        <i class="fas fa-times clear-search" id="clear-search-icon"></i>
         <button type="submit" class="search-btn">جستجو</button>
     </form>
 </div>
@@ -112,24 +123,29 @@
 {% endif %}
 
 <script>
-    // Wait for the DOM to be fully loaded
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('main-search-input');
+        const clearIcon = document.getElementById('clear-search-icon');
+        const searchForm = document.getElementById('search-form');
 
-        // Ensure the element exists before adding event listeners
-        if (searchInput) {
-            const originalPlaceholder = searchInput.getAttribute('placeholder');
-
-            searchInput.addEventListener('focus', function() {
-                this.setAttribute('placeholder', '');
-            });
-
-            searchInput.addEventListener('blur', function() {
-                if (this.value === '') {
-                    this.setAttribute('placeholder', originalPlaceholder);
-                }
-            });
+        function toggleClearIcon() {
+            if (searchInput.value) {
+                clearIcon.style.display = 'block';
+            } else {
+                clearIcon.style.display = 'none';
+            }
         }
+
+        // Initial check in case the page is loaded with a search query
+        toggleClearIcon();
+
+        searchInput.addEventListener('input', toggleClearIcon);
+
+        clearIcon.addEventListener('click', function() {
+            searchInput.value = '';
+            toggleClearIcon();
+            searchForm.submit();
+        });
     });
 </script>
 {% endblock %}

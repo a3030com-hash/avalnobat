@@ -74,12 +74,21 @@ class Appointment(models.Model):
         ('CANCELED', 'لغو شده'),
         ('PENDING_PAYMENT', 'در انتظار پرداخت'),
     )
+    INSURANCE_CHOICES = (
+        ('TAMIN', 'تامین اجتماعی'),
+        ('SALAMAT', 'سلامت'),
+        ('KHADAMAT', 'خدمات درمانی'),
+        ('ARTESH', 'ارتش'),
+        ('AZAD', 'آزاد'),
+    )
 
     doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name='appointments', verbose_name="پزشک")
     patient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='appointments', verbose_name="بیمار", null=True, blank=True)
     appointment_datetime = models.DateTimeField(verbose_name="زمان نوبت")
     patient_name = models.CharField(max_length=100, verbose_name="نام بیمار")
     patient_phone = models.CharField(max_length=20, verbose_name="شماره همراه بیمار")
+    patient_national_id = models.CharField(max_length=10, verbose_name="کد ملی بیمار", null=True, blank=True)
+    insurance_type = models.CharField(max_length=10, choices=INSURANCE_CHOICES, verbose_name="نوع بیمه", default='AZAD')
     problem_description = models.TextField(blank=True, verbose_name="شرح مشکل")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING_PAYMENT')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -150,3 +159,16 @@ class TimeSlotException(models.Model):
         verbose_name = "استثناء زمانی"
         verbose_name_plural = "استثناهای زمانی"
         unique_together = ('doctor', 'datetime_slot')
+
+class InsuranceFee(models.Model):
+    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name='insurance_fees', verbose_name="پزشک")
+    insurance_type = models.CharField(max_length=10, choices=Appointment.INSURANCE_CHOICES, verbose_name="نوع بیمه")
+    fee = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="مبلغ ویزیت")
+
+    def __str__(self):
+        return f"هزینه بیمه {self.get_insurance_type_display()} برای {self.doctor}"
+
+    class Meta:
+        verbose_name = "هزینه بیمه"
+        verbose_name_plural = "هزینه‌های بیمه"
+        unique_together = ('doctor', 'insurance_type')
