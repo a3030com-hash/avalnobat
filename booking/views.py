@@ -652,8 +652,52 @@ def cancel_slot(request, slot):
         return redirect('booking:manual_booking', date=slot_datetime.strftime('%Y-%m-%d'))
 
 from django.db.models import Sum, Q
+from django.urls import reverse
 
 # ... (other code)
+
+@login_required
+def edit_expense(request, pk):
+    """
+    ویرایش یک هزینه یا پرداخت ثبت شده.
+    """
+    expense = get_object_or_404(DailyExpense, pk=pk, doctor=request.user.doctor_profile)
+
+    if request.method == 'POST':
+        form = DailyExpenseForm(request.POST, instance=expense)
+        if form.is_valid():
+            form.save()
+            # Redirect to the secretary_payments page for the date of the expense
+            return redirect(reverse('booking:secretary_payments', kwargs={'date': expense.date.strftime('%Y-%m-%d')}))
+    else:
+        form = DailyExpenseForm(instance=expense)
+
+    context = {
+        'form': form,
+        'page_title': 'ویرایش هزینه/پرداخت',
+        'expense_date': expense.date
+    }
+    return render(request, 'booking/edit_expense.html', context)
+
+@login_required
+def delete_expense(request, pk):
+    """
+    حذف یک هزینه یا پرداخت ثبت شده.
+    """
+    expense = get_object_or_404(DailyExpense, pk=pk, doctor=request.user.doctor_profile)
+    expense_date_str = expense.date.strftime('%Y-%m-%d')
+
+    if request.method == 'POST':
+        expense.delete()
+        return redirect(reverse('booking:secretary_payments', kwargs={'date': expense_date_str}))
+
+    context = {
+        'expense': expense,
+        'page_title': 'تایید حذف',
+        'cancel_url': reverse('booking:secretary_payments', kwargs={'date': expense_date_str})
+    }
+    return render(request, 'booking/delete_expense_confirm.html', context)
+
 
 @login_required
 def financial_report(request, date=None):

@@ -1,0 +1,39 @@
+{% extends 'booking/base.html' %}
+{% load booking_filters %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .form-title {
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    .form-actions {
+        margin-top: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+    }
+</style>
+
+<div class="form-container">
+    <h1 class="form-title">{{ page_title }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
+            <a href="{% url 'booking:secretary_payments' date=expense_date|date:'Y-m-d' %}" class="btn btn-secondary">انصراف</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

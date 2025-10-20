@@ -1,0 +1,39 @@
+{% extends 'booking/base.html' %}
+{% load booking_filters %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .confirmation-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .confirmation-actions {
+        margin-top: 2rem;
+    }
+    .btn-danger {
+        margin-left: 1rem;
+    }
+</style>
+
+<div class="confirmation-container">
+    <h2>{{ page_title }}</h2>
+    <p>آیا از حذف هزینه/پرداخت زیر مطمئن هستید؟</p>
+    <p><strong>{{ expense.description }}</strong> - {{ expense.amount|intcomma }} تومان</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="confirmation-actions">
+            <button type="submit" class="btn btn-danger">بله، حذف کن</button>
+            <a href="{{ cancel_url }}" class="btn btn-secondary">انصراف</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
