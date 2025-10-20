@@ -540,6 +540,14 @@ def secretary_payments(request, date=None):
 
     cash_box_balance = total_cash_income - total_expenses_and_payments
 
+    # Calculate today's cash income
+    todays_cash_income = Appointment.objects.filter(
+        doctor=doctor_profile,
+        appointment_datetime__date=current_date,
+        payment_method=2,  # نقدی
+        visit_fee_paid__isnull=False
+    ).aggregate(total=Sum('visit_fee_paid'))['total'] or 0
+
     context = {
         'expense_form': expense_form,
         'daily_expenses': daily_expenses,
@@ -547,6 +555,7 @@ def secretary_payments(request, date=None):
         'page_title': 'پرداخت‌های منشی',
         'cash_box_balance': cash_box_balance,
         'previous_day_balance': previous_day_balance,
+        'todays_cash_income': todays_cash_income,
     }
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
