@@ -511,11 +511,27 @@ def secretary_payments(request, date=None):
     expense_form = DailyExpenseForm()
     daily_expenses = DailyExpense.objects.filter(doctor=doctor_profile, date=current_date)
 
+    # Calculate secretary cash box balance
+    total_cash_income = Appointment.objects.filter(
+        doctor=doctor_profile,
+        appointment_datetime__date__lte=current_date,
+        payment_method=2,  # نقدی
+        visit_fee_paid__isnull=False
+    ).aggregate(total=Sum('visit_fee_paid'))['total'] or 0
+
+    total_expenses_and_payments = DailyExpense.objects.filter(
+        doctor=doctor_profile,
+        date__lte=current_date
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
+    cash_box_balance = total_cash_income - total_expenses_and_payments
+
     context = {
         'expense_form': expense_form,
         'daily_expenses': daily_expenses,
         'today': current_date,
-        'page_title': 'پرداخت‌های منشی'
+        'page_title': 'پرداخت‌های منشی',
+        'cash_box_balance': cash_box_balance,
     }
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
