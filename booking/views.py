@@ -710,11 +710,11 @@ def financial_report(request, date=None):
 
     # Total expenses and payments from the DailyExpense model
     total_daily_entries = todays_expenses_queryset.aggregate(total=Sum('amount'))['total'] or 0
-    total_expenses = abs(sum(item.amount for item in todays_expenses_queryset if item.amount < 0))
-    total_payments_received = sum(item.amount for item in todays_expenses_queryset if item.amount > 0)
+    total_expenses = abs(sum(item.amount for item in todays_expenses_queryset if item.amount > 0))
+    total_payments_received = sum(item.amount for item in todays_expenses_queryset if item.amount < 0)
 
 
-    net_income = total_income + total_daily_entries
+    net_income = total_income - total_daily_entries
 
 
     if request.method == 'POST' and 'settle_up' in request.POST:

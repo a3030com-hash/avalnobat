@@ -137,7 +137,7 @@ class DailyExpense(models.Model):
     doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name='expenses', verbose_name="پزشک")
     date = models.DateField(default=datetime.date.today, verbose_name="تاریخ")
     description = models.CharField(max_length=255, verbose_name="شرح هزینه/پرداخت")
-    amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="مبلغ (پرداخت: مثبت, هزینه: منفی)")
+    amount = models.DecimalField(max_digits=10, decimal_places=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
