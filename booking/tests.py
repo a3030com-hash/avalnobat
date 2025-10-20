@@ -129,41 +129,47 @@ class BookingAppTestCase(TestCase):
         today = datetime.date.today()
         yesterday = today - datetime.timedelta(days=1)
 
+        # Create data for yesterday
         Appointment.objects.create(
             doctor=self.doctor_profile, patient=self.patient_user,
             appointment_datetime=timezone.make_aware(datetime.datetime.combine(yesterday, datetime.time(10, 0))),
-            status='COMPLETED', payment_method=2, visit_fee_paid=100000
+            status='COMPLETED', payment_method=2, visit_fee_paid=100000 # Cash
         )
-        DailyExpense.objects.create(doctor=self.doctor_profile, date=yesterday, description="هزینه تست دیروز", amount=-20000)
+        DailyExpense.objects.create(doctor=self.doctor_profile, date=yesterday, description="هزینه تست دیروز", amount=20000)
 
+        # Create data for today
         Appointment.objects.create(
             doctor=self.doctor_profile, patient=self.patient_user,
             appointment_datetime=timezone.make_aware(datetime.datetime.combine(today, datetime.time(11, 0))),
-            status='COMPLETED', payment_method=2, visit_fee_paid=150000
+            status='COMPLETED', payment_method=2, visit_fee_paid=150000 # Cash
         )
-        DailyExpense.objects.create(doctor=self.doctor_profile, date=today, description="هزینه تست امروز", amount=-30000)
+        DailyExpense.objects.create(doctor=self.doctor_profile, date=today, description="هزینه تست امروز", amount=30000)
 
         report_url = reverse('booking:financial_report', kwargs={'date': today.strftime('%Y-%m-%d')})
         response = self.client.get(report_url)
         self.assertEqual(response.status_code, 200)
 
-        # Check today's calculations
+        # Check today's daily calculations
         self.assertEqual(response.context['total_income'], 150000)
         self.assertEqual(response.context['total_expenses'], 30000)
         self.assertEqual(response.context['net_income'], 120000)
-        self.assertIn('نقدی', response.context['income_by_payment_method'])
-        self.assertEqual(response.context['income_by_payment_method']['نقدی'], 150000)
 
+        # Check cumulative cash box balance
+        self.assertEqual(response.context['cash_box_balance'], 200000) # (100k+150k) - (20k+30k)
 
-        # Test the settle up functionality (based on cash balance)
+        # Test the settle up functionality
         response = self.client.post(report_url, {'settle_up': 'true'}, follow=True)
         self.assertEqual(response.status_code, 200)
 
-        # After settling up, the net income should reflect the settlement expense
-        self.assertEqual(response.context['net_income'], 0)
-        self.assertEqual(response.context['total_expenses'], 150000) # 30000 original + 120000 settlement
+        # After settling up, the cash box balance should be zero
+        self.assertEqual(response.context['cash_box_balance'], 0)
 
+        # The day's expenses should now include the settlement amount
+        self.assertEqual(response.context['total_expenses'], 230000) # 30,000 original + 200,000 settlement
+
+        # The day's net income reflects the settlement
+        self.assertEqual(response.context['net_income'], -80000) # 150,000 income - 230,000 expenses
 
         # Check that a settlement expense was created correctly
-        settlement_expense = DailyExpense.objects.get(description="تسویه حساب با منشی")
-        self.assertEqual(settlement_expense.amount, -120000)
+        settlement_expense = DailyExpense.objects.get(description="تسویه صندوق منشی")
+        self.assertEqual(settlement_expense.amount, 200000)

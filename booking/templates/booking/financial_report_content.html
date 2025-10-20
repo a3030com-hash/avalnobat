@@ -88,9 +88,22 @@
     </table>
 </div>
 
-<div class="settle-up-section">
-    <form method="post" action="{% url 'booking:financial_report' date=today|date:'Y-m-d' %}">
-        {% csrf_token %}
-        <button type="submit" name="settle_up" class="settle-btn">تسویه حساب صندوق</button>
-    </form>
+<div class="report-section">
+    <h3 class="section-title">موجودی صندوق منشی</h3>
+    <table class="report-table">
+        <tr class="total-row">
+            <td class="label">موجودی فعلی صندوق:</td>
+            <td class="amount {% if cash_box_balance > 0 %}positive{% elif cash_box_balance < 0 %}negative{% endif %}">
+                {{ cash_box_balance|intcomma }} تومان
+            </td>
+        </tr>
+    </table>
+    <div class="settle-up-section" style="margin-top: 1rem;">
+        <form method="post" action="{% url 'booking:financial_report' date=today|date:'Y-m-d' %}">
+            {% csrf_token %}
+            <button type="submit" name="settle_up" class="settle-btn" {% if cash_box_balance == 0 %}disabled{% endif %}>
+                تسویه صندوق
+            </button>
+        </form>
+    </div>
 </div>

@@ -669,70 +669,60 @@ def financial_report(request, date=None):
     else:
         current_date = datetime.date.today()
 
-    # Get all appointments for the day with paid visit fees
+    # --- Daily Calculations ---
     todays_appointments = Appointment.objects.filter(
         doctor=doctor_profile,
         appointment_datetime__date=current_date,
         visit_fee_paid__isnull=False
     )
-
-    # Get all daily expenses/payments for the day
     todays_expenses_queryset = DailyExpense.objects.filter(
         doctor=doctor_profile,
         date=current_date
     )
-
-    # --- Calculations ---
     total_income = todays_appointments.aggregate(total=Sum('visit_fee_paid'))['total'] or 0
-
-    # Calculate income by payment method
-    income_by_payment_method = {
-        key: value for key, value in Appointment.PAYMENT_METHOD_CHOICES
-    }
     income_by_payment_method_values = todays_appointments.values('payment_method').annotate(total=Sum('visit_fee_paid'))
     income_by_payment_method_dict = {
-        income_by_payment_method.get(item['payment_method'], 'نامشخص'): item['total']
+        dict(Appointment.PAYMENT_METHOD_CHOICES).get(item['payment_method'], 'نامشخص'): item['total']
         for item in income_by_payment_method_values
-    }
-
-    # Calculate income by insurance type
-    income_by_insurance_choices = {
-        key: value for key, value in Appointment.INSURANCE_CHOICES
     }
     income_by_insurance_values = todays_appointments.values('insurance_type').annotate(total=Sum('visit_fee_paid'), count=Count('id'))
     income_by_insurance_data = {
-        income_by_insurance_choices.get(item['insurance_type'], 'نامشخص'): {
+        dict(Appointment.INSURANCE_CHOICES).get(item['insurance_type'], 'نامشخص'): {
             'total': item['total'],
             'count': item['count']
         }
         for item in income_by_insurance_values
     }
-
-    # Total expenses and payments from the DailyExpense model
     total_daily_entries = todays_expenses_queryset.aggregate(total=Sum('amount'))['total'] or 0
     total_expenses = abs(sum(item.amount for item in todays_expenses_queryset if item.amount > 0))
     total_payments_received = sum(item.amount for item in todays_expenses_queryset if item.amount < 0)
-
-
     net_income = total_income - total_daily_entries
 
+    # --- Secretary Cash Box Calculation (Cumulative) ---
+    total_cash_income = Appointment.objects.filter(
+        doctor=doctor_profile,
+        appointment_datetime__date__lte=current_date,
+        payment_method=2,  # نقدی
+        visit_fee_paid__isnull=False
+    ).aggregate(total=Sum('visit_fee_paid'))['total'] or 0
+
+    total_expenses_and_payments = DailyExpense.objects.filter(
+        doctor=doctor_profile,
+        date__lte=current_date
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
+    cash_box_balance = total_cash_income - total_expenses_and_payments
 
     if request.method == 'POST' and 'settle_up' in request.POST:
-        # The settle up logic should ideally consider the cash balance
-        cash_income = income_by_payment_method_dict.get('نقدی', 0)
-        # We assume expenses are paid in cash unless specified otherwise.
-        # This is a simplification.
-        cash_balance = cash_income - total_expenses + total_payments_received
-
-        if cash_balance != 0:
-            description = "تسویه حساب با منشی" if cash_balance > 0 else "پرداخت به منشی بابت طلب"
+        if cash_box_balance != 0:
             DailyExpense.objects.create(
                 doctor=doctor_profile,
                 date=current_date,
-                description=description,
-                amount=-cash_balance # Create an entry to zero out the cash balance
+                description="تسویه صندوق منشی",
+                amount=cash_box_balance
             )
-            return redirect('booking:financial_report', date=date)
+            # Redirect to prevent form resubmission
+            return redirect('booking:financial_report', date=current_date.strftime('%Y-%m-%d'))
 
     context = {
         'today': current_date,
@@ -744,6 +734,7 @@ def financial_report(request, date=None):
         'total_expenses': total_expenses,
         'total_payments_received': total_payments_received,
         'net_income': net_income,
+        'cash_box_balance': cash_box_balance,
     }
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
