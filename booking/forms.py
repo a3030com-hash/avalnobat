@@ -98,7 +98,7 @@ class DailyExpenseForm(forms.ModelForm):
         fields = ['description', 'amount']
         labels = {
             'description': 'شرح هزینه/پرداخت',
-            'amount': 'مبلغ (برای هزینه، عدد منفی وارد کنید)',
+            'amount': 'مبلغ (به تومان)'
         }
 
 class UserUpdateForm(forms.ModelForm):

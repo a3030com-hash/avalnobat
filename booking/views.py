@@ -525,8 +525,16 @@ def secretary_payments(request, date=None):
     ).aggregate(total=Sum('amount'))['total'] or 0
     previous_day_balance = previous_cash_income - previous_expenses_and_payments
 
+  # Calculate today's cash income
+    todays_cash_income = Appointment.objects.filter(
+        doctor=doctor_profile,
+        appointment_datetime__date=current_date,
+        payment_method=2,  # نقدی
+        visit_fee_paid__isnull=False
+    ).aggregate(total=Sum('visit_fee_paid'))['total'] or 0
+
     # Calculate current secretary cash box balance
-    total_cash_income = Appointment.objects.filter(
+    total_cash_income_lte = Appointment.objects.filter(
         doctor=doctor_profile,
         appointment_datetime__date__lte=current_date,
         payment_method=2,  # نقدی
@@ -538,7 +546,7 @@ def secretary_payments(request, date=None):
         date__lte=current_date
     ).aggregate(total=Sum('amount'))['total'] or 0
 
-    cash_box_balance = total_cash_income - total_expenses_and_payments
+    cash_box_balance = total_cash_income_lte - total_expenses_and_payments
 
     context = {
         'expense_form': expense_form,
@@ -547,6 +555,7 @@ def secretary_payments(request, date=None):
         'page_title': 'پرداخت‌های منشی',
         'cash_box_balance': cash_box_balance,
         'previous_day_balance': previous_day_balance,
+        'todays_cash_income':todays_cash_income,
     }
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
