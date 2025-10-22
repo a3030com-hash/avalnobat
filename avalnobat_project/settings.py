@@ -142,4 +142,11 @@ LOGIN_REDIRECT_URL = 'booking:doctor_dashboard'
 LOGOUT_REDIRECT_URL = 'booking:doctor_list'
 
 # Email backend for development
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.c1.liara.email'
+EMAIL_PORT = 587  #465 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER ='quizzical_chandrasekhar_0coq6v' #'info@avalnobat.ir'   # 'quizzical_chandrasekhar_0coq6v'  # Replace with your Gmail address
+EMAIL_HOST_PASSWORD = '63e215a2-3a73-4346-aa59-b011dda66998'      # Replace with your Gmail app password
+DEFAULT_FROM_EMAIL = 'info@avalnobat.ir'  # این خط را اضافه کنید
+SERVER_EMAIL = 'info@avalnobat.ir'  # این خط را هم اضافه کنید
