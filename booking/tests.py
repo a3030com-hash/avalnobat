@@ -108,6 +108,11 @@ class BookingAppTestCase(TestCase):
         appointment = Appointment.objects.first()
         self.assertEqual(appointment.status, 'PENDING_PAYMENT')
 
+        # Manually set the OTP in the session for the test
+        session = self.client.session
+        session['otp_code'] = '123456'
+        session.save()
+
         verify_url = reverse('booking:verify_appointment')
         response = self.client.post(verify_url, {'otp': '123456'}, follow=True)
 

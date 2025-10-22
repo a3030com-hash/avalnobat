@@ -1,5 +1,8 @@
 import datetime
 import jdatetime
+import random
+from django.conf import settings
+from kavenegar import KavenegarAPI, APIException, HTTPException
 from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -233,7 +236,32 @@ def book_appointment(request, pk, date):
                     appointment.status = 'PENDING_PAYMENT'
                     appointment.save()
 
-                    request.session['pending_appointment_id'] = appointment.id
+                    # --- OTP & SMS Sending Logic ---
+                    try:
+                        api = KavenegarAPI(settings.KAVENEGAR_API_TOKEN)
+                        otp_code = str(random.randint(100000, 999999))
+                        request.session['otp_code'] = otp_code
+                        request.session['pending_appointment_id'] = appointment.id
+
+                        params = {
+                            'receptor': appointment.patient_phone,
+                            'token': otp_code,
+                            'token2': appointment.patient_name,
+                            'template': 'AvalNobat',
+                        }
+                        response = api.verify_lookup(params)
+                        # print(f"SMS Response: {response}") # For debugging
+
+                    except APIException as e:
+                        # Handle API errors (e.g., invalid token, etc.)
+                        print(f"Kavenegar API Exception: {e}")
+                        # Optionally, add an error message for the user
+                    except HTTPException as e:
+                        # Handle HTTP errors (e.g., network issues)
+                        print(f"Kavenegar HTTP Exception: {e}")
+                        # Optionally, add an error message for the user
+                    # --- End of SMS Logic ---
+
 
                     return redirect('booking:verify_appointment')
 
@@ -277,8 +305,10 @@ def verify_appointment(request):
     appointment = get_object_or_404(Appointment, pk=pending_appointment_id)
 
     if request.method == 'POST':
-        otp = request.POST.get('otp')
-        if otp == '123456': # کد ثابت برای مرحله آزمایشی
+        otp_from_user = request.POST.get('otp')
+        otp_from_session = request.session.get('otp_code')
+
+        if otp_from_user == otp_from_session:
             # Find or create a patient user with the phone number
             patient_user, created = User.objects.get_or_create(
                 username=appointment.patient_phone,

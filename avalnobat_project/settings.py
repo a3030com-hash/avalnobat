@@ -11,10 +11,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, 'avalnobat_project', '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -150,3 +153,4 @@ EMAIL_HOST_USER ='quizzical_chandrasekhar_0coq6v' #'info@avalnobat.ir'   # 'quiz
 EMAIL_HOST_PASSWORD = '63e215a2-3a73-4346-aa59-b011dda66998'      # Replace with your Gmail app password
 DEFAULT_FROM_EMAIL = 'info@avalnobat.ir'  # این خط را اضافه کنید
 SERVER_EMAIL = 'info@avalnobat.ir'  # این خط را هم اضافه کنید
+KAVENEGAR_API_TOKEN = os.getenv('KAVENEGAR_API_TOKEN', 'your_default_fallback_token_if_any')
