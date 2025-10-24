@@ -255,11 +255,11 @@ def book_appointment(request, pk, date):
                         }
                         print(f'سلام کاربر محترم رمز یکبار مصرف شما {otp_code} است. AvalNobat.ir')
                         # Send the POST request
-                        APIException = requests.post(AMOOT_SMS_API_URL, headers=headers,data=payload)
-                                                
-                 
-                    except APIException as e:
-                        print("خطا")
+                        requests.post(AMOOT_SMS_API_URL, headers=headers,data=payload)
+
+
+                    except requests.exceptions.RequestException as e:
+                        print("خطا در ارسال پیامک:", e)
                     return redirect('booking:verify_appointment')
 
             except ValueError as e:
@@ -606,7 +606,11 @@ def manual_booking(request, date):
 
     # منطق محاسبه نوبت‌های موجود (مشابه book_appointment)
     all_slots = []
-    booked_datetimes = list(Appointment.objects.filter(doctor=doctor_profile, appointment_datetime__date=target_date).values_list('appointment_datetime', flat=True))
+    booked_datetimes = list(Appointment.objects.filter(
+        doctor=doctor_profile,
+        appointment_datetime__date=target_date,
+        status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
+    ).values_list('appointment_datetime', flat=True))
     canceled_slots = list(TimeSlotException.objects.filter(doctor=doctor_profile, datetime_slot__date=target_date).values_list('datetime_slot', flat=True))
     availabilities = DoctorAvailability.objects.filter(doctor=doctor_profile, day_of_week=target_date.weekday(), is_active=True)
 
