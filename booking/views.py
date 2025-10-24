@@ -2,7 +2,6 @@ import datetime
 import jdatetime
 import random
 from django.conf import settings
-from kavenegar import KavenegarAPI, APIException, HTTPException
 from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -11,6 +10,7 @@ from .models import DoctorProfile, DoctorAvailability, Appointment, TimeSlotExce
 from .forms import DoctorAvailabilityForm, AppointmentBookingForm
 
 from django.db.models import Q
+import requests
 
 def doctor_list(request):
     """
@@ -238,31 +238,28 @@ def book_appointment(request, pk, date):
 
                     # --- OTP & SMS Sending Logic ---
                     try:
-                        api = KavenegarAPI(settings.KAVENEGAR_API_TOKEN)
+                        AMOOT_SMS_API_TOKEN=settings.AMOOT_SMS_API_TOKEN
+                        AMOOT_SMS_API_URL=settings.AMOOT_SMS_API_URL
                         otp_code = str(random.randint(100000, 999999))
                         request.session['otp_code'] = otp_code
                         request.session['pending_appointment_id'] = appointment.id
-
-                        params = {
-                            'receptor': appointment.patient_phone,
-                            'token': otp_code,
-                            'token2': appointment.patient_name,
-                            'template': 'AvalNobat',
+                        payload = {
+                               'token': AMOOT_SMS_API_TOKEN,
+                               'Mobiles': appointment.patient_phone,
+                               'SendDateTime': '0',
+                               'SMSMessageText': f'سلام کاربر محترم رمز یکبار مصرف شما {otp_code} است. AvalNobat.ir',
+                               'LineNumber': 'Public'
+                            }
+                        headers = {
+                            'Content-Type': 'application/x-www-form-urlencoded'
                         }
-                        response = api.verify_lookup(params)
-                        # print(f"SMS Response: {response}") # For debugging
-
+                        print(f'سلام کاربر محترم رمز یکبار مصرف شما {otp_code} است. AvalNobat.ir')
+                        # Send the POST request
+                        APIException = requests.post(AMOOT_SMS_API_URL, headers=headers,data=payload)
+                                                
+                 
                     except APIException as e:
-                        # Handle API errors (e.g., invalid token, etc.)
-                        print(f"Kavenegar API Exception: {e}")
-                        # Optionally, add an error message for the user
-                    except HTTPException as e:
-                        # Handle HTTP errors (e.g., network issues)
-                        print(f"Kavenegar HTTP Exception: {e}")
-                        # Optionally, add an error message for the user
-                    # --- End of SMS Logic ---
-
-
+                        print("خطا")
                     return redirect('booking:verify_appointment')
 
             except ValueError as e:

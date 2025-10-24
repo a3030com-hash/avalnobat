@@ -152,5 +152,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER ='quizzical_chandrasekhar_0coq6v' #'info@avalnobat.ir'   # 'quizzical_chandrasekhar_0coq6v'  # Replace with your Gmail address
 EMAIL_HOST_PASSWORD = '63e215a2-3a73-4346-aa59-b011dda66998'      # Replace with your Gmail app password
 DEFAULT_FROM_EMAIL = 'info@avalnobat.ir'  # این خط را اضافه کنید
-SERVER_EMAIL = 'info@avalnobat.ir'  # این خط را هم اضافه کنید
-KAVENEGAR_API_TOKEN = os.getenv('KAVENEGAR_API_TOKEN', 'your_default_fallback_token_if_any')
+SERVER_EMAIL = 'info@avalnobat.ir'  # این خط را هم اضافه 
+#AMOOT_SMS
+AMOOT_SMS_API_TOKEN = '4BC33DCDDBF33395ABF6C9956E28943F61F2718B'
+AMOOT_SMS_API_URL='https://portal.amootsms.com/rest/SendSimple'

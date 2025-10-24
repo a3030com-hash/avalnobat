@@ -1,5 +1,4 @@
 Django>=5.0
 Pillow>=10.0
 jdatetime>=5.0
-kavenegar
 python-dotenv
