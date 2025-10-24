@@ -79,17 +79,23 @@
     <p>یک ساعت خالی را برای ثبت نوبت بیمار یا مسدود کردن آن انتخاب کنید.</p>
 
     <div class="time-slots" id="time-slots-container">
-        {% for slot in all_slots %}
-            {% if slot.status == 'available' %}
-                <button type="button" class="slot slot-available" onclick="showForm('{{ slot.time.isoformat }}')">
-                    {{ slot.time|time:"H:i" }}
-                </button>
-            {% elif slot.status == 'booked' %}
-                <button type="button" class="slot slot-booked" disabled>{{ slot.time|time:"H:i" }}</button>
-            {% elif slot.status == 'canceled' %}
-                <button type="button" class="slot slot-canceled" disabled>{{ slot.time|time:"H:i" }}</button>
-            {% endif %}
-        {% endfor %}
+        {% if has_availability %}
+            {% for slot in all_slots %}
+                {% if slot.status == 'available' %}
+                    <button type="button" class="slot slot-available" onclick="showForm('{{ slot.time.isoformat }}')">
+                        {{ slot.time|time:"H:i" }}
+                    </button>
+                {% elif slot.status == 'booked' %}
+                    <button type="button" class="slot slot-booked" disabled>{{ slot.time|time:"H:i" }}</button>
+                {% elif slot.status == 'canceled' %}
+                    <button type="button" class="slot slot-canceled" disabled>{{ slot.time|time:"H:i" }}</button>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-warning" role="alert">
+                برای این روز هیچ برنامه کاری فعالی تعریف نشده است. لطفا از <a href="{% url 'booking:doctor_dashboard' %}" class="alert-link">داشبورد مدیریت</a> یک برنامه کاری اضافه کنید.
+            </div>
+        {% endif %}
     </div>
 
     <!-- Hidden forms -->

@@ -662,7 +662,8 @@ def manual_booking(request, date):
         'doctor': doctor_profile,
         'date': target_date,
         'all_slots': all_slots,
-        'form': form
+        'form': form,
+        'has_availability': bool(all_slots)
     }
     return render(request, 'booking/manual_booking.html', context)
 
