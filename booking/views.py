@@ -605,6 +605,48 @@ def manage_day(request, date):
     except ValueError:
         return redirect('booking:secretary_panel')
 
+    # --- Logic to calculate and display all time slots ---
+    all_slots = []
+    booked_datetimes = list(Appointment.objects.filter(
+        doctor=doctor_profile,
+        appointment_datetime__date=target_date,
+        status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
+    ).values_list('appointment_datetime', flat=True))
+
+    time_slot_exceptions = TimeSlotException.objects.filter(
+        doctor=doctor_profile,
+        datetime_slot__date=target_date
+    )
+
+    canceled_slots = list(time_slot_exceptions.filter(is_cancellation=True).values_list('datetime_slot', flat=True))
+    added_slots = list(time_slot_exceptions.filter(is_cancellation=False).values_list('datetime_slot', flat=True))
+
+    availabilities = DoctorAvailability.objects.filter(
+        doctor=doctor_profile,
+        day_of_week=target_date.weekday(),
+        is_active=True
+    )
+
+    for avail in availabilities:
+        duration = (datetime.datetime.combine(target_date, avail.end_time) - datetime.datetime.combine(target_date, avail.start_time))
+        if avail.visit_count > 0:
+            interval = duration / avail.visit_count
+            current_time_naive = datetime.datetime.combine(target_date, avail.start_time)
+            for i in range(avail.visit_count):
+                current_time_aware = timezone.make_aware(current_time_naive)
+                status = 'available'
+                if current_time_aware in booked_datetimes:
+                    status = 'booked'
+                elif current_time_aware in canceled_slots:
+                    status = 'canceled'
+
+                all_slots.append({'time': current_time_aware, 'status': status})
+                current_time_naive += interval
+
+    for added_slot in added_slots:
+        if added_slot not in booked_datetimes and added_slot not in canceled_slots:
+            all_slots.append({'time': added_slot, 'status': 'available'})
+
     # Handle POST requests for booking, blocking, or unblocking slots
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -650,64 +692,6 @@ def manage_day(request, date):
                 # If form is invalid, we will fall through and re-render the page with errors
 
         elif action == 'add_slot':
-            last_slot_time = datetime.time(8, 50) # Default start time if no slots exist
-            if all_slots:
-                last_slot_time = max(s['time'] for s in all_slots).time()
-
-            new_slot_datetime_naive = datetime.datetime.combine(target_date, last_slot_time) + datetime.timedelta(minutes=10)
-            new_slot_datetime_aware = timezone.make_aware(new_slot_datetime_naive)
-
-            TimeSlotException.objects.create(
-                doctor=doctor_profile,
-                datetime_slot=new_slot_datetime_aware,
-                is_cancellation=False # This is an addition, not a cancellation
-            )
-            return redirect('booking:manage_day', date=date)
-
-
-    # --- Logic to calculate and display all time slots ---
-    all_slots = []
-    booked_datetimes = list(Appointment.objects.filter(
-        doctor=doctor_profile,
-        appointment_datetime__date=target_date,
-        status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
-    ).values_list('appointment_datetime', flat=True))
-
-    time_slot_exceptions = TimeSlotException.objects.filter(
-        doctor=doctor_profile,
-        datetime_slot__date=target_date
-    )
-
-    canceled_slots = list(time_slot_exceptions.filter(is_cancellation=True).values_list('datetime_slot', flat=True))
-    added_slots = list(time_slot_exceptions.filter(is_cancellation=False).values_list('datetime_slot', flat=True))
-
-    availabilities = DoctorAvailability.objects.filter(
-        doctor=doctor_profile,
-        day_of_week=target_date.weekday(),
-        is_active=True
-    )
-
-    for avail in availabilities:
-        duration = (datetime.datetime.combine(target_date, avail.end_time) - datetime.datetime.combine(target_date, avail.start_time))
-        if avail.visit_count > 0:
-            interval = duration / avail.visit_count
-            current_time_naive = datetime.datetime.combine(target_date, avail.start_time)
-            for i in range(avail.visit_count):
-                current_time_aware = timezone.make_aware(current_time_naive)
-                status = 'available'
-                if current_time_aware in booked_datetimes:
-                    status = 'booked'
-                elif current_time_aware in canceled_slots:
-                    status = 'canceled'
-
-                all_slots.append({'time': current_time_aware, 'status': status})
-                current_time_naive += interval
-
-    for added_slot in added_slots:
-        if added_slot not in booked_datetimes and added_slot not in canceled_slots:
-            all_slots.append({'time': added_slot, 'status': 'available'})
-
-    if request.method == 'POST' and request.POST.get('action') == 'add_slot':
             last_slot_time = datetime.time(8, 50) # Default start time if no slots exist
             if all_slots:
                 last_slot_time = max(s['time'] for s in all_slots).time()
