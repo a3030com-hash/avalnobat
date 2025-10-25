@@ -79,6 +79,12 @@ class AppointmentBookingForm(forms.ModelForm):
             'problem_description': forms.Textarea(attrs={'rows': 3}),
         }
 
+class AdHocAppointmentForm(AppointmentBookingForm):
+    time = forms.TimeField(
+        widget=forms.TimeInput(attrs={'placeholder': 'HH:MM'}),
+        label="ساعت نوبت"
+    )
+
 class AppointmentUpdateForm(forms.ModelForm):
     class Meta:
         model = Appointment

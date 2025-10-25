@@ -21,6 +21,5 @@ urlpatterns = [
     path('expense/edit/<int:pk>/', views.edit_expense, name='edit_expense'),
     path('expense/delete/<int:pk>/', views.delete_expense, name='delete_expense'),
     re_path(r'^financial-report/(?P<date>\d{4}-\d{2}-\d{2})?/?$', views.financial_report, name='financial_report'),
-    path('manual-booking/<str:date>/', views.manual_booking, name='manual_booking'),
-    path('cancel-slot/<str:slot>/', views.cancel_slot, name='cancel_slot'),
+    path('manage-day/<str:date>/', views.manage_day, name='manage_day'),
 ]

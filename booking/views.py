@@ -366,7 +366,7 @@ def confirm_payment(request):
 from django.contrib.auth import login
 from django.http import JsonResponse
 from django.forms import modelformset_factory
-from .forms import AppointmentUpdateForm, DailyExpenseForm, DoctorRegistrationForm, UserUpdateForm, DoctorProfileUpdateForm
+from .forms import AppointmentUpdateForm, DailyExpenseForm, DoctorRegistrationForm, UserUpdateForm, DoctorProfileUpdateForm, AdHocAppointmentForm
 from .models import DailyExpense
 from django.db.models import Count
 
@@ -590,82 +590,146 @@ def secretary_payments(request, date=None):
     return render(request, 'booking/secretary_payments.html', context)
 
 @login_required
-def manual_booking(request, date):
+def manage_day(request, date):
     """
-    صفحه ثبت نوبت دستی توسط منشی.
+    صفحه مدیریت روزانه برای منشی، شامل ثبت نوبت، مسدود کردن و فعال‌سازی نوبت‌ها.
     """
     if not request.user.user_type == 'DOCTOR':
         return redirect('booking:doctor_list')
 
     doctor_profile = request.user.doctor_profile
     try:
+        # The date comes from the URL in Jalali format
         jalali_date = jdatetime.datetime.strptime(date, '%Y-%m-%d').date()
         target_date = jalali_date.togregorian()
     except ValueError:
         return redirect('booking:secretary_panel')
 
-    # منطق محاسبه نوبت‌های موجود (مشابه book_appointment)
+    # Handle POST requests for booking, blocking, or unblocking slots
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        slot_iso = request.POST.get('selected_slot')
+
+        if action and slot_iso:
+            slot_datetime = datetime.datetime.fromisoformat(slot_iso)
+
+            if action == 'block':
+                TimeSlotException.objects.get_or_create(
+                    doctor=doctor_profile,
+                    datetime_slot=slot_datetime
+                )
+                return redirect('booking:manage_day', date=date)
+
+            elif action == 'unblock':
+                TimeSlotException.objects.filter(
+                    doctor=doctor_profile,
+                    datetime_slot=slot_datetime
+                ).delete()
+                return redirect('booking:manage_day', date=date)
+
+            elif action == 'book':
+                form = AppointmentBookingForm(request.POST)
+                if form.is_valid():
+                    with transaction.atomic():
+                        # Find or create a patient user
+                        patient_user, created = User.objects.get_or_create(
+                            username=form.cleaned_data['patient_phone'],
+                            defaults={
+                                'first_name': form.cleaned_data['patient_name'],
+                                'user_type': 'PATIENT'
+                            }
+                        )
+                        # Create the appointment
+                        appointment = form.save(commit=False)
+                        appointment.doctor = doctor_profile
+                        appointment.patient = patient_user
+                        appointment.appointment_datetime = slot_datetime
+                        appointment.status = 'BOOKED'
+                        appointment.save()
+                        return redirect('booking:manage_day', date=date)
+                # If form is invalid, we will fall through and re-render the page with errors
+
+        elif action == 'ad_hoc_book':
+            ad_hoc_form = AdHocAppointmentForm(request.POST)
+            if ad_hoc_form.is_valid():
+                appointment_time = ad_hoc_form.cleaned_data['time']
+                appointment_datetime = timezone.make_aware(datetime.datetime.combine(target_date, appointment_time))
+
+                with transaction.atomic():
+                    # Find or create a patient user
+                    patient_user, created = User.objects.get_or_create(
+                        username=ad_hoc_form.cleaned_data['patient_phone'],
+                        defaults={
+                            'first_name': ad_hoc_form.cleaned_data['patient_name'],
+                            'user_type': 'PATIENT'
+                        }
+                    )
+                    # Create the appointment
+                    appointment = ad_hoc_form.save(commit=False)
+                    appointment.doctor = doctor_profile
+                    appointment.patient = patient_user
+                    appointment.appointment_datetime = appointment_datetime
+                    appointment.status = 'BOOKED'
+                    appointment.save()
+                    return redirect('booking:manage_day', date=date)
+            # If form is invalid, we will fall through and re-render the page with errors
+
+
+    # --- Logic to calculate and display all time slots ---
     all_slots = []
     booked_datetimes = list(Appointment.objects.filter(
         doctor=doctor_profile,
         appointment_datetime__date=target_date,
         status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
     ).values_list('appointment_datetime', flat=True))
-    canceled_slots = list(TimeSlotException.objects.filter(doctor=doctor_profile, datetime_slot__date=target_date).values_list('datetime_slot', flat=True))
-    availabilities = DoctorAvailability.objects.filter(doctor=doctor_profile, day_of_week=target_date.weekday(), is_active=True)
+
+    canceled_slots = list(TimeSlotException.objects.filter(
+        doctor=doctor_profile,
+        datetime_slot__date=target_date
+    ).values_list('datetime_slot', flat=True))
+
+    availabilities = DoctorAvailability.objects.filter(
+        doctor=doctor_profile,
+        day_of_week=target_date.weekday(),
+        is_active=True
+    )
 
     for avail in availabilities:
         duration = (datetime.datetime.combine(target_date, avail.end_time) - datetime.datetime.combine(target_date, avail.start_time))
-        interval = duration / avail.visit_count if avail.visit_count > 1 else duration
-        current_time_naive = datetime.datetime.combine(target_date, avail.start_time)
-        for i in range(avail.visit_count):
-            current_time_aware = timezone.make_aware(current_time_naive)
-            if current_time_aware in booked_datetimes:
-                status = 'booked'
-            elif current_time_aware in canceled_slots:
-                status = 'canceled'
-            else:
+        if avail.visit_count > 0:
+            interval = duration / avail.visit_count
+            current_time_naive = datetime.datetime.combine(target_date, avail.start_time)
+            for i in range(avail.visit_count):
+                current_time_aware = timezone.make_aware(current_time_naive)
                 status = 'available'
-            all_slots.append({'time': current_time_aware, 'status': status})
-            current_time_naive += interval
+                if current_time_aware in booked_datetimes:
+                    status = 'booked'
+                elif current_time_aware in canceled_slots:
+                    status = 'canceled'
 
-    if request.method == 'POST':
-        form = AppointmentBookingForm(request.POST)
-        selected_slot_str = request.POST.get('selected_slot')
+                all_slots.append({'time': current_time_aware, 'status': status})
+                current_time_naive += interval
 
-        if form.is_valid() and selected_slot_str:
-            appointment_datetime = datetime.datetime.fromisoformat(selected_slot_str)
+    # If the request was a failed POST for booking, use that form, otherwise create a new one
+    if request.method == 'POST' and 'form' in locals():
+        booking_form = form
+    else:
+        booking_form = AppointmentBookingForm()
 
-            with transaction.atomic():
-                if Appointment.objects.filter(doctor=doctor_profile, appointment_datetime=appointment_datetime).exists():
-                    # این حالت نباید زیاد رخ دهد چون منشی تنها کاربر است
-                    pass # میتوان یک پیام خطا اضافه کرد
-                else:
-                    # Find or create a patient user with the phone number
-                    patient_user, created = User.objects.get_or_create(
-                        username=form.cleaned_data['patient_phone'],
-                        defaults={
-                            'first_name': form.cleaned_data['patient_name'],
-                            'user_type': 'PATIENT'
-                        }
-                    )
-                    appointment = form.save(commit=False)
-                    appointment.doctor = doctor_profile
-                    appointment.patient = patient_user
-                    appointment.appointment_datetime = appointment_datetime
-                    appointment.status = 'BOOKED' # نوبت دستی مستقیما رزرو می‌شود
-                    appointment.save()
-                    return redirect('booking:secretary_panel')
+    ad_hoc_form = AdHocAppointmentForm()
 
-    form = AppointmentBookingForm()
     context = {
         'doctor': doctor_profile,
         'date': target_date,
-        'all_slots': all_slots,
-        'form': form,
-        'has_availability': bool(all_slots)
+        'jalali_date_str': date,
+        'all_slots': sorted(all_slots, key=lambda x: x['time']),
+        'form': booking_form,
+        'ad_hoc_form': ad_hoc_form,
+        'has_availability': bool(availabilities),
+        'page_title': f'مدیریت نوبت‌های روز {date}'
     }
-    return render(request, 'booking/manual_booking.html', context)
+    return render(request, 'booking/manage_day.html', context)
+
 
 def doctor_signup(request):
     if request.method == 'POST':
@@ -708,20 +772,6 @@ def edit_profile(request):
         'page_title': 'ویرایش پروفایل'
     }
     return render(request, 'booking/edit_profile.html', context)
-
-@login_required
-def cancel_slot(request, slot):
-    if not request.user.user_type == 'DOCTOR':
-        return redirect('booking:doctor_list')
-
-    if request.method == 'POST':
-        slot_datetime = datetime.datetime.fromisoformat(slot)
-        TimeSlotException.objects.get_or_create(
-            doctor=request.user.doctor_profile,
-            datetime_slot=slot_datetime
-        )
-        # Redirect back to the manual booking page for the same day
-        return redirect('booking:manual_booking', date=slot_datetime.strftime('%Y-%m-%d'))
 
 from django.db.models import Sum, Q
 from django.urls import reverse

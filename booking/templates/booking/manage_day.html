@@ -1,0 +1,177 @@
+{% extends 'booking/base.html' %}
+{% load booking_filters %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<style>
+    .booking-container {
+        background-color: white;
+        padding: 2rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .time-slots {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 2rem;
+        flex-direction: ltr;
+    }
+    .slot {
+        padding: 10px 15px;
+        border: 1px solid;
+        border-radius: 5px;
+        font-weight: bold;
+        background-color: white;
+        transition: all 0.2s ease-in-out;
+        font-family: inherit;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    .slot-available:hover {
+        background-color: #007bff;
+        color: white;
+    }
+    .slot-booked {
+        border-color: #dc3545;
+        background-color: #f8d7da;
+        color: #721c24;
+        text-decoration: line-through;
+        cursor: not-allowed;
+    }
+    .slot-canceled {
+        border-color: #ffc107;
+        background-color: #fff3cd;
+        color: #856404;
+    }
+     .slot-canceled:hover {
+        background-color: #ffc107;
+        color: white;
+    }
+
+    .hidden-form-container {
+        display: none;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #dee2e6;
+    }
+    .submit-btn {
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 1rem;
+    }
+    .book-btn { background-color: #28a745; }
+    .block-btn { background-color: #dc3545; }
+    .unblock-btn { background-color: #17a2b8; }
+</style>
+
+<div class="booking-container">
+    <a href="{% url 'booking:secretary_panel' %}"> &larr; بازگشت به پنل مدیریت</a>
+    <hr>
+    <h1>{{ page_title }}</h1>
+    <p>برای مدیریت نوبت‌ها، یک ساعت را انتخاب کنید.</p>
+
+    <div class="time-slots" id="time-slots-container">
+        {% if has_availability %}
+            {% for slot in all_slots %}
+                <button
+                    type="button"
+                    class="slot slot-{{ slot.status }}"
+                    onclick="showActionForms('{{ slot.time.isoformat }}', '{{ slot.status }}')"
+                    {% if slot.status == 'booked' %}disabled{% endif %}>
+                    {{ slot.time|time:"H:i" }}
+                </button>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-warning" role="alert">
+                برای این روز هیچ برنامه کاری فعالی تعریف نشده است. لطفا از <a href="{% url 'booking:doctor_dashboard' %}" class="alert-link">داشبورد مدیریت</a> یک برنامه کاری اضافه کنید.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Ad-hoc Appointment Form -->
+    <div class="ad-hoc-container">
+        <h3>ثبت نوبت خارج از برنامه</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="ad_hoc_book">
+            {{ ad_hoc_form.as_p }}
+            <button type="submit" class="submit-btn book-btn">ثبت نوبت</button>
+        </form>
+    </div>
+
+    <!-- Hidden Action Forms -->
+    <div id="form-container" class="hidden-form-container">
+        <form method="post" id="action-form">
+            {% csrf_token %}
+            <input type="hidden" name="selected_slot" id="hidden-selected-slot">
+            <input type="hidden" name="action" id="hidden-action">
+
+            <!-- Booking Form Section -->
+            <div id="booking-section">
+                <h3>ثبت نوبت برای ساعت <span class="form-time"></span></h3>
+                {{ form.as_p }}
+                <button type="submit" class="submit-btn book-btn" onclick="setAction('book')">ثبت نهایی نوبت</button>
+            </div>
+
+            <!-- Blocking Confirmation Section -->
+            <div id="blocking-section">
+                <h3>مسدود کردن نوبت ساعت <span class="form-time"></span></h3>
+                <p>آیا از مسدود کردن این بازه زمانی اطمینان دارید؟ این نوبت دیگر توسط بیماران قابل رزرو نخواهد بود.</p>
+                <button type="submit" class="submit-btn block-btn" onclick="setAction('block')">بله، مسدود کن</button>
+            </div>
+
+            <!-- Unblocking Confirmation Section -->
+            <div id="unblocking-section">
+                <h3>فعال‌سازی مجدد نوبت ساعت <span class="form-time"></span></h3>
+                <p>آیا می‌خواهید این نوبت را مجدداً برای رزرو توسط بیماران فعال کنید؟</p>
+                <button type="submit" class="submit-btn unblock-btn" onclick="setAction('unblock')">بله، فعال کن</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const formContainer = document.getElementById('form-container');
+    const bookingSection = document.getElementById('booking-section');
+    const blockingSection = document.getElementById('blocking-section');
+    const unblockingSection = document.getElementById('unblocking-section');
+    const hiddenSlotInput = document.getElementById('hidden-selected-slot');
+    const hiddenActionInput = document.getElementById('hidden-action');
+    const formTimeSpans = document.querySelectorAll('.form-time');
+
+    function showActionForms(slot_iso, status) {
+        const slot_time = new Date(slot_iso).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+
+        // Set hidden input values
+        hiddenSlotInput.value = slot_iso;
+        formTimeSpans.forEach(span => span.textContent = slot_time);
+
+        // Hide all sections initially
+        bookingSection.style.display = 'none';
+        blockingSection.style.display = 'none';
+        unblockingSection.style.display = 'none';
+
+        // Show relevant sections based on slot status
+        if (status === 'available') {
+            bookingSection.style.display = 'block';
+            blockingSection.style.display = 'block';
+        } else if (status === 'canceled') {
+            unblockingSection.style.display = 'block';
+        }
+
+        // Show the main form container and scroll to it
+        formContainer.style.display = 'block';
+        formContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function setAction(action) {
+        hiddenActionInput.value = action;
+    }
+</script>
+{% endblock %}
