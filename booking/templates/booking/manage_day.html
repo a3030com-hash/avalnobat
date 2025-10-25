@@ -68,6 +68,29 @@
     .book-btn { background-color: #28a745; }
     .block-btn { background-color: #dc3545; }
     .unblock-btn { background-color: #17a2b8; }
+
+    .slot-container {
+        position: relative;
+    }
+
+    .inline-form {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+    }
+
+    .inline-btn {
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        border: none;
+        color: white;
+        font-size: 12px;
+        line-height: 20px;
+        text-align: center;
+        padding: 0;
+        cursor: pointer;
+    }
 </style>
 
 <div class="booking-container">
@@ -79,13 +102,28 @@
     <div class="time-slots" id="time-slots-container">
         {% if has_availability %}
             {% for slot in all_slots %}
-                <button
-                    type="button"
-                    class="slot slot-{{ slot.status }}"
-                    onclick="showActionForms('{{ slot.time.isoformat }}', '{{ slot.status }}')"
-                    {% if slot.status == 'booked' %}disabled{% endif %}>
-                    {{ slot.time|time:"H:i" }}
-                </button>
+                <div class="slot-container">
+                    <button
+                        type="button"
+                        class="slot slot-{{ slot.status }}"
+                        onclick="showActionForms('{{ slot.time.isoformat }}', '{{ slot.status }}')"
+                        {% if slot.status == 'booked' %}disabled{% endif %}>
+                        {{ slot.time|time:"H:i" }}
+                    </button>
+                    {% if slot.status == 'available' or slot.status == 'canceled' %}
+                        <form method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="selected_slot" value="{{ slot.time.isoformat }}">
+                            {% if slot.status == 'available' %}
+                                <input type="hidden" name="action" value="block">
+                                <button type="submit" class="inline-btn block-btn" title="مسدود کردن نوبت">×</button>
+                            {% else %}
+                                <input type="hidden" name="action" value="unblock">
+                                <button type="submit" class="inline-btn unblock-btn" title="فعال‌سازی نوبت">+</button>
+                            {% endif %}
+                        </form>
+                    {% endif %}
+                </div>
             {% endfor %}
         {% else %}
             <div class="alert alert-warning" role="alert">
@@ -94,14 +132,12 @@
         {% endif %}
     </div>
 
-    <!-- Ad-hoc Appointment Form -->
-    <div class="ad-hoc-container">
-        <h3>ثبت نوبت خارج از برنامه</h3>
+    <!-- Add Slot Button -->
+    <div class="add-slot-container">
         <form method="post">
             {% csrf_token %}
-            <input type="hidden" name="action" value="ad_hoc_book">
-            {{ ad_hoc_form.as_p }}
-            <button type="submit" class="submit-btn book-btn">ثبت نوبت</button>
+            <input type="hidden" name="action" value="add_slot">
+            <button type="submit" class="submit-btn book-btn">+ ایجاد ساعت نوبت</button>
         </form>
     </div>
 
@@ -110,27 +146,13 @@
         <form method="post" id="action-form">
             {% csrf_token %}
             <input type="hidden" name="selected_slot" id="hidden-selected-slot">
-            <input type="hidden" name="action" id="hidden-action">
+            <input type="hidden" name="action" id="hidden-action" value="book">
 
             <!-- Booking Form Section -->
             <div id="booking-section">
                 <h3>ثبت نوبت برای ساعت <span class="form-time"></span></h3>
                 {{ form.as_p }}
-                <button type="submit" class="submit-btn book-btn" onclick="setAction('book')">ثبت نهایی نوبت</button>
-            </div>
-
-            <!-- Blocking Confirmation Section -->
-            <div id="blocking-section">
-                <h3>مسدود کردن نوبت ساعت <span class="form-time"></span></h3>
-                <p>آیا از مسدود کردن این بازه زمانی اطمینان دارید؟ این نوبت دیگر توسط بیماران قابل رزرو نخواهد بود.</p>
-                <button type="submit" class="submit-btn block-btn" onclick="setAction('block')">بله، مسدود کن</button>
-            </div>
-
-            <!-- Unblocking Confirmation Section -->
-            <div id="unblocking-section">
-                <h3>فعال‌سازی مجدد نوبت ساعت <span class="form-time"></span></h3>
-                <p>آیا می‌خواهید این نوبت را مجدداً برای رزرو توسط بیماران فعال کنید؟</p>
-                <button type="submit" class="submit-btn unblock-btn" onclick="setAction('unblock')">بله، فعال کن</button>
+                <button type="submit" class="submit-btn book-btn">ثبت نهایی نوبت</button>
             </div>
         </form>
     </div>
@@ -139,39 +161,17 @@
 <script>
     const formContainer = document.getElementById('form-container');
     const bookingSection = document.getElementById('booking-section');
-    const blockingSection = document.getElementById('blocking-section');
-    const unblockingSection = document.getElementById('unblocking-section');
     const hiddenSlotInput = document.getElementById('hidden-selected-slot');
-    const hiddenActionInput = document.getElementById('hidden-action');
     const formTimeSpans = document.querySelectorAll('.form-time');
 
     function showActionForms(slot_iso, status) {
-        const slot_time = new Date(slot_iso).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-
-        // Set hidden input values
-        hiddenSlotInput.value = slot_iso;
-        formTimeSpans.forEach(span => span.textContent = slot_time);
-
-        // Hide all sections initially
-        bookingSection.style.display = 'none';
-        blockingSection.style.display = 'none';
-        unblockingSection.style.display = 'none';
-
-        // Show relevant sections based on slot status
         if (status === 'available') {
-            bookingSection.style.display = 'block';
-            blockingSection.style.display = 'block';
-        } else if (status === 'canceled') {
-            unblockingSection.style.display = 'block';
+            const slot_time = new Date(slot_iso).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+            hiddenSlotInput.value = slot_iso;
+            formTimeSpans.forEach(span => span.textContent = slot_time);
+            formContainer.style.display = 'block';
+            formContainer.scrollIntoView({ behavior: 'smooth' });
         }
-
-        // Show the main form container and scroll to it
-        formContainer.style.display = 'block';
-        formContainer.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function setAction(action) {
-        hiddenActionInput.value = action;
     }
 </script>
 {% endblock %}

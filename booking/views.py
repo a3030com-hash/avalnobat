@@ -366,7 +366,7 @@ def confirm_payment(request):
 from django.contrib.auth import login
 from django.http import JsonResponse
 from django.forms import modelformset_factory
-from .forms import AppointmentUpdateForm, DailyExpenseForm, DoctorRegistrationForm, UserUpdateForm, DoctorProfileUpdateForm, AdHocAppointmentForm
+from .forms import AppointmentUpdateForm, DailyExpenseForm, DoctorRegistrationForm, UserUpdateForm, DoctorProfileUpdateForm
 from .models import DailyExpense
 from django.db.models import Count
 
@@ -649,30 +649,20 @@ def manage_day(request, date):
                         return redirect('booking:manage_day', date=date)
                 # If form is invalid, we will fall through and re-render the page with errors
 
-        elif action == 'ad_hoc_book':
-            ad_hoc_form = AdHocAppointmentForm(request.POST)
-            if ad_hoc_form.is_valid():
-                appointment_time = ad_hoc_form.cleaned_data['time']
-                appointment_datetime = timezone.make_aware(datetime.datetime.combine(target_date, appointment_time))
+        elif action == 'add_slot':
+            last_slot_time = datetime.time(8, 50) # Default start time if no slots exist
+            if all_slots:
+                last_slot_time = max(s['time'] for s in all_slots).time()
 
-                with transaction.atomic():
-                    # Find or create a patient user
-                    patient_user, created = User.objects.get_or_create(
-                        username=ad_hoc_form.cleaned_data['patient_phone'],
-                        defaults={
-                            'first_name': ad_hoc_form.cleaned_data['patient_name'],
-                            'user_type': 'PATIENT'
-                        }
-                    )
-                    # Create the appointment
-                    appointment = ad_hoc_form.save(commit=False)
-                    appointment.doctor = doctor_profile
-                    appointment.patient = patient_user
-                    appointment.appointment_datetime = appointment_datetime
-                    appointment.status = 'BOOKED'
-                    appointment.save()
-                    return redirect('booking:manage_day', date=date)
-            # If form is invalid, we will fall through and re-render the page with errors
+            new_slot_datetime_naive = datetime.datetime.combine(target_date, last_slot_time) + datetime.timedelta(minutes=10)
+            new_slot_datetime_aware = timezone.make_aware(new_slot_datetime_naive)
+
+            TimeSlotException.objects.create(
+                doctor=doctor_profile,
+                datetime_slot=new_slot_datetime_aware,
+                is_cancellation=False # This is an addition, not a cancellation
+            )
+            return redirect('booking:manage_day', date=date)
 
 
     # --- Logic to calculate and display all time slots ---
@@ -683,10 +673,13 @@ def manage_day(request, date):
         status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
     ).values_list('appointment_datetime', flat=True))
 
-    canceled_slots = list(TimeSlotException.objects.filter(
+    time_slot_exceptions = TimeSlotException.objects.filter(
         doctor=doctor_profile,
         datetime_slot__date=target_date
-    ).values_list('datetime_slot', flat=True))
+    )
+
+    canceled_slots = list(time_slot_exceptions.filter(is_cancellation=True).values_list('datetime_slot', flat=True))
+    added_slots = list(time_slot_exceptions.filter(is_cancellation=False).values_list('datetime_slot', flat=True))
 
     availabilities = DoctorAvailability.objects.filter(
         doctor=doctor_profile,
@@ -710,13 +703,30 @@ def manage_day(request, date):
                 all_slots.append({'time': current_time_aware, 'status': status})
                 current_time_naive += interval
 
+    for added_slot in added_slots:
+        if added_slot not in booked_datetimes and added_slot not in canceled_slots:
+            all_slots.append({'time': added_slot, 'status': 'available'})
+
+    if request.method == 'POST' and request.POST.get('action') == 'add_slot':
+            last_slot_time = datetime.time(8, 50) # Default start time if no slots exist
+            if all_slots:
+                last_slot_time = max(s['time'] for s in all_slots).time()
+
+            new_slot_datetime_naive = datetime.datetime.combine(target_date, last_slot_time) + datetime.timedelta(minutes=10)
+            new_slot_datetime_aware = timezone.make_aware(new_slot_datetime_naive)
+
+            TimeSlotException.objects.create(
+                doctor=doctor_profile,
+                datetime_slot=new_slot_datetime_aware,
+                is_cancellation=False # This is an addition, not a cancellation
+            )
+            return redirect('booking:manage_day', date=date)
+
     # If the request was a failed POST for booking, use that form, otherwise create a new one
     if request.method == 'POST' and 'form' in locals():
         booking_form = form
     else:
         booking_form = AppointmentBookingForm()
-
-    ad_hoc_form = AdHocAppointmentForm()
 
     context = {
         'doctor': doctor_profile,
@@ -724,7 +734,6 @@ def manage_day(request, date):
         'jalali_date_str': date,
         'all_slots': sorted(all_slots, key=lambda x: x['time']),
         'form': booking_form,
-        'ad_hoc_form': ad_hoc_form,
         'has_availability': bool(availabilities),
         'page_title': f'مدیریت نوبت‌های روز {date}'
     }

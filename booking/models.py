@@ -150,7 +150,8 @@ class DailyExpense(models.Model):
 
 class TimeSlotException(models.Model):
     doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name='exceptions')
-    datetime_slot = models.DateTimeField(verbose_name="بازه زمانی لغو شده")
+    datetime_slot = models.DateTimeField(verbose_name="بازه زمانی")
+    is_cancellation = models.BooleanField(default=True)
 
     def __str__(self):
         return f"اسلات لغو شده برای {self.doctor} در {self.datetime_slot}"
