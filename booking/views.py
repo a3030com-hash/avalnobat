@@ -245,19 +245,11 @@ def book_appointment(request, pk, date):
                         request.session['pending_appointment_id'] = appointment.id
                         payload = {
                                'token': AMOOT_SMS_API_TOKEN,
-                               'Mobiles': appointment.patient_phone,
-                               'SendDateTime': '0',
-                               'SMSMessageText': f'سلام کاربر محترم رمز یکبار مصرف شما {otp_code} است. AvalNobat.ir',
-                               'LineNumber': 'Public'
+                               'Mobile': appointment.patient_phone,
+                               'PatternCodeID':4018,
+                               'PatternValues': otp_code,
                             }
-                        headers = {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        }
-                        print(f'سلام کاربر محترم رمز یکبار مصرف شما {otp_code} است. AvalNobat.ir')
-                        # Send the POST request
-                        requests.post(AMOOT_SMS_API_URL, headers=headers,data=payload)
-
-
+                        response=requests.post(AMOOT_SMS_API_URL,data=payload)
                     except requests.exceptions.RequestException as e:
                         print("خطا در ارسال پیامک:", e)
                     return redirect('booking:verify_appointment')
@@ -293,7 +285,7 @@ User = get_user_model()
 
 def verify_appointment(request):
     """
-    تایید شماره همراه با کد یک‌بار مصرف (شبیه‌سازی شده) با استفاده از session.
+تایید شماره همراه با کد یک‌بار مصرف  session.
     """
     pending_appointment_id = request.session.get('pending_appointment_id')
     if not pending_appointment_id:
@@ -326,20 +318,149 @@ def verify_appointment(request):
     return render(request, 'booking/verify_appointment.html', {'page_title': 'تأیید نوبت'})
 
 def payment_page(request):
-    """
-    صفحه شبیه‌سازی شده پرداخت با استفاده از session.
-    """
+ 
     pending_appointment_id = request.session.get('pending_appointment_id')
     if not pending_appointment_id:
         return redirect('booking:doctor_list')
 
     appointment = get_object_or_404(Appointment, pk=pending_appointment_id)
+
+    # ایجاد درگاه پرداخت زرین‌پال
+    merchant_id = "b7861e9d-2b6a-47b5-bac4-acc9e430e827"
+    amount = 150000  # مبلغ به ریال
+    callback_url = "http://avalnobat.ir/booking/verify_payment/"  # آدرس تأیید پرداخت
+
+    url = "https://payment.zarinpal.com/pg/v4/payment/request.json"
+    
+    payload = {
+        "merchant_id": merchant_id,
+        "amount": amount,
+        "callback_url": callback_url,
+        "description": f"پرداخت نوبت دکتر {appointment.doctor.name}",
+        "metadata": {
+            "mobile": appointment.patient_phone,
+            "email": getattr(appointment.patient, 'email', '') if hasattr(appointment, 'patient') else ''
+        }
+    }
+    
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    
+    payment_url = None
+    authority = None
+    
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        response_data = response.json()
+        
+        if response.status_code == 200 and response_data['data']['code'] == 100:
+            authority = response_data['data']['authority']
+            payment_url = f"https://www.zarinpal.com/pg/StartPay/{authority}"
+            
+            # ذخیره authority در session برای تأیید بعدی
+            request.session['payment_authority'] = authority
+            request.session['payment_amount'] = amount
+            
+            print(f"درگاه پرداخت ایجاد شد: {payment_url}")
+        else:
+            error_message = response_data['data']['message'] if 'data' in response_data else 'خطای ناشناخته'
+            print(f"خطا در ایجاد درگاه: {error_message}")
+            
+    except requests.exceptions.RequestException as e:
+        print(f"خطا در ارتباط با زرین‌پال: {e}")
+
     context = {
         'appointment': appointment,
-        'payment_amount': 100000,
+        'payment_amount': 150000,  # مبلغ جدید
+        'payment_url': payment_url,  # لینک درگاه پرداخت
+        'authority': authority,     # کد authority
         'page_title': 'صفحه پرداخت'
     }
     return render(request, 'booking/payment_page.html', context)
+
+def verify_payment(request):
+    """
+    صفحه تأیید پرداخت پس از بازگشت از درگاه زرین‌پال
+    """
+    authority = request.GET.get('Authority')
+    status = request.GET.get('Status')
+    
+    # بازیابی authority از session
+    session_authority = request.session.get('payment_authority')
+    amount = request.session.get('payment_amount', 100000)
+    pending_appointment_id = request.session.get('pending_appointment_id')
+    
+    if not pending_appointment_id:
+        return redirect('booking:doctor_list')
+    
+    appointment = get_object_or_404(Appointment, pk=pending_appointment_id)
+    
+    payment_successful = False
+    message = ""
+    
+    if status == 'OK' and authority == session_authority:
+        # تأیید پرداخت با زرین‌پال
+        merchant_id = "b7861e9d-2b6a-47b5-bac4-acc9e430e827"
+        
+        verify_url = "https://payment.zarinpal.com/pg/v4/payment/verify.json"
+        verify_payload = {
+            "merchant_id": merchant_id,
+            "amount": amount,
+            "authority": authority
+        }
+        
+        try:
+            verify_response = requests.post(verify_url, json=verify_payload, timeout=30)
+            verify_data = verify_response.json()
+            
+            if verify_response.status_code == 200:
+                if verify_data['data']['code'] == 100:
+                    # پرداخت موفق
+                    payment_successful = True
+                    appointment.is_paid = True
+                    appointment.payment_status = 'completed'
+                    appointment.save()
+                    
+                    # پاک کردن session
+                    if 'pending_appointment_id' in request.session:
+                        del request.session['pending_appointment_id']
+                    if 'payment_authority' in request.session:
+                        del request.session['payment_authority']
+                    if 'payment_amount' in request.session:
+                        del request.session['payment_amount']
+                    
+                    message = "پرداخت با موفقیت انجام شد. نوبت شما ثبت گردید."
+                else:
+                    message = f"پرداخت ناموفق: {verify_data['data']['message']}"
+            else:
+                message = "خطا در ارتباط با درگاه پرداخت"
+                
+        except requests.exceptions.RequestException as e:
+            message = f"خطا در تأیید پرداخت: {e}"
+    else:
+        message = "تراکنش توسط کاربر لغو شد."
+    
+    context = {
+        'payment_successful': payment_successful,
+        'message': message,
+        'appointment': appointment,
+        'page_title': 'نتیجه پرداخت'
+    }
+    
+    return render(request, 'booking/payment_result.html', context)
+
+def initiate_payment(request, appointment_id):
+    """
+    شروع فرآیند پرداخت و هدایت به درگاه
+    """
+    appointment = get_object_or_404(Appointment, pk=appointment_id)
+    
+    # ذخیره appointment_id در session
+    request.session['pending_appointment_id'] = appointment_id
+    
+    return redirect('booking:payment_page')
 
 def confirm_payment(request):
     """

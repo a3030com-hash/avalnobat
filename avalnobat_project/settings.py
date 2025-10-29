@@ -155,4 +155,4 @@ DEFAULT_FROM_EMAIL = 'info@avalnobat.ir'  # این خط را اضافه کنید
 SERVER_EMAIL = 'info@avalnobat.ir'  # این خط را هم اضافه 
 #AMOOT_SMS
 AMOOT_SMS_API_TOKEN = '4BC33DCDDBF33395ABF6C9956E28943F61F2718B'
-AMOOT_SMS_API_URL='https://portal.amootsms.com/rest/SendSimple'
+AMOOT_SMS_API_URL='https://portal.amootsms.com/rest/SendWithPattern'
