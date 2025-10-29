@@ -336,7 +336,7 @@ def payment_page(request):
         "merchant_id": merchant_id,
         "amount": amount,
         "callback_url": callback_url,
-        "description": f"پرداخت نوبت دکتر {appointment.doctor.name}",
+        "description": f"پرداخت نوبت دکتر {appointment.doctor.user.get_full_name()}",
         "metadata": {
             "mobile": appointment.patient_phone,
             "email": getattr(appointment.patient, 'email', '') if hasattr(appointment, 'patient') else ''
