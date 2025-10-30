@@ -3,6 +3,21 @@ import jdatetime
 
 register = template.Library()
 
+@register.filter(name='to_jalali_js')
+def to_jalali_js(gregorian_date):
+    """
+    Converts a Gregorian date to a Jalali date string in 'YYYY/MM/DD' format for JS.
+    """
+    if not gregorian_date:
+        return ""
+    if hasattr(gregorian_date, 'date'):
+        gregorian_date = gregorian_date.date()
+    try:
+        j_date = jdatetime.date.fromgregorian(date=gregorian_date)
+        return f"{j_date.year}/{j_date.month}/{j_date.day}"
+    except (ValueError, TypeError):
+        return gregorian_date
+
 @register.filter(name='to_jalali')
 def to_jalali(gregorian_date, format_str="%Y/%m/%d"):
     """

@@ -109,14 +109,14 @@
 
         {% for day in days %}
             {% if day.status == 'available' %}
-                    <a href="{% url 'booking:book_appointment' pk=doctor.pk date=day.date|to_jalali:'%Y-%m-%d' %}" style="text-decoration: none;">
-                        <div class="day {{ day.status }}" style="--booked-percentage: {{ day.booked_percentage }}%;">
-                        {{ day.date|to_jalali:"%d %B" }}
+                <a href="{% url 'booking:book_appointment' pk=doctor.pk date=day.date|to_jalali:'%Y-%m-%d' %}" style="text-decoration: none;">
+                    <div class="day {{ day.status }}" style="--booked-percentage: {{ day.booked_percentage }}%;">
+                        <span class="jalali-date" data-date="{{ day.date|to_jalali_js }}">{{ day.date|to_jalali:"%d %B" }}</span>
                     </div>
                 </a>
             {% else %}
                 <div class="day {{ day.status }}">
-                    {{ day.date|to_jalali:"%d %B" }}
+                    <span class="jalali-date" data-date="{{ day.date|to_jalali_js }}">{{ day.date|to_jalali:"%d %B" }}</span>
                 </div>
             {% endif %}
         {% endfor %}

@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -327,6 +328,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.js"></script>
+    <script src="{% static 'booking/custom_jalali.js' %}"></script>
     {% block extra_js %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
