@@ -58,3 +58,21 @@ def div(value, arg):
         return float(value) / float(arg)
     except (ValueError, ZeroDivisionError):
         return None
+
+@register.filter(name='to_persian_weekday')
+def to_persian_weekday(gregorian_date):
+    """
+    Converts a Gregorian date object to a Persian weekday name.
+    """
+    if not gregorian_date:
+        return ""
+
+    if hasattr(gregorian_date, 'date'):
+        gregorian_date = gregorian_date.date()
+
+    try:
+        jalali_date = jdatetime.date.fromgregorian(date=gregorian_date)
+        weekdays = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"]
+        return weekdays[jalali_date.weekday()]
+    except (ValueError, TypeError):
+        return ""
