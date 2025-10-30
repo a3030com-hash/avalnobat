@@ -350,12 +350,13 @@ def payment_page(request):
     
     payment_url = None
     authority = None
+    error_message = None
     
     try:
         response = requests.post(url, json=payload, headers=headers, timeout=30)
         response_data = response.json()
         
-        if response.status_code == 200 and response_data['data']['code'] == 100:
+        if response.status_code == 200 and response_data.get('data') and response_data['data'].get('code') == 100:
             authority = response_data['data']['authority']
             payment_url = f"https://www.zarinpal.com/pg/StartPay/{authority}"
             
@@ -365,10 +366,17 @@ def payment_page(request):
             
             print(f"درگاه پرداخت ایجاد شد: {payment_url}")
         else:
-            error_message = response_data['data']['message'] if 'data' in response_data else 'خطای ناشناخته'
+            # Correctly parse the error message from Zarinpal's response
+            if 'errors' in response_data and 'message' in response_data['errors']:
+                error_message = response_data['errors']['message']
+            elif 'data' in response_data and 'message' in response_data['data']:
+                 error_message = response_data['data']['message']
+            else:
+                error_message = 'خطای ناشناخته در ایجاد درگاه پرداخت رخ داد.'
             print(f"خطا در ایجاد درگاه: {error_message}")
             
     except requests.exceptions.RequestException as e:
+        error_message = "امکان اتصال به درگاه پرداخت وجود ندارد. لطفاً بعداً تلاش کنید."
         print(f"خطا در ارتباط با زرین‌پال: {e}")
 
     context = {
@@ -376,7 +384,8 @@ def payment_page(request):
         'payment_amount': 100000,  # مبلغ جدید
         'payment_url': payment_url,  # لینک درگاه پرداخت
         'authority': authority,     # کد authority
-        'page_title': 'صفحه پرداخت'
+        'page_title': 'صفحه پرداخت',
+        'error_message': error_message
     }
     return render(request, 'booking/payment_page.html', context)
 
