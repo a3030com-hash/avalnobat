@@ -327,7 +327,7 @@ def payment_page(request):
 
     # ایجاد درگاه پرداخت زرین‌پال
     merchant_id = "b7861e9d-2b6a-47b5-bac4-acc9e430e827"
-    amount = 150000  # مبلغ به ریال
+    amount = 100000  # مبلغ به ریال
     callback_url = "http://avalnobat.ir/booking/verify_payment/"  # آدرس تأیید پرداخت
 
     url = "https://payment.zarinpal.com/pg/v4/payment/request.json"
@@ -336,7 +336,7 @@ def payment_page(request):
         "merchant_id": merchant_id,
         "amount": amount,
         "callback_url": callback_url,
-        "description": f"پرداخت نوبت دکتر {appointment.doctor.name}",
+        "description": f"پرداخت نوبت دکتر {appointment.doctor.user.get_full_name()}",
         "metadata": {
             "mobile": appointment.patient_phone,
             "email": getattr(appointment.patient, 'email', '') if hasattr(appointment, 'patient') else ''
@@ -373,7 +373,7 @@ def payment_page(request):
 
     context = {
         'appointment': appointment,
-        'payment_amount': 150000,  # مبلغ جدید
+        'payment_amount': 100000,  # مبلغ جدید
         'payment_url': payment_url,  # لینک درگاه پرداخت
         'authority': authority,     # کد authority
         'page_title': 'صفحه پرداخت'
