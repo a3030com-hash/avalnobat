@@ -8,22 +8,22 @@
     <h3 class="section-title">خلاصه درآمد</h3>
     <table class="report-table">
         <tr>
-            <td class="label">درآمد کل از ویزیت‌ها:</td>
-            <td class="amount positive">{{ total_income|intcomma }} تومان</td>
+            <td data-label="عنوان" class="label">درآمد کل از ویزیت‌ها:</td>
+            <td data-label="مبلغ" class="amount positive">{{ total_income|intcomma }} تومان</td>
         </tr>
         <tr>
-            <td class="label">جمع هزینه‌ها:</td>
-            <td class="amount negative">{{ total_expenses|intcomma }} تومان</td>
+            <td data-label="عنوان" class="label">جمع هزینه‌ها:</td>
+            <td data-label="مبلغ" class="amount negative">{{ total_expenses|intcomma }} تومان</td>
         </tr>
         {% if total_payments_received > 0 %}
         <tr>
-            <td class="label">سایر دریافتی‌ها:</td>
-            <td class="amount positive">{{ total_payments_received|intcomma }} تومان</td>
+            <td data-label="عنوان" class="label">سایر دریافتی‌ها:</td>
+            <td data-label="مبلغ" class="amount positive">{{ total_payments_received|intcomma }} تومان</td>
         </tr>
         {% endif %}
         <tr class="total-row">
-            <td class="label">درآمد خالص روز:</td>
-            <td class="amount">{{ net_income|intcomma }} تومان</td>
+            <td data-label="عنوان" class="label">درآمد خالص روز:</td>
+            <td data-label="مبلغ" class="amount">{{ net_income|intcomma }} تومان</td>
         </tr>
     </table>
 </div>
@@ -33,8 +33,8 @@
     <table class="report-table">
         {% for method, total in income_by_payment_method.items %}
         <tr>
-            <td class="label">{{ method }}:</td>
-            <td class="amount">{{ total|intcomma }} تومان</td>
+            <td data-label="نوع پرداخت" class="label">{{ method }}:</td>
+            <td data-label="مبلغ" class="amount">{{ total|intcomma }} تومان</td>
         </tr>
         {% empty %}
         <tr>
@@ -49,8 +49,8 @@
     <table class="report-table">
         {% for insurance, data in income_by_insurance.items %}
         <tr>
-            <td class="label">{{ insurance }}:</td>
-            <td class="amount">
+            <td data-label="نوع بیمه" class="label">{{ insurance }}:</td>
+            <td data-label="جزئیات" class="amount">
                 {{ data.count }} نفر - هر نفر {{ data.total|div:data.count|floatformat:0|intcomma }} تومان - جمعا {{ data.total|intcomma }} تومان
             </td>
         </tr>
@@ -74,8 +74,8 @@
         <tbody>
             {% for item in todays_expenses_queryset %}
             <tr>
-                <td>{{ item.description }}</td>
-                <td class="amount {% if item.amount < 0 %}negative{% else %}positive{% endif %}">
+                <td data-label="شرح">{{ item.description }}</td>
+                <td data-label="مبلغ (تومان)" class="amount {% if item.amount < 0 %}negative{% else %}positive{% endif %}">
                     {{ item.amount|intcomma }}
                 </td>
             </tr>
@@ -98,7 +98,7 @@
     <div class="settle-up-section" style="margin-top: 1rem;">
         <form method="post" action="{% url 'booking:financial_report' date=today|date:'Y-m-d' %}">
             {% csrf_token %}
-            <button type="submit" name="settle_up" class="settle-btn" {% if cash_box_balance == 0 %}disabled{% endif %}>
+            <button type="submit" name="settle_up" class="btn-submit" {% if cash_box_balance == 0 %}disabled{% endif %}>
                 تسویه صندوق
             </button>
         </form>

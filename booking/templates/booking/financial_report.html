@@ -4,50 +4,6 @@
 {% block title %}{{ page_title }} - AvalNobat{% endblock %}
 
 {% block content %}
-<style>
-    .report-container {
-        max-width: 800px;
-        margin: 2rem auto;
-        padding: 2rem;
-        background-color: white;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    .report-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .report-table td {
-        padding: 12px;
-        border-bottom: 1px solid #eee;
-    }
-    .report-table .label {
-        font-weight: bold;
-        color: #495057;
-    }
-    .report-table .amount {
-        font-family: monospace;
-        text-align: left;
-    }
-    .total-row td {
-        border-top: 2px solid #343a40;
-        font-weight: bold;
-        font-size: 1.1rem;
-    }
-    .positive { color: #28a745; }
-    .negative { color: #dc3545; }
-    .settle-btn {
-        background-color: #007bff;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-top: 1.5rem;
-    }
-</style>
-
 <div class="report-container">
     {% include 'booking/financial_report_content.html' %}
 </div>

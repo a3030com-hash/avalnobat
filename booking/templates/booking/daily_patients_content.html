@@ -23,17 +23,17 @@
         <tbody>
             {% for form in formset %}
                 <tr>
-                    <td>{{ form.instance.appointment_datetime|time:"H:i" }}</td>
-                    <td>{{ form.instance.patient_name }}</td>
-                    <td>{{ form.instance.patient_national_id|default:"-" }}</td>
-                    <td>{{ form.insurance_type }}</td>
-                    <td>{{ form.visit_fee_paid }}</td>
-                    <td>{{ form.service_description }}</td>
-                    <td>{{ form.payment_method }}</td>
+                    <td data-label="ساعت">{{ form.instance.appointment_datetime|time:"H:i" }}</td>
+                    <td data-label="نام بیمار">{{ form.instance.patient_name }}</td>
+                    <td data-label="کد ملی">{{ form.instance.patient_national_id|default:"-" }}</td>
+                    <td data-label="نوع بیمه">{{ form.insurance_type }}</td>
+                    <td data-label="مبلغ دریافتی">{{ form.visit_fee_paid }}</td>
+                    <td data-label="شرح خدمات">{{ form.service_description }}</td>
+                    <td data-label="نحوه پرداخت">{{ form.payment_method }}</td>
                     {{ form.id }}
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-    <button type="submit" name="update_appointments" class="submit-btn">ذخیره تغییرات نوبت‌ها</button>
+    <button type="submit" name="update_appointments" class="btn-submit">ذخیره تغییرات نوبت‌ها</button>
 </form>
