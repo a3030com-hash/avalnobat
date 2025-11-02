@@ -28,6 +28,7 @@ class DoctorProfile(models.Model):
     phone_number = models.CharField(max_length=20, verbose_name="شماره تلفن مطب", null=True, blank=True)
     photo = models.ImageField(upload_to='doctor_photos/', null=True, blank=True, verbose_name="عکس پزشک")
     biography = models.TextField(blank=True, verbose_name="بیوگرافی")
+    visit_fee = models.DecimalField(max_digits=10, decimal_places=0, default=100000, verbose_name="هزینه ویزیت آنلاین")
 
     def __str__(self):
         return f"دکتر {self.user.get_full_name()}"

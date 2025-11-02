@@ -59,11 +59,16 @@
     </div>
 
     <div class="actions">
-        {% if payment_url %}
-            <a href="{{ payment_url }}" class="pay-btn">پرداخت</a>
-            <a href="{% url 'booking:doctor_detail' pk=appointment.doctor.pk %}" class="cancel-btn">لغو</a>
+        {% if error_message %}
+            <a href="{% url 'booking:doctor_detail' pk=appointment.doctor.pk %}" class="cancel-btn">بازگشت</a>
         {% else %}
-             <a href="{% url 'booking:doctor_detail' pk=appointment.doctor.pk %}" class="cancel-btn">بازگشت</a>
+            <p>در حال انتقال به درگاه پرداخت به پرداخت ملت...</p>
+            <form id="payment-form" action="https://bpm.shaparak.ir/pgwchannel/startpay.mellat" method="POST">
+                <input type="hidden" name="RefId" value="{{ ref_id }}">
+            </form>
+            <script>
+                document.getElementById('payment-form').submit();
+            </script>
         {% endif %}
     </div>
      {% if not error_message %}

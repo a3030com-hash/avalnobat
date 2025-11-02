@@ -8,7 +8,6 @@ urlpatterns = [
     path('doctor/<int:pk>/', views.doctor_detail, name='doctor_detail'),
     path('doctor/<int:pk>/book/<str:date>/', views.book_appointment, name='book_appointment'),
     path('verify/', views.verify_appointment, name='verify_appointment'),
-    path('payment/', views.payment_page, name='payment_page'),
     path('confirm/', views.confirm_payment, name='confirm_payment'),
     path('dashboard/', views.doctor_dashboard, name='doctor_dashboard'),
     path('availability/<int:pk>/edit/', views.edit_availability, name='edit_availability'),
@@ -22,4 +21,6 @@ urlpatterns = [
     path('expense/delete/<int:pk>/', views.delete_expense, name='delete_expense'),
     re_path(r'^financial-report/(?P<date>\d{4}-\d{2}-\d{2})?/?$', views.financial_report, name='financial_report'),
     path('manage-day/<str:date>/', views.manage_day, name='manage_day'),
+    path('payment/', views.payment_page, name='payment_page'),
+    path('verify-payment/', views.verify_payment, name='verify_payment'),
 ]

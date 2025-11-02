@@ -1,3 +1,4 @@
+
 import datetime
 import jdatetime
 import random
@@ -8,7 +9,7 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from .models import DoctorProfile, DoctorAvailability, Appointment, TimeSlotException
 from .forms import DoctorAvailabilityForm, AppointmentBookingForm
-
+from django.urls import reverse
 from django.db.models import Q
 import requests
 
@@ -318,72 +319,65 @@ def verify_appointment(request):
     return render(request, 'booking/verify_appointment.html', {'page_title': 'تأیید نوبت'})
 
 def payment_page(request):
- 
+    """
+    Initiates a payment request with the Beh Pardakht gateway.
+    """
     pending_appointment_id = request.session.get('pending_appointment_id')
     if not pending_appointment_id:
         return redirect('booking:doctor_list')
 
     appointment = get_object_or_404(Appointment, pk=pending_appointment_id)
+    
+    from zeep import Client
+    
+    client = Client('https://bpm.shaparak.ir/pgwchannel/services/pgw?wsdl')
+    
+    terminal_id = settings.BEH_PARDAKHT_TERMINAL_ID
+    user_name = settings.BEH_PARDAKHT_USERNAME
+    user_password = settings.BEH_PARDAKHT_PASSWORD
+    order_id = pending_appointment_id
+    amount = int(appointment.doctor.visit_fee)
+    local_date = datetime.datetime.now().strftime('%Y%m%d')
+    local_time = datetime.datetime.now().strftime('%H%M%S')
+    additional_data = f'Appointment for {appointment.patient_name}'
+    callback_url = request.build_absolute_uri(reverse('booking:verify_payment'))
+    payer_id = 0
 
-    # ایجاد درگاه پرداخت زرین‌پال
-    merchant_id = "b7861e9d-2b6a-47b5-bac4-acc9e430e827"
-    amount = 100000  # مبلغ به ریال
-    callback_url = "http://avalnobat.ir/booking/verify_payment/"  # آدرس تأیید پرداخت
-
-    url = "https://payment.zarinpal.com/pg/v4/payment/request.json"
-    
-    payload = {
-        "merchant_id": merchant_id,
-        "amount": amount,
-        "callback_url": callback_url,
-        "description": f"پرداخت نوبت دکتر {appointment.doctor.user.get_full_name()}",
-        "metadata": {
-            "mobile": appointment.patient_phone,
-            "email": getattr(appointment.patient, 'email', '') if hasattr(appointment, 'patient') else ''
-        }
-    }
-    
-    headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    }
-    
-    payment_url = None
-    authority = None
-    error_message = None
-    
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        response_data = response.json()
+        result = client.service.bpPayRequest(
+            terminalId=terminal_id,
+            userName=user_name,
+            userPassword=user_password,
+            orderId=order_id,
+            amount=amount,
+            localDate=local_date,
+            localTime=local_time,
+            additionalData=additional_data,
+            callBackUrl=callback_url,
+            payerId=payer_id
+        )
         
-        if response.status_code == 200 and response_data.get('data') and response_data['data'].get('code') == 100:
-            authority = response_data['data']['authority']
-            payment_url = f"https://www.zarinpal.com/pg/StartPay/{authority}"
-            
-            # ذخیره authority در session برای تأیید بعدی
-            request.session['payment_authority'] = authority
-            request.session['payment_amount'] = amount
-            
-            print(f"درگاه پرداخت ایجاد شد: {payment_url}")
+        res_code, ref_id = result.split(',')
+
+        if res_code == '0':
+            context = {
+                'ref_id': ref_id,
+                'post_url': 'https://bpm.shaparak.ir/pgwchannel/startpay.mellat',
+                'appointment': appointment,
+                'payment_amount': amount,
+                'page_title': 'صفحه پرداخت',
+                'error_message': None
+            }
+            return render(request, 'booking/payment_page.html', context)
         else:
-            # Correctly parse the error message from Zarinpal's response
-            if 'errors' in response_data and 'message' in response_data['errors']:
-                error_message = response_data['errors']['message']
-            elif 'data' in response_data and 'message' in response_data['data']:
-                 error_message = response_data['data']['message']
-            else:
-                error_message = 'خطای ناشناخته در ایجاد درگاه پرداخت رخ داد.'
-            print(f"خطا در ایجاد درگاه: {error_message}")
+            error_message = f'Error from Beh Pardakht: {res_code}'
             
-    except requests.exceptions.RequestException as e:
-        error_message = "امکان اتصال به درگاه پرداخت وجود ندارد. لطفاً بعداً تلاش کنید."
-        print(f"خطا در ارتباط با زرین‌پال: {e}")
+    except Exception as e:
+        error_message = f'An error occurred: {e}'
 
     context = {
         'appointment': appointment,
-        'payment_amount': 100000,  # مبلغ جدید
-        'payment_url': payment_url,  # لینک درگاه پرداخت
-        'authority': authority,     # کد authority
+        'payment_amount': amount,
         'page_title': 'صفحه پرداخت',
         'error_message': error_message
     }
@@ -391,74 +385,84 @@ def payment_page(request):
 
 def verify_payment(request):
     """
-    صفحه تأیید پرداخت پس از بازگشت از درگاه زرین‌پال
+    Verifies a payment with the Beh Pardakht gateway after the user is redirected back.
     """
-    authority = request.GET.get('Authority')
-    status = request.GET.get('Status')
-    
-    # بازیابی authority از session
-    session_authority = request.session.get('payment_authority')
-    amount = request.session.get('payment_amount', 100000)
-    pending_appointment_id = request.session.get('pending_appointment_id')
-    
-    if not pending_appointment_id:
-        return redirect('booking:doctor_list')
-    
-    appointment = get_object_or_404(Appointment, pk=pending_appointment_id)
-    
-    payment_successful = False
-    message = ""
-    
-    if status == 'OK' and authority == session_authority:
-        # تأیید پرداخت با زرین‌پال
-        merchant_id = "b7861e9d-2b6a-47b5-bac4-acc9e430e827"
-        
-        verify_url = "https://payment.zarinpal.com/pg/v4/payment/verify.json"
-        verify_payload = {
-            "merchant_id": merchant_id,
-            "amount": amount,
-            "authority": authority
-        }
+    ref_id = request.POST.get('RefId')
+    res_code = request.POST.get('ResCode')
+    sale_order_id = request.POST.get('SaleOrderId')
+    sale_reference_id = request.POST.get('SaleReferenceId')
+
+    if res_code == '0':
+        from zeep import Client
+        client = Client('https://bpm.shaparak.ir/pgwchannel/services/pgw?wsdl')
+
+        terminal_id = settings.BEH_PARDAKHT_TERMINAL_ID
+        user_name = settings.BEH_PARDAKHT_USERNAME
+        user_password = settings.BEH_PARDAKHT_PASSWORD
         
         try:
-            verify_response = requests.post(verify_url, json=verify_payload, timeout=30)
-            verify_data = verify_response.json()
-            
-            if verify_response.status_code == 200:
-                if verify_data['data']['code'] == 100:
-                    # پرداخت موفق
-                    payment_successful = True
+            verify_result = client.service.bpVerifyRequest(
+                terminalId=terminal_id,
+                userName=user_name,
+                userPassword=user_password,
+                orderId=sale_order_id,
+                saleOrderId=sale_order_id,
+                saleReferenceId=sale_reference_id
+            )
+
+            if verify_result == '0':
+                # Payment is successful, now settle it
+                settle_result = client.service.bpSettleRequest(
+                    terminalId=terminal_id,
+                    userName=user_name,
+                    userPassword=user_password,
+                    orderId=sale_order_id,
+                    saleOrderId=sale_order_id,
+                    saleReferenceId=sale_reference_id
+                )
+                if settle_result == '0':
+                    appointment = get_object_or_404(Appointment, pk=sale_order_id)
+                    appointment.status = 'BOOKED'
                     appointment.is_paid = True
-                    appointment.payment_status = 'completed'
                     appointment.save()
-                    
-                    # پاک کردن session
-                    if 'pending_appointment_id' in request.session:
-                        del request.session['pending_appointment_id']
-                    if 'payment_authority' in request.session:
-                        del request.session['payment_authority']
-                    if 'payment_amount' in request.session:
-                        del request.session['payment_amount']
-                    
                     message = "پرداخت با موفقیت انجام شد. نوبت شما ثبت گردید."
+                    payment_successful = True
+
+                    # --- Send SMS Confirmation ---
+                    try:
+                        AMOOT_SMS_API_TOKEN = settings.AMOOT_SMS_API_TOKEN
+                        AMOOT_SMS_API_URL = settings.AMOOT_SMS_API_URL
+                        payload = {
+                            'token': AMOOT_SMS_API_TOKEN,
+                            'Mobile': appointment.patient_phone,
+                            'PatternCodeID': 4161,
+                            'PatternValues': f"{appointment.patient_name};{appointment.doctor.user.get_full_name()};{appointment.appointment_datetime.strftime('%Y-%m-%d %H:%M')};{appointment.doctor.address};{appointment.doctor.phone_number}",
+                        }
+                        requests.post(AMOOT_SMS_API_URL, data=payload)
+                    except requests.exceptions.RequestException as e:
+                        print(f"Error sending confirmation SMS: {e}")
+
                 else:
-                    message = f"پرداخت ناموفق: {verify_data['data']['message']}"
+                    message = f"خطا در تسویه حساب: {settle_result}"
+                    payment_successful = False
             else:
-                message = "خطا در ارتباط با درگاه پرداخت"
-                
-        except requests.exceptions.RequestException as e:
-            message = f"خطا در تأیید پرداخت: {e}"
+                message = f"خطا در تایید پرداخت: {verify_result}"
+                payment_successful = False
+
+        except Exception as e:
+            message = f"خطا در ارتباط با وب سرویس به پرداخت: {e}"
+            payment_successful = False
     else:
-        message = "تراکنش توسط کاربر لغو شد."
-    
+        message = f"تراکنش ناموفق بود. کد خطا: {res_code}"
+        payment_successful = False
+
     context = {
         'payment_successful': payment_successful,
         'message': message,
-        'appointment': appointment,
         'page_title': 'نتیجه پرداخت'
     }
-    
     return render(request, 'booking/payment_result.html', context)
+
 
 def initiate_payment(request, appointment_id):
     """
@@ -897,7 +901,6 @@ def edit_profile(request):
     return render(request, 'booking/edit_profile.html', context)
 
 from django.db.models import Sum, Q
-from django.urls import reverse
 
 # ... (other code)
 

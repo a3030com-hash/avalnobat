@@ -3,3 +3,4 @@ Pillow>=10.0
 jdatetime>=5.0
 python-dotenv
 requests
+zeep
