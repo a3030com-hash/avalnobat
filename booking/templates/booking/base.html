@@ -49,6 +49,8 @@
             flex-direction: column; /* تنظیم به صورت ستونی */
             align-items: center;
             width: 100%;
+            max-width: 1200px; /* Match main-content width */
+            margin: 0 auto; /* Center the nav */
         }
 
         header .nav-items {
@@ -474,10 +476,12 @@
     </main>
 
     <footer>
-        <p>&copy; {% now "Y" %} - وب‌سایت نوبت‌دهی اول نوبت. تمام حقوق محفوظ است.</p>
-        <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
-            <img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf' alt='' style='cursor:pointer' code='3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
-        </a>
+        <div style="width: 100%; max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+            <p>&copy; {% now "Y" %} - وب‌سایت نوبت‌دهی اول نوبت. تمام حقوق محفوظ است.</p>
+            <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
+                <img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf' alt='' style='cursor:pointer' code='3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
+            </a>
+        </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.js"></script>
     <script src="{% static 'booking/custom_jalali.js' %}"></script>
