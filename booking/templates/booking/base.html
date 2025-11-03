@@ -280,12 +280,13 @@
 
         .form-group input,
         .form-group select,
-        .form-group textarea {
+        .form-group textarea,
+        .report-table td input,
+        .report-table td select {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            transition: border-color 0.2s, box-shadow 0.2s;
             box-sizing: border-box;
         }
 
@@ -385,6 +386,11 @@
                 padding-right: 0;
                 font-weight: 600;
                 text-align: right;
+            }
+            .report-table td input,
+            .report-table td select {
+                position: relative;
+                z-index: 2;
             }
         }
     </style>
