@@ -4,7 +4,6 @@
 <p><strong>تاریخ:</strong> {{ today|to_jalali:"%A, %d %B %Y" }}</p>
 <hr>
 
-<h3>لیست بیماران امروز</h3>
 <form method="post">
     {% csrf_token %}
     {{ formset.management_form }}

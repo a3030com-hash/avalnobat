@@ -474,14 +474,18 @@
         {% block content %}
         {% endblock %}
     </main>
-
     <footer>
-        <div style="width: 100%; max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-            <p>&copy; {% now "Y" %} - وب‌سایت نوبت‌دهی اول نوبت. تمام حقوق محفوظ است.</p>
-            <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
-                <img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf' alt='' style='cursor:pointer' code='3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
-            </a>
-        </div>
+        <div style="width: 100%; max-width: 1200px; margin: 0 auto; display: flex; align-items: center;">
+            <div style="flex: 1; display: flex; flex-direction: column;  ">
+                <p>هزینه نوبت دهی  ۱۰۰,۰۰۰ ریال است که پس از دریافت نوبت از طریق درگاه (به پرداخت)دریافت میشود.</p>
+                <p>وجه ویزیت در مطب دریافت میگردد.</p>
+            </div>  
+            <div style="flex: 2;">
+                <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
+                    <img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf' alt='لوگوی اینماد' style='cursor:pointer' code='3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
+                </a>
+            </div>
+         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.js"></script>
     <script src="{% static 'booking/custom_jalali.js' %}"></script>
