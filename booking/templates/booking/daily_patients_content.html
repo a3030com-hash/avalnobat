@@ -4,7 +4,7 @@
 <p><strong>تاریخ:</strong> {{ today|to_jalali:"%A, %d %B %Y" }}</p>
 <hr>
 
-<form method="post">
+<form id="daily-patients-form" method="post">
     {% csrf_token %}
     {{ formset.management_form }}
     <table class="form-table report-table">

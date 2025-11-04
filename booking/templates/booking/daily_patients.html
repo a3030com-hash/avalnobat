@@ -7,4 +7,55 @@
 <div class="panel-container">
     {% include 'booking/daily_patients_content.html' %}
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.querySelector('.main-content');
+
+    container.addEventListener('submit', function(e) {
+        if (e.target && e.target.id === 'daily-patients-form') {
+            e.preventDefault();
+
+            const form = e.target;
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                // Success means the form saved. We just need to show a confirmation
+                // and maybe refresh the content to show updated values.
+                // For now, let's just refresh.
+                const currentDateLink = document.querySelector('#daily-patients-link');
+                if (currentDateLink && currentDateLink.href) {
+                    const mainContent = document.querySelector('.main-content');
+                    mainContent.style.opacity = '0.5';
+                    fetch(currentDateLink.href, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        mainContent.innerHTML = html;
+                        mainContent.style.opacity = '1';
+                        // Optionally, show a success message
+                        alert('تغییرات با موفقیت ذخیره شد.');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving. Please try again.');
+            });
+        }
+    });
+});
+</script>
 {% endblock %}
