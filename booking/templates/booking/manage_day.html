@@ -91,6 +91,9 @@
         padding: 0;
         cursor: pointer;
     }
+    .toggleable-block-btn {
+        display: none;
+    }
 </style>
 
 <div class="booking-container">
@@ -116,7 +119,7 @@
                             <input type="hidden" name="selected_slot" value="{{ slot.time.isoformat }}">
                             {% if slot.status == 'available' %}
                                 <input type="hidden" name="action" value="block">
-                                <button type="submit" class="inline-btn block-btn" title="مسدود کردن نوبت">×</button>
+                                <button type="submit" class="inline-btn block-btn toggleable-block-btn" title="مسدود کردن نوبت">×</button>
                             {% else %}
                                 <input type="hidden" name="action" value="unblock">
                                 <button type="submit" class="inline-btn unblock-btn" title="فعال‌سازی نوبت">+</button>
@@ -137,9 +140,9 @@
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_slot">
-            <button type="submit" class="submit-btn book-btn" id="add-slot-btn">+ ایجاد ساعت نوبت</button>
-            <button type="submit" class="submit-btn book-btn" id="ad-hoc-booking-btn" style="display:none;">x فعال و غیر فعال ساعت نوبت</button>
+            <button type="submit" class="submit-btn book-btn">+ ایجاد ساعت نوبت</button>
         </form>
+        <button type="button" class="submit-btn book-btn" id="toggle-block-btns">x فعال و غیر فعال ساعت نوبت</button>
     </div>
 
     <!-- Hidden Action Forms -->
@@ -160,19 +163,14 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const addSlotBtn = document.getElementById('add-slot-btn');
-        const adHocBookingBtn = document.getElementById('ad-hoc-booking-btn');
-
-        // Show the ad-hoc button if the flag is set in sessionStorage
-        if (sessionStorage.getItem('adHocButtonVisible') === 'true') {
-            adHocBookingBtn.style.display = 'inline-block';
-        }
-
-        // When add-slot is clicked, show the ad-hoc button and set the flag
-        addSlotBtn.addEventListener('click', function() {
-            sessionStorage.setItem('adHocButtonVisible', 'true');
-            // The form submission will reload the page, and the DOMContentLoaded will handle showing the button.
+    document.getElementById('toggle-block-btns').addEventListener('click', function() {
+        const blockButtons = document.querySelectorAll('.toggleable-block-btn');
+        blockButtons.forEach(function(button) {
+            if (button.style.display === 'none' || button.style.display === '') {
+                button.style.display = 'inline-block';
+            } else {
+                button.style.display = 'none';
+            }
         });
     });
 
