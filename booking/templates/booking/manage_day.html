@@ -137,8 +137,8 @@
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_slot">
-            <button type="submit" class="submit-btn book-btn">+ ایجاد ساعت نوبت</button>
-            <button type="submit" class="submit-btn book-btn">x فعال و غیر فعال ساعت نوبت</button>
+            <button type="submit" class="submit-btn book-btn" id="add-slot-btn">+ ایجاد ساعت نوبت</button>
+            <button type="submit" class="submit-btn book-btn" id="ad-hoc-booking-btn" style="display:none;">x فعال و غیر فعال ساعت نوبت</button>
         </form>
     </div>
 
@@ -160,6 +160,22 @@
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const addSlotBtn = document.getElementById('add-slot-btn');
+        const adHocBookingBtn = document.getElementById('ad-hoc-booking-btn');
+
+        // Show the ad-hoc button if the flag is set in sessionStorage
+        if (sessionStorage.getItem('adHocButtonVisible') === 'true') {
+            adHocBookingBtn.style.display = 'inline-block';
+        }
+
+        // When add-slot is clicked, show the ad-hoc button and set the flag
+        addSlotBtn.addEventListener('click', function() {
+            sessionStorage.setItem('adHocButtonVisible', 'true');
+            // The form submission will reload the page, and the DOMContentLoaded will handle showing the button.
+        });
+    });
+
     const formContainer = document.getElementById('form-container');
     const bookingSection = document.getElementById('booking-section');
     const hiddenSlotInput = document.getElementById('hidden-selected-slot');
