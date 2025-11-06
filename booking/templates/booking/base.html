@@ -483,43 +483,44 @@
 
     <script>
         function formatNumber(input) {
+            // 1. Get the value and remove any existing commas.
             let value = input.value.replace(/,/g, '');
-            if (isNaN(value) || value === '') {
+
+            // 2. Ensure it's a valid number, otherwise clear the input.
+            if (isNaN(value) || value === '' || value === null) {
                 input.value = '';
                 return;
             }
-            let formattedValue = parseInt(value, 10).toLocaleString('en-US');
-            if (formattedValue === 'NaN') {
-                input.value = '';
-            } else {
-                input.value = formattedValue;
-            }
+
+            // 3. Convert to number to remove leading zeros, then back to string.
+            let numValue = parseInt(value, 10);
+
+            // 4. Use a simple regex to add thousand separators.
+            let formattedValue = numValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+            input.value = formattedValue;
         }
 
         function applyFormatting(container) {
             container.querySelectorAll('.number-input').forEach(input => {
-                if (input.dataset.isFormatted) return;
+                if (input.dataset.isFormatted) return; // Don't attach listeners twice
 
+                // Format the initial value on load
                 formatNumber(input);
 
+                // Add listener for typing
                 input.addEventListener('keyup', () => formatNumber(input));
 
-                const form = input.closest('form');
-                if (form && !form.dataset.submitListener) {
-                    form.addEventListener('submit', () => {
-                        form.querySelectorAll('.number-input').forEach(input => {
-                            input.value = input.value.replace(/,/g, '');
-                        });
-                    });
-                    form.dataset.submitListener = 'true';
-                }
+                // Mark as formatted
                 input.dataset.isFormatted = 'true';
             });
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Apply to initial content
             applyFormatting(document.body);
 
+            // Use a MutationObserver to apply to dynamically loaded content
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     mutation.addedNodes.forEach((node) => {
@@ -534,6 +535,15 @@
             if(mainContent) {
                 observer.observe(mainContent, { childList: true, subtree: true });
             }
+
+            // Add a single submit listener to the body to handle all forms
+            document.body.addEventListener('submit', function(e) {
+                if (e.target.tagName.toLowerCase() === 'form') {
+                    e.target.querySelectorAll('.number-input').forEach(input => {
+                        input.value = input.value.replace(/,/g, '');
+                    });
+                }
+            });
 
             window.userDate = null;
             let pageConfig = {};
