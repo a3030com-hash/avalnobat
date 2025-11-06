@@ -12,99 +12,34 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('daily-patients-container');
-    let userDate;
-
-    function initializeDate() {
-        const savedDate = localStorage.getItem('userDate');
-        const initialDate = container.querySelector('#date-display') ? new Date('{{ today|date:"Y-m-d" }}') : new Date();
-        userDate = savedDate ? new Date(savedDate) : initialDate;
-        updateContentForDate(userDate, false); // false = don't push history state on initial load
-    }
-
-    async function updateContentForDate(date, pushState = true) {
-        const urlDate = date.toISOString().split('T')[0];
-        localStorage.setItem('userDate', urlDate);
-
-        const targetUrl = `{% url 'booking:daily_patients' '0000-00-00' %}`.replace('0000-00-00', urlDate);
-
-        try {
-            container.style.opacity = '0.5';
-            const response = await fetch(targetUrl, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            });
-            if (!response.ok) throw new Error('Server response not OK');
-
-            const html = await response.text();
-            if (pushState) {
-                history.pushState({ path: targetUrl }, '', targetUrl);
-            }
-            container.innerHTML = html;
-        } catch (error) {
-            console.error('Fetch error:', error);
-            window.location.href = targetUrl; // Fallback to full reload
-        } finally {
-            container.style.opacity = '1';
-        }
-    }
-
-    // Event delegation for date navigation buttons
-    document.body.addEventListener('click', function(e) {
+    document.addEventListener('submit', function(e) {
         const container = document.getElementById('daily-patients-container');
-        if (!container) return;
+        if (!container || !e.target.closest('#daily-patients-form')) return;
 
-        if (e.target.closest('#prev-day-btn')) {
-            userDate.setDate(userDate.getDate() - 1);
-            updateContentForDate(userDate);
-        }
-        if (e.target.closest('#next-day-btn')) {
-            userDate.setDate(userDate.getDate() + 1);
-            updateContentForDate(userDate);
-        }
-    });
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
 
-    // Event delegation for form submission
-    container.addEventListener('submit', function(e) {
-        if (e.target && e.target.id === 'daily-patients-form') {
-            e.preventDefault();
-            const form = e.target;
-            const formData = new FormData(form);
-
-            fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('تغییرات با موفقیت ذخیره شد.');
-                    updateContentForDate(userDate, false); // Refresh content after save
-                } else {
-                    alert('خطا در ذخیره اطلاعات.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while saving.');
-            });
-        }
-    });
-
-    window.addEventListener('popstate', (event) => {
-        if (event.state && event.state.path) {
-            // Just reload the content for the path in the state
-            const url = new URL(event.state.path, window.location.origin);
-            const dateFromPath = url.pathname.split('/').filter(Boolean).pop();
-            if (dateFromPath) {
-                 userDate = new Date(dateFromPath);
-                 updateContentForDate(userDate, false);
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تغییرات با موفقیت ذخیره شد.');
+                // The global date navigation script will handle the refresh
+                const currentDate = new Date(localStorage.getItem('userDate'));
+                window.updateContentForDate(currentDate, false);
+            } else {
+                alert('خطا در ذخیره اطلاعات.');
             }
-        }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving.');
+        });
     });
-
-    initializeDate();
-});
 </script>
 {% endblock %}

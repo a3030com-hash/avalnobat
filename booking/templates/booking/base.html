@@ -480,7 +480,108 @@
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.js"></script>
     <script src="{% static 'booking/custom_jalali.js' %}"></script>
-  
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            window.userDate = null;
+            let pageConfig = {};
+
+            function getActivePage() {
+                if (document.getElementById('daily-patients-container')) {
+                    return {
+                        name: 'daily_patients',
+                        containerId: 'daily-patients-container',
+                        url: "{% url 'booking:daily_patients' '0000-00-00' %}"
+                    };
+                }
+                if (document.getElementById('secretary-payments-container')) {
+                    return {
+                        name: 'secretary_payments',
+                        containerId: 'secretary-payments-container',
+                        url: "{% url 'booking:secretary_payments' '0000-00-00' %}"
+                    };
+                }
+                if (document.getElementById('financial-report-container')) {
+                    return {
+                        name: 'financial_report',
+                        containerId: 'financial-report-container',
+                        url: "{% url 'booking:financial_report' '0000-00-00' %}"
+                    };
+                }
+                return null;
+            }
+
+            function initializeDate() {
+                const activePage = getActivePage();
+                if (!activePage) return;
+
+                const savedDate = localStorage.getItem('userDate');
+                const container = document.getElementById(activePage.containerId);
+                const initialDateEl = container.querySelector('#dynamic-content');
+                let initialDateStr = initialDateEl ? initialDateEl.getAttribute('data-current-date') : new Date().toISOString().split('T')[0];
+
+                userDate = savedDate ? new Date(savedDate) : new Date(initialDateStr);
+                updateContentForDate(userDate, false);
+            }
+
+            window.updateContentForDate = async function(date, pushState = true) {
+                const activePage = getActivePage();
+                if (!activePage) return;
+
+                const urlDate = date.toISOString().split('T')[0];
+                localStorage.setItem('userDate', urlDate);
+
+                const targetUrl = activePage.url.replace('0000-00-00', urlDate);
+                const container = document.getElementById(activePage.containerId);
+
+                try {
+                    container.style.opacity = '0.5';
+                    const response = await fetch(targetUrl, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    if (!response.ok) throw new Error('Server response not OK');
+                    const html = await response.text();
+                    if (pushState) {
+                        history.pushState({ path: targetUrl }, '', targetUrl);
+                    }
+                    container.innerHTML = html;
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    window.location.href = targetUrl;
+                } finally {
+                    container.style.opacity = '1';
+                }
+            }
+
+            document.body.addEventListener('click', function(e) {
+                const activePage = getActivePage();
+                if (!activePage) return;
+
+                if (e.target.closest('#prev-day-btn')) {
+                    userDate.setDate(userDate.getDate() - 1);
+                    updateContentForDate(userDate);
+                }
+                if (e.target.closest('#next-day-btn')) {
+                    userDate.setDate(userDate.getDate() + 1);
+                    updateContentForDate(userDate);
+                }
+            });
+
+            window.addEventListener('popstate', (event) => {
+                if (event.state && event.state.path) {
+                    const url = new URL(event.state.path, window.location.origin);
+                    const dateFromPath = url.pathname.split('/').filter(Boolean).pop();
+                    if (dateFromPath) {
+                        userDate = new Date(dateFromPath);
+                        updateContentForDate(userDate, false);
+                    }
+                }
+            });
+
+            initializeDate();
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
 </body>
 
 </html>
