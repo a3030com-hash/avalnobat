@@ -482,35 +482,69 @@
     <script src="{% static 'booking/custom_jalali.js' %}"></script>
 
     <script>
-        function formatNumber(input) {
-            // Allow only digits and remove leading zeros
-            let value = input.value.replace(/\D/g, '').replace(/^0+/, '');
-
-            // Format with thousand separators
-            let formattedValue = new Intl.NumberFormat('fa-IR').format(value);
-
-            // Check if the result is a valid number, otherwise, keep the input empty
-            if (isNaN(parseInt(value))) {
-                input.value = '';
-            } else {
-                input.value = formattedValue;
+        function toEnglishDigits(str) {
+            if (!str) return '';
+            const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+            const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            str = str.toString();
+            for (let i = 0; i < 10; i++) {
+                str = str.replace(new RegExp(persian[i], 'g'), i).replace(new RegExp(arabic[i], 'g'), i);
             }
+            return str;
+        }
+
+        function formatNumber(input) {
+            if (!input) return;
+            let value = toEnglishDigits(input.value);
+            value = value.replace(/\D/g, '').replace(/^0+/, '');
+
+            if (value === '') {
+                input.value = '';
+                return;
+            }
+
+            let formattedValue = new Intl.NumberFormat('fa-IR').format(value);
+            input.value = formattedValue;
+        }
+
+        function applyNumberFormatting(container) {
+            const inputs = container.matches('.number-input') ? [container] : container.querySelectorAll('.number-input');
+
+            inputs.forEach(input => {
+                if (input.dataset.formatted) {
+                    return;
+                }
+                formatNumber(input);
+                input.addEventListener('keyup', () => formatNumber(input));
+                input.dataset.formatted = 'true';
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Attach the event listener to all number inputs
-            document.querySelectorAll('.number-input').forEach(input => {
-                input.addEventListener('keyup', () => formatNumber(input));
+            document.body.addEventListener('submit', function(e) {
+                if (e.target.tagName.toLowerCase() === 'form') {
+                    e.target.querySelectorAll('.number-input').forEach(input => {
+                        input.value = toEnglishDigits(input.value).replace(/\D/g, '');
+                    });
+                }
             });
 
-            // Remove formatting on form submit to send raw numbers to the server
-            document.querySelectorAll('form').forEach(form => {
-                form.addEventListener('submit', () => {
-                    form.querySelectorAll('.number-input').forEach(input => {
-                        input.value = input.value.replace(/\D/g, '');
+            applyNumberFormatting(document.body);
+
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) {
+                            applyNumberFormatting(node);
+                        }
                     });
                 });
             });
+
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) {
+                observer.observe(mainContent, { childList: true, subtree: true });
+            }
 
             window.userDate = null;
             let pageConfig = {};

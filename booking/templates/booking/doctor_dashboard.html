@@ -41,7 +41,7 @@
                                 <td data-label="شیفت">{{ avail.get_shift_display }}</td>
                                 <td data-label="ساعت شروع">{{ avail.start_time|time:"H:i" }}</td>
                                 <td data-label="ساعت پایان">{{ avail.end_time|time:"H:i" }}</td>
-                                <td data-label="تعداد ویزیت">{{ avail.visit_count }}</td>
+                                <td data-label="تعداد ویزیت">{{ avail.visit_count|intcomma }}</td>
                                 <td data-label="وضعیت">
                                     <a href="{% url 'booking:toggle_availability' pk=avail.pk %}">
                                         {% if avail.is_active %}
