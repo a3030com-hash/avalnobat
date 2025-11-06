@@ -413,30 +413,21 @@
                 </div>
 
                 {% if user.is_authenticated and user.user_type == 'DOCTOR' %}
-                    <div class="date-navigation">
-                        <button id="prev-day-btn" title="روز قبل" class="btn-date-nav">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        <span id="date-display" style="font-weight: bold; font-size: 1.1rem; color: var(--primary-color);"></span>
-                        <button id="next-day-btn" title="روز بعد" class="btn-date-nav">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                    </div>
                 {% endif %}
             </div>
 
             {% if user.is_authenticated and user.user_type == 'DOCTOR' %}
                 <div class="icon-links">
-                    <a id="daily-patients-link" href="#" title="لیست بیماران روزانه">
+                    <a id="daily-patients-link" href="{% url 'booking:daily_patients' %}" title="لیست بیماران روزانه">
                         <i class="fas fa-users"></i>
                     </a>
-                    <a id="secretary-panel-link" href="#" title="نوبت‌دهی توسط منشی">
+                    <a id="secretary-panel-link" href="{% url 'booking:secretary_panel' %}" title="نوبت‌دهی توسط منشی">
                         <i class="fas fa-calendar-plus"></i>
                     </a>
-                    <a id="secretary-payments-link" href="#" title="پرداخت‌های منشی">
+                    <a id="secretary-payments-link" href="{% url 'booking:secretary_payments' %}" title="پرداخت‌های منشی">
                         <i class="fas fa-money-bill-wave"></i>
                     </a>
-                    <a id="financial-report-link" href="#" title="گزارش مالی">
+                    <a id="financial-report-link" href="{% url 'booking:financial_report' %}" title="گزارش مالی">
                         <i class="fas fa-chart-bar"></i>
                     </a>
 
@@ -492,99 +483,8 @@
     {% block extra_js %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const prevDayBtn = document.getElementById('prev-day-btn');
-            if (!prevDayBtn) return;
-
-            const nextDayBtn = document.getElementById('next-day-btn');
-            const dateDisplay = document.getElementById('date-display');
-            const mainContent = document.querySelector('.main-content');
-
-            const links = {
-                daily_patients: { el: document.getElementById('daily-patients-link'), base: "{% url 'booking:daily_patients' '0000-00-00' %}" },
-                secretary_panel: { el: document.getElementById('secretary-panel-link'), base: "{% url 'booking:secretary_panel' '0000-00-00' %}" },
-                secretary_payments: { el: document.getElementById('secretary-payments-link'), base: "{% url 'booking:secretary_payments' '0000-00-00' %}" },
-                financial_report: { el: document.getElementById('financial-report-link'), base: "{% url 'booking:financial_report' '0000-00-00' %}" }
-            };
-
-            let userDate;
-
-            function initializeDate() {
-                const savedDate = localStorage.getItem('userDate');
-                userDate = savedDate ? new Date(savedDate) : new Date();
-                updateDisplayAndLinks();
-            }
-
-            function updateDisplayAndLinks() {
-                const urlDate = userDate.toISOString().split('T')[0];
-                localStorage.setItem('userDate', urlDate);
-
-                const gDate = { gy: userDate.getFullYear(), gm: userDate.getMonth() + 1, gd: userDate.getDate() };
-                const jDate = jalaali.toJalaali(gDate.gy, gDate.gm, gDate.gd);
-                const today = new Date();
-                let dayName = '';
-
-                if (userDate.toDateString() === today.toDateString()) {
-                    dayName = ' (امروز)';
-                } else {
-                    const weekdays = ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"];
-                    dayName = ` (${weekdays[userDate.getDay()]})`;
-                }
-                dateDisplay.textContent = `${jDate.jy}/${String(jDate.jm).padStart(2, '0')}/${String(jDate.jd).padStart(2, '0')}${dayName}`;
-
-                for (const key in links) {
-                    if (links[key].el) {
-                        links[key].el.href = links[key].base.replace('0000-00-00', urlDate);
-                    }
-                }
-            }
-
-            async function handleDateChange(days) {
-                userDate.setDate(userDate.getDate() + days);
-                updateDisplayAndLinks();
-
-                const currentPath = window.location.pathname;
-                let targetUrl = '';
-
-                for (const key in links) {
-                    // Find which base URL matches the current page
-                    const basePattern = links[key].base.replace(/0000-00-00.*$/, '');
-                    if (currentPath.startsWith(basePattern)) {
-                        targetUrl = links[key].el.href;
-                        break;
-                    }
-                }
-
-                if (!targetUrl) return;
-
-                try {
-                    mainContent.style.opacity = '0.5'; // Indicate loading
-                    const response = await fetch(targetUrl, {
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    });
-                    if (!response.ok) throw new Error('Server response not OK');
-
-                    const html = await response.text();
-                    history.pushState({ path: targetUrl }, '', targetUrl);
-                    mainContent.innerHTML = html;
-
-                } catch (error) {
-                    console.error('Fetch error:', error);
-                    window.location.href = targetUrl; // Fallback to full reload
-                } finally {
-                    mainContent.style.opacity = '1';
-                }
-            }
-
-            prevDayBtn.addEventListener('click', () => handleDateChange(-1));
-            nextDayBtn.addEventListener('click', () => handleDateChange(1));
-
-            window.addEventListener('popstate', (event) => {
-                if (event.state && event.state.path) {
-                    window.location.reload(); // Simple reload on back/forward for now
-                }
-            });
-
-            initializeDate();
+            // The global date navigation logic has been removed.
+            // Page-specific logic will be handled in their respective templates.
         });
     </script>
     {% endblock %}
