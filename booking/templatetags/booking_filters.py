@@ -38,16 +38,10 @@ def to_jalali(gregorian_date, format_str="%Y/%m/%d"):
     except (ValueError, TypeError):
         return gregorian_date
 
-@register.filter(name='intcomma')
-def intcomma(value):
-    """
-    Converts an integer to a string containing commas every three digits.
-    """
-    try:
-        value = int(value)
-        return f"{value:,}"
-    except (ValueError, TypeError):
-        return value
+from django.contrib.humanize.templatetags.humanize import intcomma
+@register.filter(name='intcomma', is_safe=True)
+def intcomma_filter(value):
+    return intcomma(value)
 
 @register.filter(name='div')
 def div(value, arg):
