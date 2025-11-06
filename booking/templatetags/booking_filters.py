@@ -38,10 +38,6 @@ def to_jalali(gregorian_date, format_str="%Y/%m/%d"):
     except (ValueError, TypeError):
         return gregorian_date
 
-from django.contrib.humanize.templatetags.humanize import intcomma
-@register.filter(name='intcomma', is_safe=True)
-def intcomma_filter(value):
-    return intcomma(value)
 
 @register.filter(name='div')
 def div(value, arg):
