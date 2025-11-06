@@ -140,9 +140,10 @@
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_slot">
+            <button type="button" class="submit-btn book-btn" id="toggle-block-btns">x فعال و غیر فعال ساعت نوبت</button>
+  
             <button type="submit" class="submit-btn book-btn">+ ایجاد ساعت نوبت</button>
         </form>
-        <button type="button" class="submit-btn book-btn" id="toggle-block-btns">x فعال و غیر فعال ساعت نوبت</button>
     </div>
 
     <!-- Hidden Action Forms -->
