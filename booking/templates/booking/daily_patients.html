@@ -4,7 +4,8 @@
 {% block title %}{{ page_title }} - AvalNobat{% endblock %}
 
 {% block content %}
-<div class="panel-container">
+<div class="panel-container" id="daily-patients-container">
+    {# The initial content is loaded by the view #}
     {% include 'booking/daily_patients_content.html' %}
 </div>
 {% endblock %}
@@ -12,51 +13,95 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const container = document.querySelector('.main-content');
+    const container = document.getElementById('daily-patients-container');
+    let userDate;
 
+    function initializeDate() {
+        const savedDate = localStorage.getItem('userDate');
+        const initialDate = container.querySelector('#date-display') ? new Date('{{ today|date:"Y-m-d" }}') : new Date();
+        userDate = savedDate ? new Date(savedDate) : initialDate;
+        updateContentForDate(userDate, false); // false = don't push history state on initial load
+    }
+
+    async function updateContentForDate(date, pushState = true) {
+        const urlDate = date.toISOString().split('T')[0];
+        localStorage.setItem('userDate', urlDate);
+
+        const targetUrl = `{% url 'booking:daily_patients' '0000-00-00' %}`.replace('0000-00-00', urlDate);
+
+        try {
+            container.style.opacity = '0.5';
+            const response = await fetch(targetUrl, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!response.ok) throw new Error('Server response not OK');
+
+            const html = await response.text();
+            if (pushState) {
+                history.pushState({ path: targetUrl }, '', targetUrl);
+            }
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Fetch error:', error);
+            window.location.href = targetUrl; // Fallback to full reload
+        } finally {
+            container.style.opacity = '1';
+        }
+    }
+
+    // Event delegation for date navigation buttons
+    container.addEventListener('click', function(e) {
+        if (e.target.closest('#prev-day-btn')) {
+            userDate.setDate(userDate.getDate() - 1);
+            updateContentForDate(userDate);
+        }
+        if (e.target.closest('#next-day-btn')) {
+            userDate.setDate(userDate.getDate() + 1);
+            updateContentForDate(userDate);
+        }
+    });
+
+    // Event delegation for form submission
     container.addEventListener('submit', function(e) {
         if (e.target && e.target.id === 'daily-patients-form') {
             e.preventDefault();
-
             const form = e.target;
             const formData = new FormData(form);
 
             fetch(form.action, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                // Success means the form saved. We just need to show a confirmation
-                // and maybe refresh the content to show updated values.
-                // For now, let's just refresh.
-                const currentDateLink = document.querySelector('#daily-patients-link');
-                if (currentDateLink && currentDateLink.href) {
-                    const mainContent = document.querySelector('.main-content');
-                    mainContent.style.opacity = '0.5';
-                    fetch(currentDateLink.href, {
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    })
-                    .then(res => res.text())
-                    .then(html => {
-                        mainContent.innerHTML = html;
-                        mainContent.style.opacity = '1';
-                        // Optionally, show a success message
-                        alert('تغییرات با موفقیت ذخیره شد.');
-                    });
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('تغییرات با موفقیت ذخیره شد.');
+                    updateContentForDate(userDate, false); // Refresh content after save
+                } else {
+                    alert('خطا در ذخیره اطلاعات.');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while saving. Please try again.');
+                alert('An error occurred while saving.');
             });
         }
     });
+
+    window.addEventListener('popstate', (event) => {
+        if (event.state && event.state.path) {
+            // Just reload the content for the path in the state
+            const url = new URL(event.state.path, window.location.origin);
+            const dateFromPath = url.pathname.split('/').filter(Boolean).pop();
+            if (dateFromPath) {
+                 userDate = new Date(dateFromPath);
+                 updateContentForDate(userDate, false);
+            }
+        }
+    });
+
+    initializeDate();
 });
 </script>
 {% endblock %}

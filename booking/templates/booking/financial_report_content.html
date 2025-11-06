@@ -2,8 +2,15 @@
 <div id="dynamic-content" data-current-date="{{ today|date:"Y-m-d" }}">
 
 <h1 class="report-title">{{ page_title }}</h1>
-<p><strong>تاریخ:</strong> {{ today|to_jalali:"%A, %d %B %Y" }}</p>
-<hr>
+<div class="date-navigation local-date-nav" style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 1rem;">
+    <button id="prev-day-btn" title="روز قبل" class="btn-date-nav">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+    <span id="date-display" style="font-weight: bold; font-size: 1.2rem; color: var(--primary-color);">{{ today|to_jalali:"%A, %d %B %Y" }}</span>
+    <button id="next-day-btn" title="روز بعد" class="btn-date-nav">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+</div>
 
 <div class="report-section">
     <h3 class="section-title">خلاصه درآمد</h3>
