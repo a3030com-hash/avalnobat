@@ -492,6 +492,33 @@
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.js"></script>
     <script src="{% static 'booking/custom_jalali.js' %}"></script>
+    <script>
+        // Function to format numbers with commas
+        function formatNumber(e) {
+            const input = e.target;
+            let value = input.value.replace(/,/g, '');
+            if (!isNaN(value) && value.length > 0) {
+                input.value = parseInt(value, 10).toLocaleString('en-US');
+            }
+        }
+
+        // Attach event listeners to monetary input fields
+        document.addEventListener('keyup', function(e) {
+            if (e.target && (e.target.name.includes('visit_fee_paid') || e.target.id === 'id_amount')) {
+                formatNumber(e);
+            }
+        });
+
+        // Remove commas before form submission
+        document.addEventListener('submit', function(e) {
+            const inputs = e.target.querySelectorAll('input[name*="visit_fee_paid"], input#id_amount');
+            inputs.forEach(function(input) {
+                if (input.value) {
+                    input.value = input.value.replace(/,/g, '');
+                }
+            });
+        });
+    </script>
     {% block extra_js %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -512,8 +539,26 @@
             let userDate;
 
             function initializeDate() {
-                const savedDate = localStorage.getItem('userDate');
-                userDate = savedDate ? new Date(savedDate) : new Date();
+                const dynamicContent = document.querySelector('#dynamic-content');
+                let initialDate;
+
+                if (dynamicContent && dynamicContent.dataset.currentDate) {
+                    initialDate = dynamicContent.dataset.currentDate;
+                    // Ensure localStorage is also updated
+                    localStorage.setItem('userDate', initialDate);
+                } else {
+                    initialDate = localStorage.getItem('userDate');
+                }
+
+                userDate = initialDate ? new Date(initialDate) : new Date();
+
+                // Add a small delay to ensure the date is correctly set
+                // in case of timezone issues or race conditions with other scripts.
+                // An invalid date from localStorage can cause issues.
+                if (isNaN(userDate.getTime())) {
+                    userDate = new Date(); // Fallback to today
+                }
+
                 updateDisplayAndLinks();
             }
 

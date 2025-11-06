@@ -96,7 +96,7 @@
     }
 </style>
 
-<div class="booking-container">
+<div id="dynamic-content" class="booking-container" data-current-date="{{ date|date:"Y-m-d" }}">
     <a href="{% url 'booking:secretary_panel' %}"> &larr; بازگشت به پنل مدیریت</a>
     <hr>
     <h1>{{ page_title }}</h1>
