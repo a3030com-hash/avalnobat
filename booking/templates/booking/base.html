@@ -557,7 +557,10 @@
                 if (!targetUrl) return;
 
                 try {
-                    mainContent.style.opacity = '0.5'; // Indicate loading
+                    const dynamicContent = document.getElementById('dynamic-content');
+                    const contentTarget = dynamicContent || mainContent;
+
+                    contentTarget.style.opacity = '0.5'; // Indicate loading
                     const response = await fetch(targetUrl, {
                         headers: { 'X-Requested-With': 'XMLHttpRequest' }
                     });
@@ -565,13 +568,15 @@
 
                     const html = await response.text();
                     history.pushState({ path: targetUrl }, '', targetUrl);
-                    mainContent.innerHTML = html;
+                    contentTarget.innerHTML = html;
 
                 } catch (error) {
                     console.error('Fetch error:', error);
                     window.location.href = targetUrl; // Fallback to full reload
                 } finally {
-                    mainContent.style.opacity = '1';
+                    const dynamicContent = document.getElementById('dynamic-content');
+                    const contentTarget = dynamicContent || mainContent;
+                    contentTarget.style.opacity = '1';
                 }
             }
 
