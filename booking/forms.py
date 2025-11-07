@@ -52,7 +52,6 @@ class DoctorAvailabilityForm(forms.ModelForm):
         widgets = {
             'start_time': forms.TimeInput(format='%H:%M', attrs={'placeholder': 'HH:MM'}),
             'end_time': forms.TimeInput(format='%H:%M', attrs={'placeholder': 'HH:MM'}),
-            'visit_count': forms.NumberInput(attrs={'class': 'number-input'}),
         }
         labels = {
             'day_of_week': 'روز هفته',
@@ -84,9 +83,6 @@ class AppointmentUpdateForm(forms.ModelForm):
     class Meta:
         model = Appointment
         fields = ['visit_fee_paid', 'service_description', 'payment_method', 'insurance_type']
-        widgets = {
-            'visit_fee_paid': forms.NumberInput(attrs={'class': 'number-input'}),
-        }
         labels = {
             'visit_fee_paid': 'مبلغ دریافتی',
             'service_description': 'شرح خدمات',
@@ -100,9 +96,6 @@ class DailyExpenseForm(forms.ModelForm):
     class Meta:
         model = DailyExpense
         fields = ['description', 'amount']
-        widgets = {
-            'amount': forms.NumberInput(attrs={'class': 'number-input'}),
-        }
         labels = {
             'description': 'شرح هزینه/پرداخت',
             'amount': 'مبلغ (به تومان)'
