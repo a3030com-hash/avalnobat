@@ -12,12 +12,34 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('submit', function(e) {
-        const container = document.getElementById('daily-patients-container');
-        if (!container || !e.target.closest('#daily-patients-form')) return;
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('daily-patients-container');
 
+    // Apply formatting on initial load
+    applyNumberFormatting('#daily-patients-container');
+
+    // Re-apply formatting when new content is loaded via AJAX
+    if (container) {
+        container.addEventListener('custom:contentUpdated', function() {
+            applyNumberFormatting('#daily-patients-container');
+        });
+    }
+
+    // Handle form submissions via AJAX, using event delegation on the container
+    container.addEventListener('submit', function(e) {
+        if (!e.target.closest('form')) return;
         e.preventDefault();
+
         const form = e.target;
+        const numberInputs = form.querySelectorAll('.number-input');
+
+        // Clean number inputs before submitting
+        numberInputs.forEach(function(input) {
+            if (input.value) {
+                input.value = toEnglishNumbers(input.value).replace(/,/g, '');
+            }
+        });
+
         const formData = new FormData(form);
 
         fetch(form.action, {
@@ -29,18 +51,31 @@
         .then(data => {
             if (data.success) {
                 alert('تغییرات با موفقیت ذخیره شد.');
-                // The global date navigation script will handle the refresh
+                // Reload content, which will trigger 'custom:contentUpdated' and re-apply formatting
                 const currentDate = new Date(localStorage.getItem('userDate'));
                 window.updateContentForDate(currentDate, false);
             } else {
                 console.error('Validation Error:', data.errors);
-                alert('خطا در ذخیره اطلاعات. جزئیات در کنسول ثبت شده است.');
+                alert('خطا در ذخیره اطلاعات. لطفاً ورودی خود را بررسی کنید.');
+                // Restore formatting on failed submission for better UX
+                numberInputs.forEach(input => {
+                    if (input.value) {
+                       input.value = formatNumber(input.value);
+                    }
+                });
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while saving.');
+            alert('An unexpected error occurred.');
+            // Restore formatting on network error
+            numberInputs.forEach(input => {
+                if (input.value) {
+                    input.value = formatNumber(input.value);
+                }
+            });
         });
     });
+});
 </script>
 {% endblock %}

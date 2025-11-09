@@ -545,6 +545,9 @@
                         history.pushState({ path: targetUrl }, '', targetUrl);
                     }
                     container.innerHTML = html;
+                    // Dispatch a custom event to signal that the content has been updated
+                    const event = new Event('custom:contentUpdated');
+                    container.dispatchEvent(event);
                 } catch (error) {
                     console.error('Fetch error:', error);
                     window.location.href = targetUrl;
@@ -580,6 +583,41 @@
 
             initializeDate();
         });
+
+        // Shared JavaScript functions for number formatting
+        function toEnglishNumbers(str) {
+            if (!str) return str;
+            const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+            const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            let newStr = String(str);
+            for (let i = 0; i < 10; i++) {
+                newStr = newStr.replace(new RegExp(persian[i], 'g'), english[i]);
+            }
+            return newStr;
+        }
+
+        function formatNumber(n) {
+            if (!n) return '';
+            let numStr = String(n).replace(/,/g, '');
+            return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function applyNumberFormatting(containerSelector) {
+            const container = document.querySelector(containerSelector);
+            if (!container) return;
+
+            container.querySelectorAll('input.number-input').forEach(input => {
+                // Format on initial load
+                input.value = formatNumber(toEnglishNumbers(input.value));
+
+                // Reformat on input change
+                input.addEventListener('input', function(e) {
+                    let englishValue = toEnglishNumbers(e.target.value);
+                    let numericValue = englishValue.replace(/[^0-9]/g, '');
+                    e.target.value = formatNumber(numericValue);
+                });
+            });
+        }
     </script>
     {% block extra_js %}{% endblock %}
 </body>

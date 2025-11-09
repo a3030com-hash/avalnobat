@@ -26,6 +26,7 @@
                 <th>مبلغ دریافتی</th>
                 <th>شرح خدمات</th>
                 <th>نحوه پرداخت</th>
+                <th>ذخیره</th>
             </tr>
         </thead>
         <tbody>
@@ -38,57 +39,15 @@
                     <td data-label="مبلغ دریافتی">{{ form.visit_fee_paid }}</td>
                     <td data-label="شرح خدمات">{{ form.service_description }}</td>
                     <td data-label="نحوه پرداخت">{{ form.payment_method }}</td>
+                    <td data-label="ذخیره">
+                        <button type="submit" name="appointment_id" value="{{ form.instance.pk }}" class="btn btn-submit" style="padding: 5px 10px; font-size: 0.8rem;">
+                            <i class="fas fa-save"></i>
+                        </button>
+                    </td>
                     {{ form.id }}
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-    <button type="submit" name="update_appointments" class="btn-submit">ذخیره تغییرات نوبت‌ها</button>
 </form>
 </div>
-
-<script>
-    function toEnglishNumbers(str) {
-        const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-        const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-        let result = String(str);
-        for (let i = 0; i < 10; i++) {
-            result = result.replace(new RegExp(persian[i], 'g'), i).replace(new RegExp(arabic[i], 'g'), i);
-        }
-        return result;
-    }
-
-    function formatNumber(input) {
-        let value = toEnglishNumbers(input.value);
-        value = value.replace(/,/g, '').replace(/[^\d.-]/g, '');
-
-        if (isNaN(parseFloat(value)) && value !== '' && value !== '-') {
-            input.value = '';
-            return;
-        }
-
-        let parts = value.split('.');
-        let integerPart = parts[0];
-        let decimalPart = parts.length > 1 ? '.' + parts[1] : '';
-
-        let isNegative = integerPart.startsWith('-');
-        if(isNegative) {
-            integerPart = integerPart.substring(1);
-        }
-
-        let formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
-        input.value = (isNegative ? '-' : '') + formattedInteger + decimalPart;
-    }
-
-    document.addEventListener('submit', function(e) {
-        if (e.target && e.target.id === 'daily-patients-form') {
-            const numberInputs = e.target.querySelectorAll('.number-input');
-            numberInputs.forEach(function(input) {
-                if (input.value) {
-                    input.value = toEnglishNumbers(input.value).replace(/,/g, '');
-                }
-            });
-        }
-    });
-</script>
