@@ -33,7 +33,8 @@
                 const currentDate = new Date(localStorage.getItem('userDate'));
                 window.updateContentForDate(currentDate, false);
             } else {
-                alert('خطا در ذخیره اطلاعات.');
+                console.error('Validation Error:', data.errors);
+                alert('خطا در ذخیره اطلاعات. جزئیات در کنسول ثبت شده است.');
             }
         })
         .catch(error => {

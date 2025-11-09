@@ -35,11 +35,7 @@
                     <td data-label="نام بیمار">{{ form.instance.patient_name }}</td>
                     <td data-label="کد ملی">{{ form.instance.patient_national_id|default:"-" }}</td>
                     <td data-label="نوع بیمه">{{ form.insurance_type }}</td>
-                    <td data-label="مبلغ دریافتی">
-                        <input type="text" name="{{ form.visit_fee_paid.name }}" class="number-input" 
-                               value="{{ form.visit_fee_paid.value|default:"0"|comma }}" 
-                               oninput="formatNumber(this)">
-                    </td>
+                    <td data-label="مبلغ دریافتی">{{ form.visit_fee_paid }}</td>
                     <td data-label="شرح خدمات">{{ form.service_description }}</td>
                     <td data-label="نحوه پرداخت">{{ form.payment_method }}</td>
                     {{ form.id }}
@@ -52,22 +48,47 @@
 </div>
 
 <script>
+    function toEnglishNumbers(str) {
+        const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        let result = String(str);
+        for (let i = 0; i < 10; i++) {
+            result = result.replace(new RegExp(persian[i], 'g'), i).replace(new RegExp(arabic[i], 'g'), i);
+        }
+        return result;
+    }
+
     function formatNumber(input) {
-        // 1. Get the value and remove any existing commas.
-        let value = input.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
-        
-        // 2. Ensure it's a valid number, otherwise clear the input.
-        if (isNaN(value) || value === '' || value === null) {
+        let value = toEnglishNumbers(input.value);
+        value = value.replace(/,/g, '').replace(/[^\d.-]/g, '');
+
+        if (isNaN(parseFloat(value)) && value !== '' && value !== '-') {
             input.value = '';
             return;
         }
-        
-        // 3. Convert to number to remove leading zeros, then back to string.
-        let numValue = parseFloat(value);
 
-        // 4. Use a regex to add thousand separators.
-        let formattedValue = numValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        let parts = value.split('.');
+        let integerPart = parts[0];
+        let decimalPart = parts.length > 1 ? '.' + parts[1] : '';
 
-        input.value = formattedValue;
+        let isNegative = integerPart.startsWith('-');
+        if(isNegative) {
+            integerPart = integerPart.substring(1);
+        }
+
+        let formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+        input.value = (isNegative ? '-' : '') + formattedInteger + decimalPart;
     }
+
+    document.addEventListener('submit', function(e) {
+        if (e.target && e.target.id === 'daily-patients-form') {
+            const numberInputs = e.target.querySelectorAll('.number-input');
+            numberInputs.forEach(function(input) {
+                if (input.value) {
+                    input.value = toEnglishNumbers(input.value).replace(/,/g, '');
+                }
+            });
+        }
+    });
 </script>

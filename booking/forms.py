@@ -89,6 +89,12 @@ class AppointmentUpdateForm(forms.ModelForm):
             'payment_method': 'نحوه پرداخت',
             'insurance_type': 'نوع بیمه',
         }
+        widgets = {
+            'visit_fee_paid': forms.TextInput(attrs={
+                'class': 'number-input',
+                'oninput': 'formatNumber(this)',
+            }),
+        }
 
 from .models import DailyExpense, DoctorProfile
 
