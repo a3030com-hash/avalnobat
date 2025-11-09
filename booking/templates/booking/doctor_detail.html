@@ -3,6 +3,10 @@
 
 {% block title %}{{ page_title }} - AvalNobat{% endblock %}
 
+{% block meta_tags %}
+<meta name="description" content="اطلاعات و نوبت‌دهی آنلاین دکتر {{ doctor.user.get_full_name }}، متخصص {{ doctor.specialty.name }}. {{ doctor.biography|truncatewords:20 }}">
+{% endblock %}
+
 {% block content %}
 <style>
     .profile-container {

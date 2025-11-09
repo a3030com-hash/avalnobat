@@ -26,10 +26,10 @@ load_dotenv(os.path.join(BASE_DIR, 'avalnobat_project', '.env'))
 SECRET_KEY = "django-insecure-8y7!do&z*f#h3z*)3@fo%_f_avyca32&k)b&p&+zn3aayki7g6"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = [
     'avalnobat.ir',
-    'www.avalnobat.ir', 
+    'www.avalnobat.ir',
     'localhost',
     '127.0.0.1',
     '0.0.0.0'
@@ -49,13 +49,19 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    'django.contrib.sites',
     'booking',
+    'django.contrib.sitemaps',
+    'robots',
 ]
+
+SITE_ID = 1
 
 AUTH_USER_MODEL = 'booking.CustomUser'
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -131,6 +137,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 # Media files (User-uploaded content)
 MEDIA_URL = '/media/'
@@ -154,7 +163,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER ='quizzical_chandrasekhar_0coq6v' #'info@avalnobat.ir'   # 'quizzical_chandrasekhar_0coq6v'  # Replace with your Gmail address
 EMAIL_HOST_PASSWORD = '63e215a2-3a73-4346-aa59-b011dda66998'      # Replace with your Gmail app password
 DEFAULT_FROM_EMAIL = 'info@avalnobat.ir'  # این خط را اضافه کنید
-SERVER_EMAIL = 'info@avalnobat.ir'  # این خط را هم اضافه 
+SERVER_EMAIL = 'info@avalnobat.ir'  # این خط را هم اضافه
 #AMOOT_SMS
 AMOOT_SMS_API_TOKEN = os.getenv('AMOOT_SMS_API_TOKEN', '4BC33DCDDBF33395ABF6C9956E28943F61F2718B')
 AMOOT_SMS_API_URL='https://portal.amootsms.com/rest/SendWithPattern'
@@ -163,3 +172,9 @@ AMOOT_SMS_API_URL='https://portal.amootsms.com/rest/SendWithPattern'
 BEH_PARDAKHT_TERMINAL_ID = os.getenv('BEH_PARDAKHT_TERMINAL_ID', 'YOUR_TERMINAL_ID')
 BEH_PARDAKHT_USERNAME = os.getenv('BEH_PARDAKHT_USERNAME', 'YOUR_USERNAME')
 BEH_PARDAKHT_PASSWORD = os.getenv('BEH_PARDAKHT_PASSWORD', 'YOUR_PASSWORD')
+
+# Robots
+ROBOTS_USE_SITEMAP = True
+ROBOTS_SITEMAP_URLS = [
+    ('sitemap.xml', None),
+]

@@ -4,9 +4,18 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from booking import views as booking_views
+from django.contrib.sitemaps.views import sitemap
+from booking.sitemaps import StaticViewSitemap, DoctorProfileSitemap
+
+sitemaps = {
+    'static': StaticViewSitemap,
+    'doctors': DoctorProfileSitemap,
+}
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    path('robots.txt', include('robots.urls')),
 
     # App URLs
     path('', include('booking.urls', namespace='booking')),
