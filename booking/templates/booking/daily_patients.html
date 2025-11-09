@@ -28,7 +28,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('تغییرات با موفقیت ذخیره شد.');
+                //alert('تغییرات با موفقیت ذخیره شد.');
                 // The global date navigation script will handle the refresh
                 const currentDate = new Date(localStorage.getItem('userDate'));
                 window.updateContentForDate(currentDate, false);
