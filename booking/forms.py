@@ -98,11 +98,16 @@ class DailyExpenseForm(forms.ModelForm):
         fields = ['description', 'amount']
         labels = {
             'description': 'شرح هزینه/پرداخت',
-            'amount': 'مبلغ (به تومان)'
+            'amount': 'مبلغ (به تومان)',
         }
         widgets = {
             'description': forms.TextInput(attrs={'placeholder': 'مثلاً: هزینه آب و برق'}),
-            'amount': forms.NumberInput(attrs={'placeholder': 'مبلغ را به تومان وارد کنید', 'maxlength': '15'}),
+            'amount': forms.TextInput(attrs={
+                'class': 'number-input',
+                'placeholder': 'مبلغ را به تومان وارد کنید',
+                'oninput': 'formatNumber(this)',
+                'maxlength': '13',  # Allows for up to 10 digits + 3 commas
+            }),
         }
 
 class UserUpdateForm(forms.ModelForm):
