@@ -100,6 +100,9 @@ class DailyExpenseForm(forms.ModelForm):
             'description': 'شرح هزینه/پرداخت',
             'amount': 'مبلغ (به تومان)'
         }
+        widgets = {
+            'amount': forms.NumberInput(attrs={'placeholder': 'مبلغ را به تومان وارد کنید'}),
+        }
 
 class UserUpdateForm(forms.ModelForm):
     class Meta:

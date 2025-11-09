@@ -640,9 +640,6 @@ def secretary_payments(request, date=None):
     """
     نمایش و ثبت هزینه‌های روزانه منشی.
     """
-    if request.method == 'POST':
-        amount = request.POST.get('amount')  # مطمئن شوید از 'amount' استفاده می‌کنید
-  
     if not request.user.user_type == 'DOCTOR':
         return redirect('booking:doctor_list')
 
