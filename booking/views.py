@@ -596,22 +596,46 @@ def daily_patients(request, date=None):
     ).order_by('appointment_datetime')
 
     if request.method == 'POST':
-        formset = AppointmentFormSet(request.POST, queryset=queryset)
-        if formset.is_valid():
-            appointments = formset.save()
-            for appointment in appointments:
-                if appointment.visit_fee_paid is not None:
-                    InsuranceFee.objects.update_or_create(
-                        doctor=doctor_profile,
-                        insurance_type=appointment.insurance_type,
-                        defaults={'fee': appointment.visit_fee_paid}
-                    )
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': True})
-            return redirect('booking:daily_patients', date=date)
-        elif request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            # Handle formset errors for AJAX requests
-            return JsonResponse({'success': False, 'errors': formset.errors})
+        appointment_id_str = request.POST.get('appointment_id')
+
+        # This logic handles saving a single row from the formset
+        if appointment_id_str and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            formset = AppointmentFormSet(request.POST, queryset=queryset)
+
+            target_form = None
+            for form in formset:
+                # The instance.pk is an int, the POST data is a string
+                if str(form.instance.pk) == appointment_id_str:
+                    target_form = form
+                    break
+
+            if target_form:
+                if target_form.is_valid():
+                    appointment = target_form.save()
+                    # Update the last-used insurance fee for this doctor/insurance combo
+                    if appointment.visit_fee_paid is not None:
+                        InsuranceFee.objects.update_or_create(
+                            doctor=doctor_profile,
+                            insurance_type=appointment.insurance_type,
+                            defaults={'fee': appointment.visit_fee_paid}
+                        )
+                    return JsonResponse({'success': True})
+                else:
+                    return JsonResponse({'success': False, 'errors': target_form.errors})
+            else:
+                # This case should ideally not be reached if the frontend is correct
+                return JsonResponse({'success': False, 'errors': 'Appointment not found in the submitted data.'})
+
+        # Fallback to original full formset validation if needed (e.g., for non-AJAX or future "Save All" button)
+        else:
+            formset = AppointmentFormSet(request.POST, queryset=queryset)
+            if formset.is_valid():
+                formset.save()
+                return redirect('booking:daily_patients', date=date)
+            # Note: Error handling for the full formset in an AJAX context is not fully detailed here,
+            # as the primary interaction is single-row saving.
+            elif request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': formset.errors})
     else:
         # Pre-fill visit fee based on insurance
         insurance_fees = {
