@@ -48,6 +48,15 @@ def intcomma(value):
         return f"{value:,}"
     except (ValueError, TypeError):
         return value
+@register.filter(name='comma')
+def comma(value):
+    try:
+        # تبدیل به عدد
+        value = float(value)  # یا int(value) بر حسب نیاز 
+        # فرمت کردن عدد با کاما
+        return f"{value:,.0f}"  # صفر برای نمایش بدون اعشار
+    except (ValueError, TypeError):
+        return value  # اگر خطایی ایجاد شد، مقدار اصلی را برگردانید
 
 @register.filter(name='div')
 def div(value, arg):

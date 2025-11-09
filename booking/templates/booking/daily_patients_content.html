@@ -35,7 +35,11 @@
                     <td data-label="نام بیمار">{{ form.instance.patient_name }}</td>
                     <td data-label="کد ملی">{{ form.instance.patient_national_id|default:"-" }}</td>
                     <td data-label="نوع بیمه">{{ form.insurance_type }}</td>
-                    <td data-label="مبلغ دریافتی">{{ form.visit_fee_paid }}</td>
+                    <td data-label="مبلغ دریافتی">
+                        <input type="text" name="{{ form.visit_fee_paid.name }}" class="number-input" 
+                               value="{{ form.visit_fee_paid.value|default:"0"|comma }}" 
+                               oninput="formatNumber(this)">
+                    </td>
                     <td data-label="شرح خدمات">{{ form.service_description }}</td>
                     <td data-label="نحوه پرداخت">{{ form.payment_method }}</td>
                     {{ form.id }}
@@ -46,3 +50,24 @@
     <button type="submit" name="update_appointments" class="btn-submit">ذخیره تغییرات نوبت‌ها</button>
 </form>
 </div>
+
+<script>
+    function formatNumber(input) {
+        // 1. Get the value and remove any existing commas.
+        let value = input.value.replace(/,/g, '').replace(/[^0-9.]/g, '');
+        
+        // 2. Ensure it's a valid number, otherwise clear the input.
+        if (isNaN(value) || value === '' || value === null) {
+            input.value = '';
+            return;
+        }
+        
+        // 3. Convert to number to remove leading zeros, then back to string.
+        let numValue = parseFloat(value);
+
+        // 4. Use a regex to add thousand separators.
+        let formattedValue = numValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+        input.value = formattedValue;
+    }
+</script>

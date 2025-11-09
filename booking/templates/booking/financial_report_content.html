@@ -17,21 +17,21 @@
     <table class="report-table">
         <tr>
             <td data-label="عنوان" class="label">درآمد کل از ویزیت‌ها:</td>
-            <td data-label="مبلغ" class="amount positive">{{ total_income|intcomma }} تومان</td>
+            <td data-label="مبلغ" class="amount positive">{{ total_income|comma }} تومان</td>
         </tr>
         <tr>
             <td data-label="عنوان" class="label">جمع هزینه‌ها:</td>
-            <td data-label="مبلغ" class="amount negative">{{ total_expenses|intcomma }} تومان</td>
+            <td data-label="مبلغ" class="amount negative">{{ total_expenses|comma }} تومان</td>
         </tr>
         {% if total_payments_received > 0 %}
         <tr>
             <td data-label="عنوان" class="label">سایر دریافتی‌ها:</td>
-            <td data-label="مبلغ" class="amount positive">{{ total_payments_received|intcomma }} تومان</td>
+            <td data-label="مبلغ" class="amount positive">{{ total_payments_received|comma }} تومان</td>
         </tr>
         {% endif %}
         <tr class="total-row">
             <td data-label="عنوان" class="label">درآمد خالص روز:</td>
-            <td data-label="مبلغ" class="amount">{{ net_income|intcomma }} تومان</td>
+            <td data-label="مبلغ" class="amount">{{ net_income|comma }} تومان</td>
         </tr>
     </table>
 </div>
@@ -42,7 +42,7 @@
         {% for method, total in income_by_payment_method.items %}
         <tr>
             <td data-label="نوع پرداخت" class="label">{{ method }}:</td>
-            <td data-label="مبلغ" class="amount">{{ total|intcomma }} تومان</td>
+            <td data-label="مبلغ" class="amount">{{ total|comma }} تومان</td>
         </tr>
         {% empty %}
         <tr>
@@ -59,7 +59,7 @@
         <tr>
             <td data-label="نوع بیمه" class="label">{{ insurance }}:</td>
             <td data-label="جزئیات" class="amount">
-                {{ data.count }} نفر - هر نفر {{ data.total|div:data.count|floatformat:0|intcomma }} تومان - جمعا {{ data.total|intcomma }} تومان
+                {{ data.count }} نفر - هر نفر {{ data.total|div:data.count|floatformat:0|comma }} تومان - جمعا {{ data.total|comma }} تومان
             </td>
         </tr>
         {% empty %}
@@ -84,7 +84,7 @@
             <tr>
                 <td data-label="شرح">{{ item.description }}</td>
                 <td data-label="مبلغ (تومان)" class="amount {% if item.amount < 0 %}negative{% else %}positive{% endif %}">
-                    {{ item.amount|intcomma }}
+                    {{ item.amount|comma }}
                 </td>
             </tr>
             {% empty %}
@@ -95,7 +95,7 @@
             <tr class="total-row">
                 <td class="label">موجودی فعلی صندوق:</td>
                 <td class="amount {% if cash_box_balance > 0 %}positive{% elif cash_box_balance < 0 %}negative{% endif %}">
-                    {{ cash_box_balance|intcomma }} تومان
+                    {{ cash_box_balance|comma }} تومان
                 </td>
             </tr>
         </tbody>
