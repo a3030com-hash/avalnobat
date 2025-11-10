@@ -1,0 +1,50 @@
+{% extends 'booking/base.html' %}
+{% load booking_filters humanize %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<div class="form-container" id="expense-item-details-container">
+    <h1 class="report-title">{{ page_title }}</h1>
+
+    <div class="report-section">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>ردیف</th>
+                    <th>تاریخ</th>
+                    <th>شرح</th>
+                    <th>مبلغ (تومان)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in expenses %}
+                <tr class="clickable-row" data-href="{% url 'booking:secretary_payments' date=item.date|date:'Y-m-d' %}">
+                    <td data-label="ردیف">{{ forloop.counter }}</td>
+                    <td data-label="تاریخ">{{ item.date|to_jalali:"%Y/%m/%d" }}</td>
+                    <td data-label="شرح">{{ item.description }}</td>
+                    <td data-label="مبلغ (تومان)" class="amount">{{ item.amount|comma }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">هیچ هزینه‌ای برای این مورد در بازه زمانی مشخص شده وجود ندارد.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const rows = document.querySelectorAll('.clickable-row');
+        rows.forEach(row => {
+            row.addEventListener('click', () => {
+                window.location.href = row.dataset.href;
+            });
+        });
+    });
+</script>
+{% endblock %}

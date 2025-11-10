@@ -20,7 +20,7 @@
             </thead>
             <tbody>
                 {% for item in expenses %}
-                <tr>
+                <tr class="clickable-row" data-href="{% url 'booking:expense_item_details' description=item.description %}">
                     <td data-label="ردیف">{{ forloop.counter }}</td>
                     <td data-label="شرح">{{ item.description }}</td>
                     <td data-label="تعداد نوبت">{{ item.count }}</td>

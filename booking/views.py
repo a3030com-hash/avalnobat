@@ -1073,3 +1073,34 @@ def expense_balance_report(request):
     }
 
     return render(request, 'booking/expense_balance_report.html', context)
+
+@login_required
+def expense_item_details(request, description):
+    """
+    نمایش لیست جزئیات یک هزینه خاص.
+    """
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    doctor_profile = request.user.doctor_profile
+    end_date = datetime.date.today()
+    jalali_today = jdatetime.date.fromgregorian(date=end_date)
+    start_of_year = jdatetime.date(jalali_today.year, 1, 1).togregorian()
+    start_date = start_of_year
+
+    expenses = DailyExpense.objects.filter(
+        doctor=doctor_profile,
+        description=description,
+        date__range=[start_date, end_date],
+        amount__gt=0
+    ).order_by('date')
+
+    context = {
+        'expenses': expenses,
+        'description': description,
+        'start_date': start_date,
+        'end_date': end_date,
+        'page_title': f'لیست هزینه ها ({description}) از تاریخ {jdatetime.date.fromgregorian(date=start_date).strftime("%Y/%m/%d")} تا تاریخ {jdatetime.date.fromgregorian(date=end_date).strftime("%Y/%m/%d")}'
+    }
+
+    return render(request, 'booking/expense_item_details.html', context)

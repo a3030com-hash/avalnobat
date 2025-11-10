@@ -21,6 +21,7 @@ urlpatterns = [
     path('expense/delete/<int:pk>/', views.delete_expense, name='delete_expense'),
     re_path(r'^financial-report/(?P<date>\d{4}-\d{2}-\d{2})?/?$', views.financial_report, name='financial_report'),
     path('expense-balance/', views.expense_balance_report, name='expense_balance_report'),
+    path('expense-balance/<str:description>/', views.expense_item_details, name='expense_item_details'),
     path('manage-day/<str:date>/', views.manage_day, name='manage_day'),
     path('payment/', views.payment_page, name='payment_page'),
     path('verify-payment/', views.verify_payment, name='verify_payment'),
