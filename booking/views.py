@@ -12,6 +12,7 @@ from .forms import DoctorAvailabilityForm, AppointmentBookingForm
 from django.urls import reverse
 from django.db.models import Q
 import requests
+from django.db.models import Q
 
 def doctor_list(request):
     """

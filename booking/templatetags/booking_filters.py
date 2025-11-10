@@ -18,6 +18,19 @@ def to_jalali_js(gregorian_date):
     except (ValueError, TypeError):
         return gregorian_date
 
+@register.filter(name='to_jalali_date')
+def to_jalali_date(gregorian_date):
+    """
+    Converts a Gregorian datetime object to a Jalali date string.
+    """
+    if not gregorian_date:
+        return ""
+    try:
+        j_date = jdatetime.date.fromgregorian(date=gregorian_date)
+        return f"{j_date.year}/{j_date.month}/{j_date.day}"
+    except (ValueError, TypeError):
+        return gregorian_date
+
 @register.filter(name='to_jalali')
 def to_jalali(gregorian_date, format_str="%Y/%m/%d"):
     """
