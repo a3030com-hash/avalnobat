@@ -16,6 +16,7 @@ urlpatterns = [
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     re_path(r'^secretary-panel/(?P<date>\d{4}-\d{2}-\d{2})?/?$', views.secretary_panel, name='secretary_panel'),
     re_path(r'^daily-patients/(?P<date>\d{4}-\d{2}-\d{2})?/?$', views.daily_patients, name='daily_patients'),
+    path('patient-list/', views.patient_list, name='patient_list'),
     re_path(r'^secretary-payments/(?P<date>\d{4}-\d{2}-\d{2})?/?$', views.secretary_payments, name='secretary_payments'),
     path('expense/edit/<int:pk>/', views.edit_expense, name='edit_expense'),
     path('expense/delete/<int:pk>/', views.delete_expense, name='delete_expense'),

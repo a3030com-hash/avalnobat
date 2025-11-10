@@ -569,6 +569,39 @@ def secretary_panel(request, date=None):
 from .models import InsuranceFee
 
 @login_required
+def patient_list(request):
+    """
+    نمایش لیست تمام بیماران با قابلیت جستجو.
+    """
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    try:
+        doctor_profile = request.user.doctor_profile
+    except DoctorProfile.DoesNotExist:
+        return redirect('booking:doctor_list')
+
+    queryset = Appointment.objects.filter(
+        doctor=doctor_profile, status='BOOKED'
+    ).order_by('-appointment_datetime')
+
+    query = request.GET.get('q')
+    if query:
+        queryset = queryset.filter(
+            Q(patient_name__icontains=query) |
+            Q(patient_national_id__icontains=query) |
+            Q(patient_phone__icontains=query)
+        )
+
+    context = {
+        'appointments': queryset,
+        'page_title': 'لیست تمام بیماران',
+        'search_query': query or ''
+    }
+    return render(request, 'booking/patient_list.html', context)
+
+
+@login_required
 def daily_patients(request, date=None):
     """
     نمایش و مدیریت لیست بیماران امروز.

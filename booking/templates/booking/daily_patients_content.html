@@ -13,6 +13,10 @@
     </button>
 </div>
 
+<div style="text-align: center; margin-bottom: 1rem;">
+    <a href="{% url 'booking:patient_list' %}" class="btn-submit">لیست بیماران</a>
+</div>
+
 <form id="daily-patients-form" method="post" action="{% url 'booking:daily_patients' date=today|date:'Y-m-d' %}">
     {% csrf_token %}
     {{ formset.management_form }}
