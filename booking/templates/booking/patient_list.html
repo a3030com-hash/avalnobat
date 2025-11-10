@@ -9,9 +9,9 @@
 
     <div class="search-container" style="margin-bottom: 20px; text-align: center;">
         <form method="get" action="{% url 'booking:patient_list' %}" id="search-form">
-            <div style="position: relative; display: inline-block;">
-                <input type="text" name="q" placeholder="جستجو بر اساس نام، کد ملی، شماره همراه..." value="{{ search_query }}" class="search-input">
-                <span class="clear-search" id="clear-search-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: {% if search_query %}inline{% else %}none{% endif %};">&times;</span>
+            <div style="position: relative; display: inline-block; width: 40%;">
+                <input type="text" name="q" placeholder="جستجو بر اساس نام، کد ملی، شماره همراه..." value="{{ search_query }}" class="search-input" style="width: 100%; padding-left: 30px;">
+                <span class="clear-search" id="clear-search-btn" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: {% if search_query %}inline{% else %}none{% endif %};">&times;</span>
             </div>
             <button type="submit" class="btn-submit">جستجو</button>
         </form>
