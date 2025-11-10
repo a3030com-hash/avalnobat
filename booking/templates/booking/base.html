@@ -528,12 +528,19 @@
                 const activePage = getActivePage();
                 if (!activePage) return;
 
-                const savedDate = localStorage.getItem('userDate');
                 const container = document.getElementById(activePage.containerId);
                 const initialDateEl = container.querySelector('#dynamic-content');
-                let initialDateStr = initialDateEl ? initialDateEl.getAttribute('data-current-date') : new Date().toISOString().split('T')[0];
+                let initialDateStr = initialDateEl ? initialDateEl.getAttribute('data-current-date') : null;
 
-                userDate = savedDate ? new Date(savedDate) : new Date(initialDateStr);
+                if (initialDateStr) {
+                    // Always prioritize the date from the server if it exists
+                    userDate = new Date(initialDateStr);
+                } else {
+                    // Fallback to localStorage or today's date
+                    const savedDate = localStorage.getItem('userDate');
+                    userDate = savedDate ? new Date(savedDate) : new Date();
+                }
+
                 updateContentForDate(userDate, false);
             }
 
