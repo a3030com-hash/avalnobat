@@ -1069,7 +1069,7 @@ def expense_balance_report(request):
         'start_date': start_date,
         'end_date': end_date,
         'total_expense_sum': total_expense_sum,
-        'page_title': f'خلاصه صورت هزینه های مطب از تاریخ {start_date.strftime("%Y-%m-%d")} تا تاریخ {end_date.strftime("%Y-%m-%d")}'
+        'page_title': f'خلاصه صورت هزینه های مطب از تاریخ {jdatetime.date.fromgregorian(date=start_date).strftime("%Y/%m/%d")} تا تاریخ {jdatetime.date.fromgregorian(date=end_date).strftime("%Y/%m/%d")}'
     }
 
     return render(request, 'booking/expense_balance_report.html', context)
