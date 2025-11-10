@@ -35,7 +35,7 @@
                     <td data-label="نام بیمار">{{ form.instance.patient_name }}</td>
                     <td data-label="کد ملی">{{ form.instance.patient_national_id|default:"-" }}</td>
                     <td data-label="نوع بیمه">{{ form.insurance_type }}</td>
-                    <td data-label="مبلغ دریافتی">{{ form.visit_fee_paid|comma }}</td>
+                    <td data-label="مبلغ دریافتی">{{ form.visit_fee_paid }}</td>
                     <td data-label="شرح خدمات">{{ form.service_description }}</td>
                     <td data-label="نحوه پرداخت">{{ form.payment_method }}</td>
                     {{ form.id }}
