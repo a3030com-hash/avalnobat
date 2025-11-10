@@ -103,13 +103,16 @@
 </div>
 
 <div class="report-section">
-    <div class="settle-up-section" style="margin-top: 1rem;">
+    <div class="settle-up-section" style="margin-top: 1rem; display: flex; gap: 10px;">
         <form method="post" action="{% url 'booking:financial_report' date=today|date:'Y-m-d' %}">
             {% csrf_token %}
             <button type="submit" name="settle_up" class="btn-submit" {% if cash_box_balance == 0 %}disabled{% endif %}>
                 تسویه صندوق
             </button>
         </form>
+        <a href="{% url 'booking:expense_balance_report' %}" target="_blank" class="btn-secondary">
+            تراز هزینه
+        </a>
     </div>
 </div>
 </div>

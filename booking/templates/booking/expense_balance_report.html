@@ -1,0 +1,45 @@
+{% extends 'booking/base.html' %}
+{% load booking_filters humanize %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block content %}
+<div class="form-container" id="expense-balance-report-container">
+    <h1 class="report-title">{{ page_title }}</h1>
+
+    <div class="report-section">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>ردیف</th>
+                    <th>شرح</th>
+                    <th>تعداد نوبت</th>
+                    <th>میانگین (تومان)</th>
+                    <th>جمع هزینه (تومان)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in expenses %}
+                <tr>
+                    <td data-label="ردیف">{{ forloop.counter }}</td>
+                    <td data-label="شرح">{{ item.description }}</td>
+                    <td data-label="تعداد نوبت">{{ item.count }}</td>
+                    <td data-label="میانگین (تومان)" class="amount">{{ item.average_amount|floatformat:0|comma }}</td>
+                    <td data-label="جمع هزینه (تومان)" class="amount">{{ item.total_amount|comma }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">هیچ هزینه‌ای برای نمایش در بازه زمانی مشخص شده وجود ندارد.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="4" style="text-align: left; font-weight: bold;">جمع کل هزینه‌ها:</td>
+                    <td data-label="جمع کل" class="amount" style="font-weight: bold;">{{ total_expense_sum|comma }} تومان</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

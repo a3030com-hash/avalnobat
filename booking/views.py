@@ -905,7 +905,7 @@ def edit_profile(request):
     }
     return render(request, 'booking/edit_profile.html', context)
 
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Count, Avg
 
 # ... (other code)
 
@@ -1037,3 +1037,39 @@ def financial_report(request, date=None):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return render(request, 'booking/financial_report_content.html', context)
     return render(request, 'booking/financial_report.html', context)
+
+@login_required
+def expense_balance_report(request):
+    """
+    گزارش تراز هزینه سالانه.
+    """
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    doctor_profile = request.user.doctor_profile
+    end_date = datetime.date.today()
+    jalali_today = jdatetime.date.fromgregorian(date=end_date)
+    start_of_year = jdatetime.date(jalali_today.year, 1, 1).togregorian()
+    start_date = start_of_year
+
+    expenses = DailyExpense.objects.filter(
+        doctor=doctor_profile,
+        date__range=[start_date, end_date],
+        amount__gt=0  # Only include expenses, not payments received
+    ).values('description').annotate(
+        count=Count('id'),
+        total_amount=Sum('amount'),
+        average_amount=Avg('amount')
+    ).order_by('-total_amount')
+
+    total_expense_sum = sum(item['total_amount'] for item in expenses)
+
+    context = {
+        'expenses': expenses,
+        'start_date': start_date,
+        'end_date': end_date,
+        'total_expense_sum': total_expense_sum,
+        'page_title': f'خلاصه صورت هزینه های مطب از تاریخ {start_date.strftime("%Y-%m-%d")} تا تاریخ {end_date.strftime("%Y-%m-%d")}'
+    }
+
+    return render(request, 'booking/expense_balance_report.html', context)
