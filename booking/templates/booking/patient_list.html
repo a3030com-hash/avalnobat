@@ -8,12 +8,12 @@
     <h1>{{ page_title }}</h1>
 
     <div class="search-container" style="margin-bottom: 20px; text-align: center;">
-        <form method="get" action="{% url 'booking:patient_list' %}" id="search-form">
-            <div style="position: relative; display: inline-block; width: 20%;">
-                <input type="text" name="q" placeholder="جستجو بر اساس نام، کد ملی، شماره همراه..." value="{{ search_query }}" class="search-input" style="width: 100%; padding-left: 30px;">
+        <form method="get" action="{% url 'booking:patient_list' %}" id="search-form" style="display: flex; justify-content: center; align-items: center;">
+            <div style="position: relative; display: inline-block; flex-grow: 1; max-width: 300px; margin-right: 10px;"> <!-- تنظیم عرض باکس -->
+                <input type="text" name="q" placeholder="جستجو بر اساس نام، کد ملی، شماره همراه..." value="{{ search_query }}" class="search-input" style="width: 100%; padding-left: 30px; height: 40px;">
                 <span class="clear-search" id="clear-search-btn" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: {% if search_query %}inline{% else %}none{% endif %};">&times;</span>
             </div>
-            <button type="submit" class="btn-submit">جستجو</button>
+            <button type="submit" class="btn-submit" style="padding: 10px 20px; height: 40px;">جستجو</button> <!-- دکمه جستجو -->
         </form>
     </div>
 
