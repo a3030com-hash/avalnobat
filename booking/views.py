@@ -35,7 +35,7 @@ def doctor_list(request):
 
     context = {
         'doctors': queryset,
-        'page_title': 'لیست پزشکان'
+        'page_title':''  #'لیست پزشکان'
     }
     return render(request, 'booking/doctor_list.html', context)
 

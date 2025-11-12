@@ -5,6 +5,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="اول نوبت دات‌آی‌آر | سایت نوبت‌دهی پزشکان">
+    <meta name="description" content="اول نوبت دات‌آی‌آر مرجع نوبت‌دهی پزشکان کشور است که به شما امکان می‌دهد تا بتوانید به‌راحتی پزشک مورد نظر را انتخاب کرده و وقت ویزیت دریافت نمایید. این پلتفرم برای پزشکان رایگان است و 50% درآمد نوبت‌دهی را به منشی به صورت ماهیانه پرداخت می‌کند. همچنین، خدمات حسابداری رایگان برای مطب‌ها ارائه می‌دهد، شامل ثبت هزینه‌های روزانه، دریافت و پرداخت‌های منشی و تراز درآمد به تفکیک بیمه‌ها.">
+    <meta property="og:description" content="اول نوبت دات‌آی‌آر، بهترین راهکار برای نوبت‌دهی و حسابداری مطب با امکاناتی چون ثبت دستی نوبت، فعال و غیر فعال کردن ساعت‌های نوبت و صورت هزینه‌های سالانه مطب به تفکیک هزینه.">
+    <meta property="og:url" content="https://avalnobat.ir/">
+  
     <title>{% block title %}AvalNobat{% endblock %}</title>
     {% block meta_tags %}{% endblock %}
     <script type="application/ld+json">
@@ -42,7 +47,7 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
+            min-height: 50vh;
             background-color: var(--light-gray);
             color: var(--dark-gray);
         }
@@ -55,6 +60,7 @@
             display: flex; /* اضافه کردن flex برای تراز کردن */
             justify-content: center; /* مرکز کردن محتوا */
             align-items: center; /* مرکز کردن عمودی */
+            background-color:#35c8ed;
         }
 
         header nav {
@@ -100,10 +106,10 @@
 
         header nav a,
         header nav .nav-item {
-            margin-left: 20px; /* فاصله بین آیکن‌ها */
+            /*margin-left: 20px; *1/* فاصله بین آیکن‌ها */
             text-decoration: none;
             color: var(--secondary-color);
-            font-weight: 500;
+            font-weight: 300;
             transition: color 0.2s;
             display: inline-flex;
             align-items: center;
@@ -199,7 +205,7 @@
 
         .main-content {
             flex: 1;
-            padding: 2rem;
+            padding: 0;
             max-width: 1200px;
             margin: 0 auto;
             width: 100%;
@@ -418,19 +424,13 @@
 
     <header>
         <nav>
-            <div class="nav-items">
-                <div class="logo">
-                    <a href="{% url 'booking:doctor_list' %}" title="صفحه اصلی">
-                        <i class="fas fa-heartbeat icon"></i>
-                    </a>
-                </div>
-
-                {% if user.is_authenticated and user.user_type == 'DOCTOR' %}
-                {% endif %}
-            </div>
+      
 
             {% if user.is_authenticated and user.user_type == 'DOCTOR' %}
                 <div class="icon-links">
+                    <a href="{% url 'booking:doctor_list' %}" title="صفحه اصلی">
+                        <img src="/media/avalnobat.png" style="padding: 0;" alt="avalnobat-icon">
+                    </a>
                     <a id="daily-patients-link" href="{% url 'booking:daily_patients' %}" title="لیست بیماران روزانه">
                         <i class="fas fa-users"></i>
                     </a>
@@ -460,12 +460,11 @@
                     </div>
                 </div>
             {% else %}
-                <div class="flex-row flex-between flex-gap-15">
-                    <div class="logo">
-                        <a href="{% url 'booking:doctor_list' %}">اول نوبت</a>
-                        <i class="fas fa-heartbeat icon logo"></i>
-                    </div>
-                    <div>
+                <div class="icon-links">
+                     <div>
+                        <a href="{% url 'booking:doctor_list' %}" title="صفحه اصلی">
+                            <img src="/media/avalnobat.png" style="padding: 10;" alt="avalnobat-icon">
+                        </a>
                         <a href="{% url 'signup' %}" title="ثبت نام پزشک"><i class="fas fa-user-plus"></i></a>
                         <a href="{% url 'login' %}" title="ورود پزشک"><i class="fas fa-sign-in-alt"></i></a>
                     </div>
