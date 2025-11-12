@@ -26,4 +26,5 @@ urlpatterns = [
     path('manage-day/<str:date>/', views.manage_day, name='manage_day'),
     path('payment/', views.payment_page, name='payment_page'),
     path('verify-payment/', views.verify_payment, name='verify_payment'),
+    path('accounting-guide/', views.accounting_guide, name='accounting_guide'),
 ]

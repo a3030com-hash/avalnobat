@@ -33,6 +33,12 @@
             <td data-label="عنوان" class="label">درآمد خالص روز:</td>
             <td data-label="مبلغ" class="amount">{{ net_income|comma }} تومان</td>
         </tr>
+        <tr>
+            <td data-label="عنوان" class="label">جزئیات نوبت‌ها:</td>
+            <td data-label="تعداد" class="amount">
+                {{ total_booked_count }} نوبت رزرو شده، {{ total_visited_count }} نفر ویزیت شده
+            </td>
+        </tr>
     </table>
 </div>
 

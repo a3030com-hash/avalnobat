@@ -76,10 +76,9 @@ class Appointment(models.Model):
         ('PENDING_PAYMENT', 'در انتظار پرداخت'),
     )
     INSURANCE_CHOICES = (
-        ('TAMIN', 'تامین اجتماعی'),
-        ('SALAMAT', 'سلامت'),
-        ('KHADAMAT', 'خدمات درمانی'),
-        ('ARTESH', 'ارتش'),
+        ('TAMIN', 'بیمه تامین اجتماعی'),
+        ('KHADAMAT', 'بیمه خدمات درمانی'),
+        ('MOSALAH', 'بیمه نیروهای مصلح'),
         ('AZAD', 'آزاد'),
     )
 

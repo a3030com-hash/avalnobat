@@ -90,6 +90,16 @@
     <p><strong>تخصص:</strong> {{ doctor.specialty.name|default:"-" }}</p>
     <p><strong>شماره تلفن مطب:</strong> {{ doctor.phone_number }}</p>
     <p><strong>آدرس:</strong> {{ doctor.address }}</p>
+
+    <div style="margin-top: 1rem; margin-bottom: 1rem;">
+        <a href="#calendar-section" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; display: inline-block;">
+            دریافت نوبت اینترنتی
+        </a>
+        <a href="{% url 'booking:accounting_guide' %}" style="background-color: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">
+            راهنمای حسابداری مطب
+        </a>
+    </div>
+
     <p><strong>بیوگرافی:</strong></p>
     <p>{{ doctor.biography|linebreaks|default:"بیوگرافی ثبت نشده است." }}</p>
 

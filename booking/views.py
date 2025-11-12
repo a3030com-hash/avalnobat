@@ -1001,9 +1001,11 @@ def financial_report(request, date=None):
         current_date = datetime.date.today()
 
     # --- Daily Calculations ---
-    todays_appointments = Appointment.objects.filter(
+    all_todays_appointments = Appointment.objects.filter(
         doctor=doctor_profile,
-        appointment_datetime__date=current_date,
+        appointment_datetime__date=current_date
+    )
+    todays_appointments = all_todays_appointments.filter(
         visit_fee_paid__isnull=False
     )
     todays_expenses_queryset = DailyExpense.objects.filter(
@@ -1055,6 +1057,9 @@ def financial_report(request, date=None):
             # Redirect to prevent form resubmission
             return redirect('booking:financial_report', date=current_date.strftime('%Y-%m-%d'))
 
+    total_booked_count = all_todays_appointments.exclude(status='CANCELED').count()
+    total_visited_count = todays_appointments.count()
+
     context = {
         'today': current_date,
         'page_title': 'گزارش مالی روزانه',
@@ -1066,6 +1071,8 @@ def financial_report(request, date=None):
         'total_payments_received': total_payments_received,
         'net_income': net_income,
         'cash_box_balance': cash_box_balance,
+        'total_booked_count': total_booked_count,
+        'total_visited_count': total_visited_count,
     }
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -1138,3 +1145,10 @@ def expense_item_details(request, description):
     }
 
     return render(request, 'booking/expense_item_details.html', context)
+
+
+def accounting_guide(request):
+    """
+    Displays the accounting guide page.
+    """
+    return render(request, 'booking/accounting_guide.html')
