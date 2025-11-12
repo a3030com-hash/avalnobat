@@ -4,190 +4,202 @@
 
 {% block content %}
 <style>
+    body {
+        background-color: #f4f7f6;
+    }
+    .hero-section {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        padding: 4rem 2rem;
+        border-radius: 15px;
+        margin-bottom: 2.5rem;
+        text-align: center;
+    }
+    .hero-section h1 {
+        font-weight: 700;
+        font-size: 2.5rem;
+    }
+    .hero-section p {
+        font-size: 1.2rem;
+    }
     .card {
-        margin-bottom: 1.5rem;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        overflow: hidden;
     }
     .card-header {
-        background-color: #f8f9fa;
-        font-weight: bold;
+        background-color: #ffffff;
+        border-bottom: 2px solid #f0f0f0;
+        padding: 1.5rem;
+        font-weight: 600;
+        font-size: 1.5rem;
+        color: #0056b3;
+    }
+    .card-body {
+        padding: 1.5rem;
+        line-height: 1.8;
     }
     .table-responsive {
-        margin-top: 1rem;
+        margin-top: 1.5rem;
     }
-    h2, h3 {
+    .table thead {
+        border-radius: 10px;
+    }
+    .table thead th {
+        border: none;
+        color: white;
+        padding: 1rem;
+    }
+    .table-daily-patients thead th { background-color: #17a2b8; }
+    .table-financial-report tbody tr:first-child td { font-weight: bold; color: #28a745; }
+
+    .final-note {
+        background-color: #e2f0ff;
+        border-left: 5px solid #007bff;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-top: 2rem;
+    }
+    .final-note h4 {
         color: #0056b3;
+        font-weight: 600;
     }
 </style>
 
 <div class="container mt-5 mb-5">
-    <h1 class="text-center mb-4">راهنمای جامع حسابداری و مدیریت مطب</h1>
+    <div class="hero-section shadow-lg">
+        <h1>راهنمای جامع و هوشمند مدیریت مطب</h1>
+        <p>یک سرمایه‌گذاری هوشمندانه برای افزایش بهره‌وری و شفافیت مالی مطب شما.</p>
+    </div>
 
-    <p class="lead">این راهنما برای درک بهتر فرآیندهای مالی و مدیریتی در سامانه طراحی شده است. ما یک سناریوی یک روز کاری فرضی را با داده‌های نمونه شرح می‌دهیم تا شما بتوانید با نحوه عملکرد هر بخش به طور کامل آشنا شوید.</p>
-
-    <hr>
+    <p class="lead text-center mb-5">این راهنما یک نمونه واقعی از عملکرد سیستم در یک روز کاری را به شما نمایش می‌دهد. ببینید که چگونه مدیریت مالی و نوبت‌دهی می‌تواند تا این حد ساده و کارآمد باشد.</p>
 
     <!-- Daily Patients Section -->
     <div id="daily-patients" class="card">
         <div class="card-header">
-            <h3>۱. صفحه بیماران روز (Daily Patients)</h3>
+            ۱. مدیریت هوشمند بیماران روز
         </div>
         <div class="card-body">
-            <p>این صفحه لیست بیمارانی که برای یک روز خاص نوبت گرفته‌اند را نمایش می‌دهد. منشی می‌تواند وضعیت ویزیت، مبلغ پرداختی و نوع پرداخت هر بیمار را در این بخش مدیریت کند.</p>
+            <p>در این بخش، منشی به سادگی لیست بیماران روز را مدیریت کرده، مبالغ و نوع پرداخت را ثبت می‌کند و سیستم به صورت خودکار گزارش‌ها را به‌روز می‌کند.</p>
 
-            <h4>سناریوی نمونه:</h4>
-            <p>فرض کنید امروز <strong>۱۵ بیمار</strong> نوبت گرفته‌اند. وضعیت پرداخت‌ها و بیمه‌های آن‌ها به شرح زیر است:</p>
-            <ul>
-                <li><strong>تعداد کل نوبت‌ها:</strong> ۱۸ نوبت (۳ نفر کنسل کرده‌اند)</li>
-                <li><strong>تعداد بیماران ویزیت شده:</strong> ۱۵ نفر</li>
-                <li><strong>بیماران با بیمه (مثلاً تامین اجتماعی):</strong> ۱۰ نفر. هزینه ویزیت هر نفر: <strong>۱۰۰,۰۰۰ تومان</strong>.</li>
-                <li><strong>بیماران آزاد:</strong> ۵ نفر. هزینه ویزیت هر نفر: <strong>۳۰۰,۰۰۰ تومان</strong>.</li>
-                <li><strong>پرداخت نقدی:</strong> ۲ نفر (یک بیمار آزاد و یک بیمار با بیمه). جمع دریافتی نقدی: <strong>۴۰۰,۰۰۰ تومان</strong> (۳۰۰,۰۰۰ + ۱۰۰,۰۰۰).</li>
-                <li><strong>پرداخت با کارتخوان یا آنلاین:</strong> ۱۳ نفر.</li>
-            </ul>
-
-            <p>در صفحه <strong>Daily Patients</strong>، لیستی مشابه جدول زیر را مشاهده خواهید کرد که می‌توانید اطلاعات آن را ویرایش و ذخیره کنید:</p>
+            <h5 class="mt-4">نمونه گزارش روزانه بیماران:</h5>
             <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="thead-light">
+                <table class="table table-hover table-striped table-daily-patients">
+                    <thead>
                         <tr>
                             <th>نام بیمار</th>
-                            <th>بیمه</th>
-                            <th>وضعیت ویزیت</th>
-                            <th>مبلغ پرداختی (تومان)</th>
-                            <th>روش پرداخت</th>
+                            <th>نوع بیمه</th>
+                            <th>وضعیت</th>
+                            <th>مبلغ دریافتی (تومان)</th>
+                            <th>نحوه پرداخت</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>رضا احمدی</td>
                             <td>آزاد</td>
-                            <td>ویزیت شده</td>
+                            <td><span class="badge badge-success">ویزیت شده</span></td>
                             <td>۳۰۰,۰۰۰</td>
-                            <td>نقدی</td>
+                            <td><span class="badge badge-primary">نقدی</span></td>
                         </tr>
                         <tr>
                             <td>مریم حسینی</td>
-                            <td>تامین اجتماعی</td>
-                            <td>ویزیت شده</td>
+                            <td>بیمه تامین اجتماعی</td>
+                            <td><span class="badge badge-success">ویزیت شده</span></td>
                             <td>۱۰۰,۰۰۰</td>
-                            <td>نقدی</td>
+                            <td><span class="badge badge-primary">نقدی</span></td>
                         </tr>
                         <tr>
                             <td>علی کریمی</td>
-                            <td>خدمات درمانی</td>
-                            <td>ویزیت شده</td>
+                            <td>بیمه خدمات درمانی</td>
+                            <td><span class="badge badge-success">ویزیت شده</span></td>
                             <td>۱۰۰,۰۰۰</td>
-                            <td>کارتخوان</td>
+                            <td><span class="badge badge-info">کارتخوان</span></td>
                         </tr>
-                        <tr>
-                            <td>... (۱۲ بیمار دیگر)</td>
-                            <td>...</td>
-                            <td>...</td>
-                            <td>...</td>
-                            <td>...</td>
+                         <tr>
+                            <td>فاطمه محمدی</td>
+                            <td>بیمه نیروهای مصلح</td>
+                            <td><span class="badge badge-success">ویزیت شده</span></td>
+                            <td>۱۰۰,۰۰۰</td>
+                            <td><span class="badge badge-info">کارتخوان</span></td>
                         </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Secretary Panel Section -->
-    <div id="secretary-panel" class="card">
-        <div class="card-header">
-            <h3>۲. پنل منشی (Secretary Panel)</h3>
-        </div>
-        <div class="card-body">
-            <p>این بخش داشبورد اصلی منشی برای مدیریت نوبت‌های آینده است. منشی می‌تواند روزهای فعال و ظرفیت باقی‌مانده هر روز را ببیند و در صورت نیاز، برای بیمارانی که حضوری یا تلفنی تماس می‌گیرند، نوبت ثبت کند.</p>
-
-            <h4>نحوه استفاده:</h4>
-            <p>در این صفحه، تقویمی از روزهای آینده نمایش داده می‌شود. هر روز با یک رنگ متفاوت، وضعیت ظرفیت خود را نشان می‌دهد (مثلاً سبز برای موجود، قرمز برای تکمیل شده). منشی با کلیک بر روی هر روز، به صفحه <strong>"مدیریت نوبت‌های روز"</strong> منتقل می‌شود و می‌تواند:</p>
-            <ul>
-                <li>یک نوبت جدید برای بیماری خاص ثبت کند.</li>
-                <li>یک ساعت خاص را مسدود (Block) کند تا دیگران نتوانند آن را رزرو کنند.</li>
-                <li>یک ساعت مسدود شده را مجدداً فعال (Unblock) کند.</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Secretary Payments Section -->
-    <div id="secretary-payments" class="card">
-        <div class="card-header">
-            <h3>۳. پرداخت‌های منشی (Secretary Payments)</h3>
-        </div>
-        <div class="card-body">
-            <p>در این صفحه، منشی می‌تواند هزینه‌های روزانه مطب را ثبت کند. این هزینه‌ها از صندوق نقدی منشی کسر می‌شوند.</p>
-
-            <h4>سناریوی نمونه:</h4>
-            <p>امروز، منشی هزینه‌های زیر را در سیستم ثبت کرده است:</p>
-            <ul>
-                <li><strong>قبض برق:</strong> ۵۰,۰۰۰ تومان</li>
-                <li><strong>کرایه اسنپ برای ارسال نمونه:</strong> ۲۵,۰۰۰ تومان</li>
-                <li><strong>خرید دستمال کاغذی و ملزومات:</strong> ۱۵,۰۰۰ تومان</li>
-            </ul>
-            <p><strong>مجموع هزینه‌ها:</strong> ۹۰,۰۰۰ تومان.</p>
-            <p>همانطور که در بخش اول دیدیم، دریافتی نقدی امروز <strong>۴۰۰,۰۰۰ تومان</strong> بوده است. با کسر هزینه‌ها، مانده صندوق نقدی منشی در پایان روز <strong>۳۱۰,۰۰۰ تومان</strong> خواهد بود.</p>
-        </div>
-    </div>
-
-    <!-- Financial Report Section -->
-    <div id="financial-report" class="card">
-        <div class="card-header">
-            <h3>۴. گزارش مالی (Financial Report)</h3>
-        </div>
-        <div class="card-body">
-            <p>این صفحه یک نمای کلی و دقیق از وضعیت مالی مطب برای روز انتخاب شده ارائه می‌دهد. تمام داده‌های وارد شده در بخش‌های دیگر، در اینجا جمع‌بندی می‌شوند.</p>
-
-            <h4>گزارش نمونه بر اساس سناریوی ما:</h4>
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <tbody>
-                        <tr>
-                            <td><strong>جمع کل درآمد امروز</strong></td>
-                            <td><strong>۲,۵۰۰,۰۰۰ تومان</strong> ((۱۰ * ۱۰۰,۰۰۰) + (۵ * ۳۰۰,۰۰۰))</td>
-                        </tr>
-                        <tr>
-                            <td>تفکیک درآمد بر اساس روش پرداخت</td>
-                            <td>
-                                <ul>
-                                    <li>نقدی: ۴۰۰,۰۰۰ تومان</li>
-                                    <li>کارتخوان/آنلاین: ۲,۱۰۰,۰۰۰ تومان</li>
-                                </ul>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>تفکیک درآمد بر اساس نوع بیمه</td>
-                            <td>
-                                <ul>
-                                    <li>تامین اجتماعی: (X نفر) Y تومان</li>
-                                    <li>خدمات درمانی: (A نفر) B تومان</li>
-                                    <li>آزاد: (۵ نفر) ۱,۵۰۰,۰۰۰ تومان</li>
-                                </ul>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>جمع کل هزینه‌ها</strong></td>
-                            <td><strong>۹۰,۰۰۰ تومان</strong></td>
-                        </tr>
-                        <tr>
-                            <td><strong>درآمد خالص امروز</strong></td>
-                            <td><strong>۲,۴۱۰,۰۰۰ تومان</strong> (درآمد کل - هزینه‌ها)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>مانده صندوق نقدی منشی</strong></td>
-                            <td><strong>۳۱۰,۰۰۰ تومان</strong></td>
-                        </tr>
-                        <tr>
-                            <td><strong>جزئیات تعداد نوبت‌ها و ویزیت شده‌ها</strong></td>
-                            <td><strong>تعداد نوبت رزرو شده ۱۸ نفر، تعداد ویزیت شده ۱۵ نفر</strong></td>
+                        <tr class="table-info">
+                            <td colspan="5" class="text-center">... و ۱۱ بیمار ویزیت شده دیگر ...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="alert alert-info mt-3">
-                <strong>نکته:</strong> دکمه "تسویه صندوق منشی" در پایین این صفحه، مانده حساب نقدی را صفر کرده و یک رکورد هزینه به اندازه مبلغ مانده ثبت می‌کند تا حساب روز بسته شود.
+        </div>
+    </div>
+
+    <!-- Secretary Payments & Financial Report -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div id="secretary-payments" class="card h-100">
+                <div class="card-header">
+                    ۲. ثبت آسان هزینه‌ها
+                </div>
+                <div class="card-body">
+                    <p>منشی می‌تواند هزینه‌های روزمره مطب را به راحتی ثبت کند تا حساب صندوق نقدی همیشه شفاف و دقیق باشد.</p>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            قبض برق
+                            <span class="badge badge-danger badge-pill">۵۰,۰۰۰ تومان</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            کرایه اسنپ
+                            <span class="badge badge-danger badge-pill">۲۵,۰۰۰ تومان</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ملزومات اداری
+                            <span class="badge badge-danger badge-pill">۱۵,۰۰۰ تومان</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
+        <div class="col-lg-6">
+            <div id="financial-report" class="card h-100">
+                <div class="card-header">
+                   ۳. گزارش مالی شفاف و لحظه‌ای
+                </div>
+                <div class="card-body">
+                     <p>تمام درآمدها و هزینه‌ها به صورت خودکار در این گزارش تجمیع شده و نمایی کامل از وضعیت مالی روز را ارائه می‌دهد.</p>
+                    <table class="table table-sm table-borderless table-financial-report">
+                        <tbody>
+                            <tr>
+                                <td><strong>جمع درآمد امروز:</strong></td>
+                                <td class="text-right"><strong>۲,۵۰۰,۰۰۰ تومان</strong></td>
+                            </tr>
+                            <tr>
+                                <td>جمع هزینه‌های امروز:</td>
+                                <td class="text-right text-danger">۹۰,۰۰۰ تومان</td>
+                            </tr>
+                            <tr class="border-top">
+                                <td><strong>درآمد خالص روز:</strong></td>
+                                <td class="text-right font-weight-bold text-success"><strong>۲,۴۱۰,۰۰۰ تومان</strong></td>
+                            </tr>
+                            <tr class="mt-2">
+                                <td>مانده صندوق نقدی:</td>
+                                <td class="text-right">۳۱۰,۰۰۰ تومان</td>
+                            </tr>
+                             <tr>
+                                <td>جزئیات نوبت‌ها:</td>
+                                <td class="text-right">۱۸ نوبت رزرو شده، ۱۵ ویزیت شده</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Note Section -->
+    <div class="final-note">
+        <h4>یک طرح برد-برد برای پزشکان و منشی‌ها</h4>
+        <p>ما به نقش حیاتی منشی‌ها در مدیریت یک مطب موفق ایمان داریم. به همین دلیل، برای قدردانی از زحمات ایشان و ایجاد انگیزه‌ی بیشتر، <strong>۵۰٪ از درآمد حاصل از نوبت‌گیری آنلاین</strong> که به حساب ما واریز می‌شود، مستقیماً به حساب منشی‌ها واریز خواهد شد. این طرح نه تنها به نفع منشی‌هاست، بلکه با افزایش رضایت شغلی آن‌ها، به بهبود خدمات‌رسانی به بیماران و در نهایت موفقیت بیشتر مطب شما کمک می‌کند.</p>
     </div>
 </div>
 {% endblock %}
