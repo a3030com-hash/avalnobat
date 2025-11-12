@@ -119,6 +119,13 @@
                 </h2>
                 <p><i class="fas fa-stethoscope icon"></i><strong>تخصص:</strong> {{ doctor.specialty.name|default:"-" }}</p>
                 <p><i class="fas fa-map-marker-alt icon"></i><strong>آدرس:</strong> {{ doctor.address|truncatewords:10 }}</p>
+                {% if doctor.has_availability %}
+                <div style="margin-top: 1rem; margin-bottom: 1rem;">
+                    <a href="{% url 'booking:doctor_detail' pk=doctor.pk %}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; display: inline-block;">
+                        دریافت نوبت اینترنتی
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
     {% endfor %}

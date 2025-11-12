@@ -18,7 +18,7 @@ def doctor_list(request):
     """
     نمایش لیست تمام پزشکان با قابلیت جستجو.
     """
-    queryset = DoctorProfile.objects.select_related('user', 'specialty').all()
+    queryset = DoctorProfile.objects.select_related('user', 'specialty').prefetch_related('availabilities').all()
     query = request.GET.get('q')
 
     if query:

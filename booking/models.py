@@ -30,6 +30,10 @@ class DoctorProfile(models.Model):
     biography = models.TextField(blank=True, verbose_name="بیوگرافی")
     visit_fee = models.DecimalField(max_digits=10, decimal_places=0, default=100000, verbose_name="هزینه ویزیت آنلاین")
 
+    @property
+    def has_availability(self):
+        return self.availabilities.exists()
+
     def __str__(self):
         return f"دکتر {self.user.get_full_name()}"
 
