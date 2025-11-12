@@ -44,16 +44,13 @@
     .table-responsive {
         margin-top: 1.5rem;
     }
-    .table thead {
-        border-radius: 10px;
-    }
     .table thead th {
         border: none;
         color: white;
         padding: 1rem;
     }
     .table-daily-patients thead th { background-color: #17a2b8; }
-    .table-financial-report tbody tr:first-child td { font-weight: bold; color: #28a745; }
+    .table-financial-report thead th { background-color: #28a745; }
 
     .final-note {
         background-color: #e2f0ff;
@@ -76,73 +73,66 @@
 
     <p class="lead text-center mb-5">این راهنما یک نمونه واقعی از عملکرد سیستم در یک روز کاری را به شما نمایش می‌دهد. ببینید که چگونه مدیریت مالی و نوبت‌دهی می‌تواند تا این حد ساده و کارآمد باشد.</p>
 
-    <!-- Daily Patients Section -->
-    <div id="daily-patients" class="card">
-        <div class="card-header">
-            ۱. مدیریت هوشمند بیماران روز
-        </div>
-        <div class="card-body">
-            <p>در این بخش، منشی به سادگی لیست بیماران روز را مدیریت کرده، مبالغ و نوع پرداخت را ثبت می‌کند و سیستم به صورت خودکار گزارش‌ها را به‌روز می‌کند.</p>
-
-            <h5 class="mt-4">نمونه گزارش روزانه بیماران:</h5>
-            <div class="table-responsive">
-                <table class="table table-hover table-striped table-daily-patients">
-                    <thead>
-                        <tr>
-                            <th>نام بیمار</th>
-                            <th>نوع بیمه</th>
-                            <th>وضعیت</th>
-                            <th>مبلغ دریافتی (تومان)</th>
-                            <th>نحوه پرداخت</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>رضا احمدی</td>
-                            <td>آزاد</td>
-                            <td><span class="badge badge-success">ویزیت شده</span></td>
-                            <td>۳۰۰,۰۰۰</td>
-                            <td><span class="badge badge-primary">نقدی</span></td>
-                        </tr>
-                        <tr>
-                            <td>مریم حسینی</td>
-                            <td>بیمه تامین اجتماعی</td>
-                            <td><span class="badge badge-success">ویزیت شده</span></td>
-                            <td>۱۰۰,۰۰۰</td>
-                            <td><span class="badge badge-primary">نقدی</span></td>
-                        </tr>
-                        <tr>
-                            <td>علی کریمی</td>
-                            <td>بیمه خدمات درمانی</td>
-                            <td><span class="badge badge-success">ویزیت شده</span></td>
-                            <td>۱۰۰,۰۰۰</td>
-                            <td><span class="badge badge-info">کارتخوان</span></td>
-                        </tr>
-                         <tr>
-                            <td>فاطمه محمدی</td>
-                            <td>بیمه نیروهای مصلح</td>
-                            <td><span class="badge badge-success">ویزیت شده</span></td>
-                            <td>۱۰۰,۰۰۰</td>
-                            <td><span class="badge badge-info">کارتخوان</span></td>
-                        </tr>
-                        <tr class="table-info">
-                            <td colspan="5" class="text-center">... و ۱۱ بیمار ویزیت شده دیگر ...</td>
-                        </tr>
-                    </tbody>
-                </table>
+    <!-- Daily Patients & Secretary Payments Section -->
+    <div class="row">
+        <div class="col-lg-7">
+            <div id="daily-patients" class="card h-100">
+                <div class="card-header">
+                    ۱. مدیریت هوشمند بیماران روز
+                </div>
+                <div class="card-body">
+                    <p>در این بخش، منشی به سادگی لیست بیماران روز را مدیریت کرده و سیستم به صورت خودکار گزارش‌ها را به‌روز می‌کند.</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped table-daily-patients">
+                            <thead>
+                                <tr>
+                                    <th>نام بیمار</th>
+                                    <th>نوع بیمه</th>
+                                    <th>مبلغ دریافتی</th>
+                                    <th>نحوه پرداخت</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>رضا احمدی</td>
+                                    <td>آزاد</td>
+                                    <td>۳۰۰,۰۰۰</td>
+                                    <td><span class="badge badge-primary">نقدی</span></td>
+                                </tr>
+                                <tr>
+                                    <td>مریم حسینی</td>
+                                    <td>بیمه تامین اجتماعی</td>
+                                    <td>۱۰۰,۰۰۰</td>
+                                    <td><span class="badge badge-primary">نقدی</span></td>
+                                </tr>
+                                <tr>
+                                    <td>علی کریمی</td>
+                                    <td>بیمه خدمات درمانی</td>
+                                    <td>۱۰۰,۰۰۰</td>
+                                    <td><span class="badge badge-info">کارتخوان</span></td>
+                                </tr>
+                                <tr>
+                                    <td>فاطمه محمدی</td>
+                                    <td>بیمه نیروهای مصلح</td>
+                                    <td>۱۰۰,۰۰۰</td>
+                                    <td><span class="badge badge-info">کارتخوان</span></td>
+                                </tr>
+                                <tr class="table-info">
+                                    <td colspan="4" class="text-center">... و ۱۱ بیمار ویزیت شده دیگر ...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-
-    <!-- Secretary Payments & Financial Report -->
-    <div class="row">
-        <div class="col-lg-6">
-            <div id="secretary-payments" class="card h-100">
+        <div class="col-lg-5">
+             <div id="secretary-payments" class="card h-100">
                 <div class="card-header">
                     ۲. ثبت آسان هزینه‌ها
                 </div>
                 <div class="card-body">
-                    <p>منشی می‌تواند هزینه‌های روزمره مطب را به راحتی ثبت کند تا حساب صندوق نقدی همیشه شفاف و دقیق باشد.</p>
+                    <p>منشی می‌تواند هزینه‌های روزمره مطب را ثبت کند تا حساب صندوق نقدی شفاف باشد.</p>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             قبض برق
@@ -156,43 +146,91 @@
                             ملزومات اداری
                             <span class="badge badge-danger badge-pill">۱۵,۰۰۰ تومان</span>
                         </li>
+                         <li class="list-group-item d-flex justify-content-between align-items-center font-weight-bold">
+                            جمع هزینه‌ها
+                            <span class="badge badge-dark badge-pill">۹۰,۰۰۰ تومان</span>
+                        </li>
                     </ul>
                 </div>
             </div>
         </div>
-        <div class="col-lg-6">
-            <div id="financial-report" class="card h-100">
-                <div class="card-header">
-                   ۳. گزارش مالی شفاف و لحظه‌ای
-                </div>
-                <div class="card-body">
-                     <p>تمام درآمدها و هزینه‌ها به صورت خودکار در این گزارش تجمیع شده و نمایی کامل از وضعیت مالی روز را ارائه می‌دهد.</p>
-                    <table class="table table-sm table-borderless table-financial-report">
-                        <tbody>
-                            <tr>
-                                <td><strong>جمع درآمد امروز:</strong></td>
-                                <td class="text-right"><strong>۲,۵۰۰,۰۰۰ تومان</strong></td>
-                            </tr>
-                            <tr>
-                                <td>جمع هزینه‌های امروز:</td>
-                                <td class="text-right text-danger">۹۰,۰۰۰ تومان</td>
-                            </tr>
-                            <tr class="border-top">
-                                <td><strong>درآمد خالص روز:</strong></td>
-                                <td class="text-right font-weight-bold text-success"><strong>۲,۴۱۰,۰۰۰ تومان</strong></td>
-                            </tr>
-                            <tr class="mt-2">
-                                <td>مانده صندوق نقدی:</td>
-                                <td class="text-right">۳۱۰,۰۰۰ تومان</td>
-                            </tr>
-                             <tr>
-                                <td>جزئیات نوبت‌ها:</td>
-                                <td class="text-right">۱۸ نوبت رزرو شده، ۱۵ ویزیت شده</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    </div>
+
+    <!-- Financial Report Section -->
+    <div id="financial-report" class="card mt-4">
+        <div class="card-header">
+           ۳. گزارش مالی شفاف و لحظه‌ای
+        </div>
+        <div class="card-body">
+             <p>تمام درآمدها و هزینه‌ها به صورت خودکار در این گزارش تجمیع شده و نمایی کامل از وضعیت مالی روز را ارائه می‌دهد.</p>
+             <div class="table-responsive">
+                <table class="table table-bordered table-financial-report">
+                    <thead>
+                        <tr>
+                            <th colspan="2">خلاصه درآمد و هزینه</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>درآمد کل از ویزیت‌ها</td>
+                            <td class="text-success font-weight-bold">۲,۵۰۰,۰۰۰ تومان</td>
+                        </tr>
+                        <tr>
+                            <td>جمع هزینه‌ها</td>
+                            <td class="text-danger font-weight-bold">- ۹۰,۰۰۰ تومان</td>
+                        </tr>
+                        <tr class="table-primary">
+                            <td class="font-weight-bold">درآمد خالص روز</td>
+                            <td class="font-weight-bold">۲,۴۱۰,۰۰۰ تومان</td>
+                        </tr>
+                    </tbody>
+                    <thead>
+                        <tr>
+                            <th colspan="2">جزئیات درآمد بر اساس نوع پرداخت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         <tr>
+                            <td>نقدی (۲ نفر)</td>
+                            <td>۴۰۰,۰۰۰ تومان</td>
+                        </tr>
+                         <tr>
+                            <td>کارتخوان (۱۳ نفر)</td>
+                            <td>۲,۱۰۰,۰۰۰ تومان</td>
+                        </tr>
+                    </tbody>
+                    <thead>
+                        <tr>
+                            <th colspan="2">جزئیات درآمد بر اساس نوع بیمه</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         <tr>
+                            <td>آزاد (۵ نفر)</td>
+                            <td>۱,۵۰۰,۰۰۰ تومان</td>
+                        </tr>
+                         <tr>
+                            <td>بیمه (۱۰ نفر)</td>
+                            <td>۱,۰۰۰,۰۰۰ تومان</td>
+                        </tr>
+                    </tbody>
+                     <thead>
+                        <tr>
+                            <th colspan="2">خلاصه وضعیت نوبت‌ها و صندوق</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         <tr>
+                            <td>تعداد نوبت رزرو شده / ویزیت شده</td>
+                            <td>۱۸ نفر / ۱۵ نفر</td>
+                        </tr>
+                         <tr>
+                            <td class="font-weight-bold">مانده نهایی صندوق نقدی منشی</td>
+                            <td class="font-weight-bold">۳۱۰,۰۰۰ تومان</td>
+                        </tr>
+                    </tbody>
+                </table>
+             </div>
         </div>
     </div>
 
