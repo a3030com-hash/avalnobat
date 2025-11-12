@@ -458,15 +458,21 @@
                             </form>
                         </div>
                     </div>
+                    <a href="{% url 'booking:accounting_guide' %}" >
+                        <img src="/media/hesabdari.png" style="padding: 0;" alt="avalnobat-icon">
+                    </a>
                 </div>
             {% else %}
                 <div class="icon-links">
                      <div>
                         <a href="{% url 'booking:doctor_list' %}" title="صفحه اصلی">
-                            <img src="/media/avalnobat.png" style="padding: 10;" alt="avalnobat-icon">
+                            <img src="/media/avalnobat.png" style="padding: 10,0,0,0;" alt="avalnobat-icon">
                         </a>
                         <a href="{% url 'signup' %}" title="ثبت نام پزشک"><i class="fas fa-user-plus"></i></a>
                         <a href="{% url 'login' %}" title="ورود پزشک"><i class="fas fa-sign-in-alt"></i></a>
+                        <a href="{% url 'booking:accounting_guide' %}" >
+                            <img src="/media/hesabdari.png"  alt="avalnobat-icon">
+                        </a>
                     </div>
                 </div>
             {% endif %}
