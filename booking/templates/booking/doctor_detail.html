@@ -96,39 +96,14 @@
     <hr>
 
     <h3>تقویم نوبت‌دهی (۴۵ روز آینده)</h3>
-    <div class="calendar">
-        <!-- Header for days of week -->
-        <div class="day-name">شنبه</div>
-        <div class="day-name">یکشنبه</div>
-        <div class="day-name">دوشنبه</div>
-        <div class="day-name">سه‌شنبه</div>
-        <div class="day-name">چهارشنبه</div>
-        <div class="day-name">پنجشنبه</div>
-        <div class="day-name">جمعه</div>
-
-            <!-- Add empty cells for offset -->
-            {% for i in calendar_offset %}
-                <div class="day day-empty"></div>
-            {% endfor %}
-
-        {% for day in days %}
-            {% if day.status == 'available' %}
-                <a href="{% url 'booking:book_appointment' pk=doctor.pk date=day.date|to_jalali:'%Y-%m-%d' %}" style="text-decoration: none;">
-                    <div class="day {{ day.status }}" style="--booked-percentage: {{ day.booked_percentage }}%;">
-                        <span class="jalali-date" data-date="{{ day.date|to_jalali_js }}">{{ day.date|to_jalali:"%d %B" }}</span>
-                    </div>
-                </a>
-            {% else %}
-                <div class="day {{ day.status }}">
-                    <span class="jalali-date" data-date="{{ day.date|to_jalali_js }}">{{ day.date|to_jalali:"%d %B" }}</span>
-                </div>
-            {% endif %}
+    <div class="available-days-list">
+        {% for day in available_days %}
+            <a href="{% url 'booking:book_appointment' pk=doctor.pk date=day.date|to_jalali:'%Y-%m-%d' %}" class="day-link">
+                {{ day.date|to_jalali:"%d %B" }} ({{ day.jalali_day_name }})
+            </a>
+        {% empty %}
+            <p>در ۴۵ روز آینده نوبت خالی وجود ندارد.</p>
         {% endfor %}
-    </div>
-    <div class="legend">
-        <span><div class="color-box" style="background-color: #d4edda;"></div> نوبت موجود</span>
-        <span><div class="color-box" style="background-color: #f8d7da;"></div> نوبت تکمیل شده</span>
-        <span><div class="color-box" style="background-color: #e9ecef;"></div> روز غیرفعال</span>
     </div>
 </div>
 {% endblock %}
