@@ -470,9 +470,7 @@
                         </a>
                         <a href="{% url 'signup' %}" title="ثبت نام پزشک"><i class="fas fa-user-plus"></i></a>
                         <a href="{% url 'login' %}" title="ورود پزشک"><i class="fas fa-sign-in-alt"></i></a>
-                        <a href="{% url 'booking:accounting_guide' %}" >
-                            <img src="/media/hesabdari.png"  alt="avalnobat-icon">
-                        </a>
+                       
                     </div>
                 </div>
             {% endif %}
@@ -488,6 +486,9 @@
             <div style="flex: 1; display: flex; flex-direction: column;  ">
                 <p>هزینه نوبت دهی  ۱۰۰,۰۰۰ ریال است که پس از دریافت نوبت از طریق درگاه (به پرداخت)دریافت میشود.</p>
                 <p>وجه ویزیت در مطب دریافت میگردد.</p>
+                <a href="{% url 'booking:accounting_guide' %}" >
+                    <img src="/media/hesabdari.png"  alt="avalnobat-icon">
+                </a>
             </div>  
             <div style="flex: 2;">
                 <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
