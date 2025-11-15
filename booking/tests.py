@@ -2,6 +2,7 @@ import datetime
 import jdatetime
 from django.test import TestCase
 from django.urls import reverse
+from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import Specialty, DoctorProfile, Appointment, DoctorAvailability, DailyExpense
@@ -178,3 +179,28 @@ class BookingAppTestCase(TestCase):
         # Check that a settlement expense was created correctly
         settlement_expense = DailyExpense.objects.get(description="تسویه صندوق منشی")
         self.assertEqual(settlement_expense.amount, 200000)
+
+    @patch('booking.views.requests.post')
+    def test_doctor_signup(self, mock_post):
+        """Test the doctor signup process."""
+        mock_post.return_value.status_code = 200
+        signup_url = reverse('booking:signup')
+        form_data = {
+            'username': 'newdoctor',
+            'password1': 'a_much_stronger_password_123',
+            'password2': 'a_much_stronger_password_123',
+            'first_name': 'تست',
+            'last_name': 'پزشک',
+            'email': 'newdoctor@example.com',
+            'specialty': self.specialty.pk,
+            'address': 'آدرس تستی',
+            'phone_number': '0987654321',
+            'mobile_number': '09123456789',
+            'medical_id': '123456',
+        }
+        response = self.client.post(signup_url, form_data)
+        self.assertEqual(response.status_code, 302)  # Should redirect after successful signup
+        self.assertTrue(User.objects.filter(username='newdoctor').exists())
+        self.assertTrue(DoctorProfile.objects.filter(user__username='newdoctor').exists())
+        doctor_profile = DoctorProfile.objects.get(user__username='newdoctor')
+        self.assertEqual(doctor_profile.mobile_number, '09123456789')

@@ -889,33 +889,33 @@ def doctor_signup(request):
                 specialty=form.cleaned_data.get('specialty'),
                 address=form.cleaned_data.get('address'),
                 phone_number=form.cleaned_data.get('phone_number'),
+                mobile_number=form.cleaned_data.get('mobile_number'),
                 photo=form.cleaned_data.get('photo'),
                 biography=form.cleaned_data.get('biography')
             )
 
-        try:
-                        AMOOT_SMS_API_TOKEN=settings.AMOOT_SMS_API_TOKEN
-                        AMOOT_SMS_API_URL=settings.AMOOT_SMS_API_URL
-                        otp_code = str(random.randint(100000, 999999))
-                        request.session['otp_code'] = otp_code
-                        request.session['new_user_id'] = user.id
-                        mob_number='09151110677'
+            try:
+                AMOOT_SMS_API_TOKEN=settings.AMOOT_SMS_API_TOKEN
+                AMOOT_SMS_API_URL=settings.AMOOT_SMS_API_URL
+                otp_code = str(random.randint(100000, 999999))
+                request.session['otp_code'] = otp_code
+                request.session['new_user_id'] = user.id
+                mob_number = form.cleaned_data.get('mobile_number')
 
-                        payload = {
-                               'token': AMOOT_SMS_API_TOKEN,
-                               'Mobile': mob_number,
-                               'PatternCodeID':4018,
-                               'PatternValues': otp_code,
-                            }
-                        response=requests.post(AMOOT_SMS_API_URL,data=payload)
-        except requests.exceptions.RequestException as e:
-                # Handle exceptions, maybe delete the created user
+                payload = {
+                       'token': AMOOT_SMS_API_TOKEN,
+                       'Mobile': mob_number,
+                       'PatternCodeID':4018,
+                       'PatternValues': otp_code,
+                    }
+                requests.post(AMOOT_SMS_API_URL,data=payload)
+                return redirect('booking:verify_doctor_signup')
+            except requests.exceptions.RequestException as e:
+                # Handle exceptions, delete the created user since we can't verify them
                 user.delete()
                 form.add_error(None, "خطا در ارسال کد تایید. لطفاً مجدداً تلاش کنید.")
-                return render(request, 'booking/signup.html', {'form': form, 'page_title': 'ثبت نام پزشک'})
-
-        return redirect('booking:verify_doctor_signup')
-    else:
+                # Fall through to render the form with the error message
+    else: # GET
         form = DoctorRegistrationForm()
 
     return render(request, 'booking/signup.html', {'form': form, 'page_title': 'ثبت نام پزشک'})
