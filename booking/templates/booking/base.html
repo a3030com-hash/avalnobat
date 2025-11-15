@@ -235,7 +235,7 @@
             }
 
             header {
-                padding: 1rem;
+                padding: 0;
             }
         }
 
@@ -443,7 +443,7 @@
                     <a id="financial-report-link" href="{% url 'booking:financial_report' %}" title="گزارش مالی">
                         <i class="fas fa-chart-bar"></i>
                     </a>
-
+                
                     <div class="dropdown">
                         <span class="dropbtn nav-item">
                             <i class="fas fa-user-cog" style="margin-left: 8px;"></i>
@@ -457,22 +457,27 @@
                                 <button type="submit" class="link-button">خروج پزشک</button>
                             </form>
                         </div>
-                    </div>
-                    <a href="{% url 'booking:accounting_guide' %}" >
-                        <img src="/media/hesabdari.png" style="padding: 0;" alt="avalnobat-icon">
-                    </a>
-                </div>
             {% else %}
-                <div class="icon-links">
-                     <div>
-                        <a href="{% url 'booking:doctor_list' %}" title="صفحه اصلی">
-                            <img src="/media/avalnobat.png" style="padding: 10,0,0,0;" alt="avalnobat-icon">
-                        </a>
-                        <a href="{% url 'signup' %}" title="ثبت نام پزشک"><i class="fas fa-user-plus"></i></a>
-                        <a href="{% url 'login' %}" title="ورود پزشک"><i class="fas fa-sign-in-alt"></i></a>
-                       
+            <div class="icon-links">
+                <div>
+                    <a href="{% url 'booking:doctor_list' %}" title="صفحه اصلی">
+                        <img src="/media/aval3.png" style="padding: 0; width: 60%;" alt="avalnobat-icon">
+                    </a>
+                    <div class="dropdown">
+                        <span class="dropbtn nav-item">
+                            <img src="/media/doctor.png" style="padding: 0; border-radius: 50%; width: 50px; height: 50px;" alt="avalnobat-icon">
+                        </span>
+                        <div class="dropdown-content">
+                            <a href="{% url 'signup' %}">
+                                <span class="fas fa-user-plus"></span> ثبت نام پزشک
+                            </a>
+                            <a href="{% url 'login' %}">
+                                <span class="fas fa-sign-in-alt"></span> ورود پزشک
+                            </a>
+                        </div>
                     </div>
                 </div>
+            </div>
             {% endif %}
         </nav>
     </header>
@@ -483,19 +488,20 @@
     </main>
     <footer>
         <div style="width: 100%; max-width: 1200px; margin: 0 auto; display: flex; align-items: center;">
+                    <div style="flex: 1;display: flex; flex-direction: column; ">
+                     <p href="{% url 'booking:accounting_guide' %}">📅 سیستم نوبت‌دهی و حسابداری مطب برای راحتی بیماران و مدیریت بهتر مالی!</p>
+                     <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
+                <img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'
+                 alt='نوبت دهی پزشکان' style='cursor:pointer' code='3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>         </a>
+            </div>
             <div style="flex: 1; display: flex; flex-direction: column;  ">
-                <p>هزینه نوبت دهی  ۱۰۰,۰۰۰ ریال است که پس از دریافت نوبت از طریق درگاه (به پرداخت)دریافت میشود.</p>
-                <p>وجه ویزیت در مطب دریافت میگردد.</p>
+                 <p>هزینه نوبت دهی  ۱۰۰,۰۰۰ ریال است که پس از دریافت نوبت از طریق درگاه (به پرداخت)دریافت میشود.
+                    وجه ویزیت در مطب دریافت میگردد.</p>
                 <a href="{% url 'booking:accounting_guide' %}" >
                     <img src="/media/hesabdari.png"  alt="avalnobat-icon">
                 </a>
             </div>  
-            <div style="flex: 2;">
-                <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
-                <img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'
-                 alt='نوبت دهی پزشکان' style='cursor:pointer' code='3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>         </a>
-            </div>
-         </div>
+   </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.js"></script>
     <script src="{% static 'booking/custom_jalali.js' %}"></script>
