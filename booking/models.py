@@ -26,6 +26,7 @@ class DoctorProfile(models.Model):
     specialty = models.ForeignKey(Specialty, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="تخصص")
     address = models.TextField(verbose_name="آدرس مطب", null=True, blank=True)
     phone_number = models.CharField(max_length=20, verbose_name="شماره تلفن مطب", null=True, blank=True)
+    mobile_number = models.CharField(max_length=20, verbose_name="شماره موبایل", null=True, blank=True)
     photo = models.ImageField(upload_to='doctor_photos/', null=True, blank=True, verbose_name="عکس پزشک")
     biography = models.TextField(blank=True, verbose_name="بیوگرافی")
     visit_fee = models.DecimalField(max_digits=10, decimal_places=0, default=100000, verbose_name="هزینه ویزیت آنلاین")

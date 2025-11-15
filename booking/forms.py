@@ -13,6 +13,7 @@ class DoctorRegistrationForm(UserCreationForm):
     specialty = forms.ModelChoiceField(queryset=Specialty.objects.all(), required=True, label="تخصص")
     address = forms.CharField(max_length=255, required=True, label="آدرس مطب", widget=forms.TextInput(attrs={'placeholder': 'آدرس مطب'}))
     phone_number = forms.CharField(max_length=20, required=True, label="شماره تلفن مطب", widget=forms.TextInput(attrs={'placeholder': 'شماره تلفن مطب'}))
+    mobile_number = forms.CharField(max_length=20, required=True, label="شماره موبایل", widget=forms.TextInput(attrs={'placeholder': 'شماره موبایل'}))
     medical_id = forms.CharField(max_length=20, required=True, label="شماره نظام پزشکی", widget=forms.TextInput(attrs={'placeholder': 'شماره نظام پزشکی'}))
     photo = forms.ImageField(required=False, label="عکس پروفایل")
     biography = forms.CharField(widget=forms.Textarea(attrs={'placeholder': 'بیوگرافی'}), required=False, label="بیوگرافی")
@@ -40,6 +41,7 @@ class DoctorRegistrationForm(UserCreationForm):
                 specialty=self.cleaned_data.get('specialty'),
                 address=self.cleaned_data.get('address'),
                 phone_number=self.cleaned_data.get('phone_number'),
+                mobile_number=self.cleaned_data.get('mobile_number'),
                 photo=self.cleaned_data.get('photo'),
                 biography=self.cleaned_data.get('biography')
             )
