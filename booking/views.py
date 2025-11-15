@@ -893,21 +893,28 @@ def doctor_signup(request):
                 biography=form.cleaned_data.get('biography')
             )
 
-            # --- OTP & SMS Sending Logic ---
-            try:
-                # ... (SMS sending logic remains the same)
-                otp_code = str(random.randint(100000, 999999))
-                request.session['otp_code'] = otp_code
-                request.session['new_user_id'] = user.id # Store user ID instead of form data
-                # ... (actual SMS sending call)
+        try:
+                        AMOOT_SMS_API_TOKEN=settings.AMOOT_SMS_API_TOKEN
+                        AMOOT_SMS_API_URL=settings.AMOOT_SMS_API_URL
+                        otp_code = str(random.randint(100000, 999999))
+                        request.session['otp_code'] = otp_code
+                        request.session['new_user_id'] = user.id
+                        mob_number='09151110677'
 
-            except Exception as e:
+                        payload = {
+                               'token': AMOOT_SMS_API_TOKEN,
+                               'Mobile': mob_number,
+                               'PatternCodeID':4018,
+                               'PatternValues': otp_code,
+                            }
+                        response=requests.post(AMOOT_SMS_API_URL,data=payload)
+        except requests.exceptions.RequestException as e:
                 # Handle exceptions, maybe delete the created user
                 user.delete()
                 form.add_error(None, "خطا در ارسال کد تایید. لطفاً مجدداً تلاش کنید.")
                 return render(request, 'booking/signup.html', {'form': form, 'page_title': 'ثبت نام پزشک'})
 
-            return redirect('booking:verify_doctor_signup')
+        return redirect('booking:verify_doctor_signup')
     else:
         form = DoctorRegistrationForm()
 

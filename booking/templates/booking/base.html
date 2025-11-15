@@ -451,7 +451,7 @@
                         <div class="dropdown-content">
                             <a href="{% url 'booking:doctor_dashboard' %}">مدیریت برنامه کاری</a>
                             <a href="{% url 'booking:edit_profile' %}">ویرایش پروفایل پزشک</a>
-                            <a href="{% url 'signup' %}">ثبت نام پزشک جدید</a>
+                            <a href="{% url 'booking:signup' %}">ثبت نام پزشک جدید</a>
                             <form action="{% url 'logout' %}" method="post">
                                 {% csrf_token %}
                                 <button type="submit" class="link-button">خروج پزشک</button>
@@ -468,7 +468,7 @@
                             <img src="/media/doctor.png" style="padding: 0; border-radius: 50%; width: 50px; height: 50px;" alt="avalnobat-icon">
                         </span>
                         <div class="dropdown-content">
-                            <a href="{% url 'signup' %}">
+                            <a href="{% url 'booking:signup' %}">
                                 <span class="fas fa-user-plus"></span> ثبت نام پزشک
                             </a>
                             <a href="{% url 'login' %}">

@@ -30,8 +30,6 @@ urlpatterns = [
         next_page='booking:doctor_list' # پس از خروج به صفحه اصلی می‌رود
     ), name='logout'),
 
-    path('signup/', booking_views.doctor_signup, name='signup'),
-
     # Password Reset URLs
     path('password_reset/', auth_views.PasswordResetView.as_view(
         template_name='booking/password_reset_form.html',
