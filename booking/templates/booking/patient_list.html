@@ -17,6 +17,14 @@
         </form>
     </div>
 
+    <div class="export-buttons" style="text-align: center; margin-bottom: 20px;">
+        <a href="{% url 'booking:export_patients_to_excel' %}" class="btn-submit">
+            <i class="fas fa-file-excel"></i> اکسل
+        </a>
+        <a href="{% url 'booking:export_patients_to_pdf' %}" class="btn-submit">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
+    </div>
     <table class="report-table">
         <thead>
             <tr>

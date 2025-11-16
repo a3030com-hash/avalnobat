@@ -30,6 +30,10 @@ class DoctorProfile(models.Model):
     photo = models.ImageField(upload_to='doctor_photos/', null=True, blank=True, verbose_name="عکس پزشک")
     biography = models.TextField(blank=True, verbose_name="بیوگرافی")
     visit_fee = models.DecimalField(max_digits=10, decimal_places=0, default=100000, verbose_name="هزینه ویزیت آنلاین")
+    booking_days = models.PositiveIntegerField(default=45, verbose_name="تعداد روزهای نمایش نوبت")
+    secretary_card_number = models.CharField(max_length=16, blank=True, null=True, verbose_name="شماره کارت منشی")
+    secretary_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="نام منشی")
+    secretary_mobile = models.CharField(max_length=20, blank=True, null=True, verbose_name="موبایل منشی")
 
     @property
     def has_availability(self):

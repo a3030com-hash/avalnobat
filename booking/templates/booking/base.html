@@ -533,6 +533,13 @@
                         url: "{% url 'booking:financial_report' '0000-00-00' %}"
                     };
                 }
+                if (document.getElementById('secretary-panel-container')) {
+                    return {
+                        name: 'secretary_panel',
+                        containerId: 'secretary-panel-container',
+                        url: "{% url 'booking:secretary_panel' '0000-00-00' %}"
+                    };
+                }
                 return null;
             }
 
