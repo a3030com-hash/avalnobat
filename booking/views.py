@@ -48,6 +48,7 @@ def doctor_detail(request, pk):
 
     # محاسبه تقویم برای 45 روز آینده
     today = datetime.date.today()
+    booking_days = doctor.booking_days
 
     j_to_model_weekday_map = {
         0: 5, 1: 6, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4
@@ -56,7 +57,7 @@ def doctor_detail(request, pk):
     jalali_day_names = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"]
 
     available_days = []
-    for i in range(45):
+    for i in range(booking_days):
         current_gregorian_date = today + datetime.timedelta(days=i)
         current_jalali_date = jdatetime.date.fromgregorian(date=current_gregorian_date)
         model_weekday = j_to_model_weekday_map[current_jalali_date.weekday()]
@@ -496,13 +497,12 @@ def secretary_panel(request, date=None):
     except DoctorProfile.DoesNotExist:
         return redirect('booking:doctor_list')
 
+    current_date = datetime.date.today()
     if date:
         try:
             current_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
         except ValueError:
-            current_date = datetime.date.today()
-    else:
-        current_date = datetime.date.today()
+            pass
 
 
     end_date = current_date + datetime.timedelta(days=45)

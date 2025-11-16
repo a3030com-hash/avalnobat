@@ -131,7 +131,7 @@ class UserUpdateForm(forms.ModelForm):
 class DoctorProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = DoctorProfile
-        fields = ['specialty', 'address', 'phone_number', 'photo', 'biography']
+        fields = ['specialty', 'address', 'phone_number', 'photo', 'biography', 'visit_fee', 'booking_days', 'secretary_card_number', 'secretary_name', 'secretary_mobile']
         labels = {
             'specialty': 'تخصص',
             'address': 'آدرس مطب',
