@@ -6,3 +6,5 @@ requests
 zeep
 django-robots
 whitenoise
+openpyxl
+reportlab

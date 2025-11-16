@@ -13,6 +13,13 @@ from django.urls import reverse
 from django.db.models import Q
 import requests
 from django.db.models import Q
+from django.http import HttpResponse
+import openpyxl
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib import colors
 
 def doctor_list(request):
     """
@@ -48,6 +55,7 @@ def doctor_detail(request, pk):
 
     # محاسبه تقویم برای 45 روز آینده
     today = datetime.date.today()
+    booking_days = doctor.booking_days
 
     j_to_model_weekday_map = {
         0: 5, 1: 6, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4
@@ -56,7 +64,7 @@ def doctor_detail(request, pk):
     jalali_day_names = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"]
 
     available_days = []
-    for i in range(45):
+    for i in range(booking_days):
         current_gregorian_date = today + datetime.timedelta(days=i)
         current_jalali_date = jdatetime.date.fromgregorian(date=current_gregorian_date)
         model_weekday = j_to_model_weekday_map[current_jalali_date.weekday()]
@@ -496,16 +504,15 @@ def secretary_panel(request, date=None):
     except DoctorProfile.DoesNotExist:
         return redirect('booking:doctor_list')
 
+    current_date = datetime.date.today()
     if date:
         try:
             current_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
         except ValueError:
-            current_date = datetime.date.today()
-    else:
-        current_date = datetime.date.today()
+            pass
 
 
-    end_date = current_date + datetime.timedelta(days=45)
+    end_date = current_date + datetime.timedelta(days=doctor_profile.booking_days)
     availabilities = doctor_profile.availabilities.filter(is_active=True)
 
     # Optimize appointment counting
@@ -1133,8 +1140,14 @@ def expense_balance_report(request):
     expenses = DailyExpense.objects.filter(
         doctor=doctor_profile,
         date__range=[start_date, end_date],
-        amount__gt=0  # Only include expenses, not payments received
-    ).values('description').annotate(
+        amount__gt=0
+    )
+
+    query = request.GET.get('q')
+    if query:
+        expenses = expenses.filter(description__icontains=query)
+
+    expenses = expenses.values('description').annotate(
         count=Count('id'),
         total_amount=Sum('amount'),
         average_amount=Avg('amount')
@@ -1189,3 +1202,234 @@ def accounting_guide(request):
     Displays the accounting guide page.
     """
     return render(request, 'booking/accounting_guide.html')
+
+@login_required
+def export_patients_to_excel(request):
+    """
+    Export patient list to Excel.
+    """
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    doctor_profile = request.user.doctor_profile
+    queryset = Appointment.objects.filter(
+        doctor=doctor_profile, status='BOOKED'
+    ).order_by('-appointment_datetime')
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename=patients.xlsx'
+
+    workbook = openpyxl.Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Patients'
+
+    columns = [
+        'نام بیمار',
+        'کد ملی',
+        'شماره همراه',
+        'نوع بیمه',
+        'زمان نوبت',
+    ]
+    row_num = 1
+
+    for col_num, column_title in enumerate(columns, 1):
+        cell = worksheet.cell(row=row_num, column=col_num)
+        cell.value = column_title
+
+    for appointment in queryset:
+        row_num += 1
+        row = [
+            appointment.patient_name,
+            appointment.patient_national_id,
+            appointment.patient_phone,
+            appointment.get_insurance_type_display(),
+            appointment.appointment_datetime.strftime('%Y-%m-%d %H:%M'),
+        ]
+        for col_num, cell_value in enumerate(row, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = cell_value
+
+    workbook.save(response)
+    return response
+
+@login_required
+def export_patients_to_pdf(request):
+    """
+    Export patient list to PDF.
+    """
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    doctor_profile = request.user.doctor_profile
+    queryset = Appointment.objects.filter(
+        doctor=doctor_profile, status='BOOKED'
+    ).order_by('-appointment_datetime')
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=patients.pdf'
+
+    try:
+        pdfmetrics.registerFont(TTFont('Vazir', 'static/fonts/Vazirmatn-Regular.ttf'))
+    except Exception as e:
+        print(f"Error registering font: {e}")
+
+    p = canvas.Canvas(response)
+    p.setFont('Vazir', 10)
+
+    p.drawString(400, 800, 'لیست بیماران')
+
+    data = [['نام بیمار', 'کد ملی', 'شماره همراه', 'نوع بیمه', 'زمان نوبت']]
+    for app in queryset:
+        data.append([
+            app.patient_name,
+            app.patient_national_id,
+            app.patient_phone,
+            app.get_insurance_type_display(),
+            app.appointment_datetime.strftime('%Y-%m-%d %H:%M')
+        ])
+
+    col_widths = [100, 100, 100, 100, 100]
+    table = Table(data, colWidths=col_widths)
+    style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Vazir'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+    ])
+    table.setStyle(style)
+
+    table.wrapOn(p, 400, 300)
+    table.drawOn(p, 100, 600)
+
+    p.showPage()
+    p.save()
+    return response
+
+@login_required
+def export_expenses_to_excel(request):
+    """
+    Export expense balance report to Excel.
+    """
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    doctor_profile = request.user.doctor_profile
+    end_date = datetime.date.today()
+    jalali_today = jdatetime.date.fromgregorian(date=end_date)
+    start_of_year = jdatetime.date(jalali_today.year, 1, 1).togregorian()
+    start_date = start_of_year
+
+    expenses = DailyExpense.objects.filter(
+        doctor=doctor_profile,
+        date__range=[start_date, end_date],
+        amount__gt=0
+    ).values('description').annotate(
+        count=Count('id'),
+        total_amount=Sum('amount'),
+        average_amount=Avg('amount')
+    ).order_by('-total_amount')
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename=expenses.xlsx'
+
+    workbook = openpyxl.Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Expenses'
+
+    columns = [
+        'شرح',
+        'تعداد',
+        'مجموع',
+        'میانگین',
+    ]
+    row_num = 1
+
+    for col_num, column_title in enumerate(columns, 1):
+        cell = worksheet.cell(row=row_num, column=col_num)
+        cell.value = column_title
+
+    for expense in expenses:
+        row_num += 1
+        row = [
+            expense['description'],
+            expense['count'],
+            expense['total_amount'],
+            expense['average_amount'],
+        ]
+        for col_num, cell_value in enumerate(row, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = cell_value
+
+    workbook.save(response)
+    return response
+
+@login_required
+def export_expenses_to_pdf(request):
+    """
+    Export expense balance report to PDF.
+    """
+    if not request.user.user_type == 'DOCTOR':
+        return redirect('booking:doctor_list')
+
+    doctor_profile = request.user.doctor_profile
+    end_date = datetime.date.today()
+    jalali_today = jdatetime.date.fromgregorian(date=end_date)
+    start_of_year = jdatetime.date(jalali_today.year, 1, 1).togregorian()
+    start_date = start_of_year
+
+    expenses = DailyExpense.objects.filter(
+        doctor=doctor_profile,
+        date__range=[start_date, end_date],
+        amount__gt=0
+    ).values('description').annotate(
+        count=Count('id'),
+        total_amount=Sum('amount'),
+        average_amount=Avg('amount')
+    ).order_by('-total_amount')
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename=expenses.pdf'
+
+    try:
+        pdfmetrics.registerFont(TTFont('Vazir', 'static/fonts/Vazirmatn-Regular.ttf'))
+    except Exception as e:
+        print(f"Error registering font: {e}")
+
+    p = canvas.Canvas(response)
+    p.setFont('Vazir', 10)
+
+    p.drawString(400, 800, 'گزارش تراز هزینه')
+
+    data = [['شرح', 'تعداد', 'مجموع', 'میانگین']]
+    for expense in expenses:
+        data.append([
+            expense['description'],
+            expense['count'],
+            expense['total_amount'],
+            expense['average_amount'],
+        ])
+
+    col_widths = [100, 100, 100, 100]
+    table = Table(data, colWidths=col_widths)
+    style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Vazir'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+    ])
+    table.setStyle(style)
+
+    table.wrapOn(p, 400, 300)
+    table.drawOn(p, 100, 600)
+
+    p.showPage()
+    p.save()
+    return response

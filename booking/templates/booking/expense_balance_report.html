@@ -7,6 +7,23 @@
 <div class="form-container" id="expense-balance-report-container">
     <h1 class="report-title">{{ page_title }}</h1>
 
+    <div class="search-container" style="margin-bottom: 20px; text-align: center;">
+        <form method="get" action="{% url 'booking:expense_balance_report' %}" id="search-form" style="display: flex; justify-content: center; align-items: center;">
+            <div style="position: relative; display: inline-block; flex-grow: 1; max-width: 300px; margin-right: 10px;"> <!-- تنظیم عرض باکس -->
+                <input type="text" name="q" placeholder="جستجو بر اساس شرح..." value="{{ search_query }}" class="search-input" style="width: 100%; padding-left: 30px; height: 40px;">
+                <span class="clear-search" id="clear-search-btn" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: {% if search_query %}inline{% else %}none{% endif %};">&times;</span>
+            </div>
+            <button type="submit" class="btn-submit" style="padding: 10px 20px; height: 40px;">جستجو</button> <!-- دکمه جستجو -->
+        </form>
+    </div>
+    <div class="export-buttons" style="text-align: center; margin-bottom: 20px;">
+        <a href="{% url 'booking:export_expenses_to_excel' %}" class="btn-submit">
+            <i class="fas fa-file-excel"></i> اکسل
+        </a>
+        <a href="{% url 'booking:export_expenses_to_pdf' %}" class="btn-submit">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
+    </div>
     <div class="report-section">
         <table class="report-table">
             <thead>
