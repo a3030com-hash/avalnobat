@@ -377,6 +377,32 @@
             border-radius: 5px;
         }
 
+        .tabs-container {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        .tab-link {
+            padding: 1rem 1.5rem;
+            text-decoration: none;
+            color: var(--secondary-color);
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px; /* Aligns the bottom border with the container's border */
+            transition: all 0.3s ease;
+        }
+        .tab-link:hover {
+            color: var(--primary-color);
+            background-color: #e9ecef;
+        }
+        .tab-link.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            font-weight: 600;
+        }
+        .tab-link:nth-child(1).active { border-bottom-color: #4CAF50; color: #4CAF50; } /* Green for Daily */
+        .tab-link:nth-child(2).active { border-bottom-color: #FFC107; color: #FFC107; } /* Yellow for Monthly */
+        .tab-link:nth-child(3).active { border-bottom-color: #F44336; color: #F44336; } /* Red for Yearly */
+
         @media (max-width: 768px) {
             .report-table thead {
                 display: none;
