@@ -1144,6 +1144,20 @@ def financial_report(request, period='daily', date=None):
         'total_visited_count': total_visited_count,
     }
 
+    if period in ['monthly', 'yearly']:
+        grouped_expenses = expenses_in_period_queryset.filter(amount__gt=0).values('description').annotate(
+            total=Sum('amount'),
+            count=Count('id'),
+            average=Avg('amount')
+        ).order_by('-total')
+        grouped_payments = expenses_in_period_queryset.filter(amount__lt=0).values('description').annotate(
+            total=Sum('amount'),
+            count=Count('id'),
+            average=Avg('amount')
+        ).order_by('total')
+        context['grouped_expenses'] = grouped_expenses
+        context['grouped_payments'] = grouped_payments
+
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return render(request, 'booking/financial_report_content.html', context)
     return render(request, 'booking/financial_report.html', context)

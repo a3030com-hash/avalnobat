@@ -96,18 +96,51 @@
             </tr>
         </thead>
         <tbody>
-            {% for item in todays_expenses_queryset %}
-            <tr>
-                <td data-label="شرح">{{ item.description }}</td>
-                <td data-label="مبلغ (تومان)" class="amount {% if item.amount < 0 %}negative{% else %}positive{% endif %}">
-                    {{ item.amount|comma }}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="2">موردی برای نمایش وجود ندارد.</td>
-            </tr>
-            {% endfor %}
+            {% if period == 'daily' %}
+                {% for item in todays_expenses_queryset %}
+                <tr>
+                    <td data-label="شرح">{{ item.description }}</td>
+                    <td data-label="مبلغ (تومان)" class="amount {% if item.amount < 0 %}negative{% else %}positive{% endif %}">
+                        {{ item.amount|comma }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2">موردی برای نمایش وجود ندارد.</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                {% if grouped_expenses %}
+                    <tr><td colspan="2" style="background-color: #f0f0f0; font-weight: bold;">هزینه‌ها</td></tr>
+                {% endif %}
+                {% for item in grouped_expenses %}
+                <tr>
+                    <td data-label="شرح">{{ item.description }} ({{ item.count }} نوبت)</td>
+                    <td data-label="مبلغ (تومان)" class="amount positive">
+                        {{ item.total|comma }} (میانگین: {{ item.average|floatformat:0|comma }})
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% if grouped_payments %}
+                    <tr><td colspan="2" style="background-color: #f0f0f0; font-weight: bold;">دریافتی‌ها</td></tr>
+                {% endif %}
+                {% for item in grouped_payments %}
+                <tr>
+                    <td data-label="شرح">{{ item.description }} ({{ item.count }} نوبت)</td>
+                    <td data-label="مبلغ (تومان)" class="amount negative">
+                        {{ item.total|comma }} (میانگین: {{ item.average|floatformat:0|comma }})
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% if not grouped_expenses and not grouped_payments %}
+                <tr>
+                    <td colspan="2">موردی برای نمایش وجود ندارد.</td>
+                </tr>
+                {% endif %}
+            {% endif %}
+
             <tr class="total-row">
                 <td class="label">موجودی فعلی صندوق:</td>
                 <td class="amount {% if cash_box_balance > 0 %}positive{% elif cash_box_balance < 0 %}negative{% endif %}">
