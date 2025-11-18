@@ -535,7 +535,7 @@
                     return {
                         name: 'financial_report',
                         containerId: 'financial-report-container',
-                        url: "{% url 'booking:financial_report' '0000-00-00' %}"
+                        url: "/financial-report/__period__/0000-00-00/"
                     };
                 }
                 if (document.getElementById('secretary-panel-container')) {
@@ -575,8 +575,14 @@
                 const urlDate = date.toISOString().split('T')[0];
                 localStorage.setItem('userDate', urlDate);
 
-                const targetUrl = activePage.url.replace('0000-00-00', urlDate);
+                let targetUrl = activePage.url.replace('0000-00-00', urlDate);
                 const container = document.getElementById(activePage.containerId);
+
+                if (activePage.name === 'financial_report') {
+                    const dynamicContent = container.querySelector('#dynamic-content');
+                    const period = dynamicContent ? dynamicContent.getAttribute('data-current-period') : 'daily';
+                    targetUrl = targetUrl.replace('__period__', period);
+                }
 
                 try {
                     container.style.opacity = '0.5';

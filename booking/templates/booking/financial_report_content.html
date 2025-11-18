@@ -1,5 +1,5 @@
 {% load booking_filters humanize %}
-<div id="dynamic-content" data-current-date="{{ today|date:"Y-m-d" }}">
+<div id="dynamic-content" data-current-date="{{ today|date:"Y-m-d" }}" data-current-period="{{ period }}">
 <a href="{% url 'booking:secretary_payments' %}"> &larr; بازگشت به پرداخت های منشی</a>
 
 <div class="tabs-container">
