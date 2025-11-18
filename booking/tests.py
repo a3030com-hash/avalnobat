@@ -151,7 +151,7 @@ class BookingAppTestCase(TestCase):
         )
         DailyExpense.objects.create(doctor=self.doctor_profile, date=today, description="هزینه تست امروز", amount=30000)
 
-        report_url = reverse('booking:financial_report', kwargs={'date': today.strftime('%Y-%m-%d')})
+        report_url = reverse('booking:financial_report', kwargs={'period': 'daily', 'date': today.strftime('%Y-%m-%d')})
         response = self.client.get(report_url)
         self.assertEqual(response.status_code, 200)
 

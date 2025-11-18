@@ -1031,11 +1031,13 @@ def delete_expense(request, pk):
 
 
 @login_required
-def financial_report(request, date=None):
+def financial_report(request, period='daily', date=None):
     if not request.user.user_type == 'DOCTOR':
         return redirect('booking:doctor_list')
 
     doctor_profile = request.user.doctor_profile
+
+    # Determine the date range based on the period
     if date:
         try:
             current_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
@@ -1044,25 +1046,44 @@ def financial_report(request, date=None):
     else:
         current_date = datetime.date.today()
 
-    # --- Daily Calculations ---
-    all_todays_appointments = Appointment.objects.filter(
+    jalali_today = jdatetime.date.fromgregorian(date=current_date)
+    end_date = current_date
+    page_title = 'گزارش مالی'
+
+    if period == 'daily':
+        start_date = current_date
+        page_title = 'گزارش مالی روزانه'
+    elif period == 'monthly':
+        start_date = jdatetime.date(jalali_today.year, jalali_today.month, 1).togregorian()
+        page_title = f'گزارش مالی ماهانه ({jalali_today.strftime("%B %Y")})'
+    elif period == 'yearly':
+        start_date = jdatetime.date(jalali_today.year, 1, 1).togregorian()
+        page_title = f'گزارش مالی سالانه ({jalali_today.strftime("%Y")})'
+    else: # Default to daily if period is invalid
+        period = 'daily'
+        start_date = current_date
+        page_title = 'گزارش مالی روزانه'
+
+
+    # --- Calculations for the selected period ---
+    all_appointments_in_period = Appointment.objects.filter(
         doctor=doctor_profile,
-        appointment_datetime__date=current_date
+        appointment_datetime__date__range=[start_date, end_date]
     )
-    todays_appointments = all_todays_appointments.filter(
+    appointments_in_period = all_appointments_in_period.filter(
         visit_fee_paid__isnull=False
     )
-    todays_expenses_queryset = DailyExpense.objects.filter(
+    expenses_in_period_queryset = DailyExpense.objects.filter(
         doctor=doctor_profile,
-        date=current_date
+        date__range=[start_date, end_date]
     )
-    total_income = todays_appointments.aggregate(total=Sum('visit_fee_paid'))['total'] or 0
-    income_by_payment_method_values = todays_appointments.values('payment_method').annotate(total=Sum('visit_fee_paid'))
+    total_income = appointments_in_period.aggregate(total=Sum('visit_fee_paid'))['total'] or 0
+    income_by_payment_method_values = appointments_in_period.values('payment_method').annotate(total=Sum('visit_fee_paid'))
     income_by_payment_method_dict = {
         dict(Appointment.PAYMENT_METHOD_CHOICES).get(item['payment_method'], 'نامشخص'): item['total']
         for item in income_by_payment_method_values
     }
-    income_by_insurance_values = todays_appointments.values('insurance_type').annotate(total=Sum('visit_fee_paid'), count=Count('id'))
+    income_by_insurance_values = appointments_in_period.values('insurance_type').annotate(total=Sum('visit_fee_paid'), count=Count('id'))
     income_by_insurance_data = {
         dict(Appointment.INSURANCE_CHOICES).get(item['insurance_type'], 'نامشخص'): {
             'total': item['total'],
@@ -1070,22 +1091,23 @@ def financial_report(request, date=None):
         }
         for item in income_by_insurance_values
     }
-    total_daily_entries = todays_expenses_queryset.aggregate(total=Sum('amount'))['total'] or 0
-    total_expenses = abs(sum(item.amount for item in todays_expenses_queryset if item.amount > 0))
-    total_payments_received = sum(item.amount for item in todays_expenses_queryset if item.amount < 0)
-    net_income = total_income - total_daily_entries
+    total_period_entries = expenses_in_period_queryset.aggregate(total=Sum('amount'))['total'] or 0
+    total_expenses = abs(sum(item.amount for item in expenses_in_period_queryset if item.amount > 0))
+    total_payments_received = sum(item.amount for item in expenses_in_period_queryset if item.amount < 0)
+    net_income = total_income - total_period_entries
 
-    # --- Secretary Cash Box Calculation (Cumulative) ---
+    # --- Secretary Cash Box Calculation (Cumulative up to end_date) ---
+    # This calculation should always be cumulative up to the selected date.
     total_cash_income = Appointment.objects.filter(
         doctor=doctor_profile,
-        appointment_datetime__date__lte=current_date,
+        appointment_datetime__date__lte=end_date,
         payment_method=2,  # نقدی
         visit_fee_paid__isnull=False
     ).aggregate(total=Sum('visit_fee_paid'))['total'] or 0
 
     total_expenses_and_payments = DailyExpense.objects.filter(
         doctor=doctor_profile,
-        date__lte=current_date
+        date__lte=end_date
     ).aggregate(total=Sum('amount'))['total'] or 0
 
     cash_box_balance = total_cash_income - total_expenses_and_payments
@@ -1094,23 +1116,26 @@ def financial_report(request, date=None):
         if cash_box_balance != 0:
             DailyExpense.objects.create(
                 doctor=doctor_profile,
-                date=current_date,
+                date=current_date, # Settle on the current day
                 description="تسویه صندوق منشی",
                 amount=cash_box_balance
             )
             # Redirect to prevent form resubmission
-            return redirect('booking:financial_report', date=current_date.strftime('%Y-%m-%d'))
+            return redirect('booking:financial_report', period=period, date=current_date.strftime('%Y-%m-%d'))
 
-    total_booked_count = all_todays_appointments.exclude(status='CANCELED').count()
-    total_visited_count = todays_appointments.count()
+    total_booked_count = all_appointments_in_period.exclude(status='CANCELED').count()
+    total_visited_count = appointments_in_period.count()
 
     context = {
-        'today': current_date,
-        'page_title': 'گزارش مالی روزانه',
+        'today': current_date, # 'today' is used for navigation, so keep it
+        'period': period,
+        'start_date': start_date,
+        'end_date': end_date,
+        'page_title': page_title,
         'total_income': total_income,
         'income_by_payment_method': income_by_payment_method_dict,
         'income_by_insurance': income_by_insurance_data,
-        'todays_expenses_queryset': todays_expenses_queryset,
+        'todays_expenses_queryset': expenses_in_period_queryset, # Renaming this might be good, but let's keep it for now to avoid breaking the template
         'total_expenses': total_expenses,
         'total_payments_received': total_payments_received,
         'net_income': net_income,
