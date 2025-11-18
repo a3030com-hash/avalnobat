@@ -427,26 +427,25 @@
       
 
             {% if user.is_authenticated and user.user_type == 'DOCTOR' %}
-                <div class="icon-links">
+                <div style="width: 100%;display: flex"  class="icon-links">
+                    <div>
                     <a href="{% url 'booking:doctor_list' %}" title="صفحه اصلی">
-                        <img src="/media/avalnobat.png" style="padding: 0;width: 60%;" alt="avalnobat-icon">
+                        <img src="/media/avalnobatk.png" style="padding: 0" alt="avalnobat-icon">
                     </a>
-                    <a id="daily-patients-link" href="{% url 'booking:daily_patients' %}" title="لیست بیماران روزانه">
-                        <i class="fas fa-users"></i>
+                    </div>
+                    <div style="margin-right:auto; ">
+                        <a id="daily-patients-link" href="{% url 'booking:daily_patients' %}" title="لیست بیماران روزانه" >
+                            <img src="/media/entezar.png" style="display: block; width: 100%; height: auto; border-radius: 8px;margin-left:20px;" alt="avalnobat-icon">
+                        </a>
+                  
+                    <a id="secretary-payments-link" href="{% url 'booking:secretary_payments' %}" title="پرداخت‌های منشی" >
+                        <img src="/media/mali.png" style="display: block; width: 100%; height: auto; border-radius: 8px; margin-left:20px;" alt="avalnobat-icon">
                     </a>
-                    <a id="secretary-panel-link" href="{% url 'booking:secretary_panel' %}" title="نوبت‌دهی توسط منشی">
-                        <i class="fas fa-calendar-plus"></i>
-                    </a>
-                    <a id="secretary-payments-link" href="{% url 'booking:secretary_payments' %}" title="پرداخت‌های منشی">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </a>
-                    <a id="financial-report-link" href="{% url 'booking:financial_report' %}" title="گزارش مالی">
-                        <i class="fas fa-chart-bar"></i>
-                    </a>
-                
-                    <div class="dropdown">
+                                  
+                    <div class="dropdown" style="margin-left:20px;">
                         <span class="dropbtn nav-item">
-                            <i class="fas fa-user-cog" style="margin-left: 8px;"></i>
+                            <img src="/media/doctor.png" style="display: block; width: 100%; height: auto; border-radius: 8px;" alt="avalnobat-icon">
+        
                         </span>
                         <div class="dropdown-content">
                             <a href="{% url 'booking:doctor_dashboard' %}">مدیریت برنامه کاری</a>
@@ -457,15 +456,21 @@
                                 <button type="submit" class="link-button">خروج پزشک</button>
                             </form>
                         </div>
-            {% else %}
-            <div class="icon-links">
-                <div>
+        
+                    </div>
+                    </div>
+                    </div>
+                    {% else %}
+                  <div style="width: 100%;display: flex" >
+                    <div style="margin-right: 20px">
                     <a href="{% url 'booking:doctor_list' %}" title="صفحه اصلی">
-                        <img src="/media/avalnobat.png" style="padding: 0; width: 60%;" alt="avalnobat-icon">
+                       <img src="/media/avalnobat.png" style="padding: 0; " alt="avalnobat-icon">
                     </a>
-                    <div class="dropdown">
+                    </div>
+                    
+                    <div class="dropdown" style="margin-right:auto; " >
                         <span class="dropbtn nav-item">
-                            <img src="/media/doctor.png" style="padding: 0; border-radius: 50%; width: 50px; height: 50px;" alt="avalnobat-icon">
+                            <img src="/media/doctor.png" style="padding: 0; " alt="avalnobat-icon">
                         </span>
                         <div class="dropdown-content">
                             <a href="{% url 'booking:signup' %}">
@@ -477,7 +482,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+          
             {% endif %}
         </nav>
     </header>
