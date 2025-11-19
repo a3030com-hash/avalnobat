@@ -36,6 +36,7 @@ class DoctorProfile(models.Model):
     secretary_card_number = models.CharField(max_length=16, blank=True, null=True, verbose_name="شماره کارت منشی")
     secretary_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="نام منشی")
     secretary_mobile = models.CharField(max_length=20, blank=True, null=True, verbose_name="موبایل منشی")
+    financial_settings_completed = models.BooleanField(default=False, verbose_name="تنظیمات مالی تکمیل شده")
 
     @property
     def has_availability(self):

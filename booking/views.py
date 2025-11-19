@@ -512,6 +512,10 @@ def secretary_panel(request, date=None):
     if not doctor_profile:
         return redirect('booking:doctor_list')
 
+    if request.user.user_type == 'DOCTOR' and not doctor_profile.financial_settings_completed:
+        doctor_profile.financial_settings_completed = True
+        doctor_profile.save()
+
     current_date = datetime.date.today()
     if date:
         try:
@@ -1417,6 +1421,26 @@ def export_patients_to_pdf(request):
     p.showPage()
     p.save()
     return response
+
+from django.contrib.auth.views import LoginView
+from django.shortcuts import redirect
+from django.urls import reverse
+
+class CustomLoginView(LoginView):
+    template_name = 'booking/login.html'
+
+    def get_success_url(self):
+        user = self.request.user
+        if user.is_authenticated:
+            if user.user_type == 'DOCTOR':
+                doctor_profile = getattr(user, 'doctor_profile', None)
+                if doctor_profile and doctor_profile.financial_settings_completed:
+                    return reverse('booking:financial_report', kwargs={'period': 'yearly'})
+                else:
+                    return reverse('booking:doctor_dashboard')
+            elif user.user_type == 'SECRETARY':
+                return reverse('booking:daily_patients')
+        return reverse('booking:doctor_list')
 
 @login_required
 def export_expenses_to_excel(request):
