@@ -22,6 +22,16 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
 
+def _get_doctor_profile(user):
+    """
+    Helper function to get the doctor profile for a doctor or secretary.
+    """
+    if user.user_type == 'DOCTOR':
+        return user.doctor_profile
+    elif user.user_type == 'SECRETARY':
+        return user.doctor
+    return None
+
 def doctor_list(request):
     """
     نمایش لیست تمام پزشکان با قابلیت جستجو.
@@ -498,11 +508,8 @@ def secretary_panel(request, date=None):
     """
     پنل مدیریت منشی (داشبورد).
     """
-    if request.user.user_type == 'DOCTOR':
-        doctor_profile = request.user.doctor_profile
-    elif request.user.user_type == 'SECRETARY':
-        doctor_profile = request.user.doctor
-    else:
+    doctor_profile = _get_doctor_profile(request.user)
+    if not doctor_profile:
         return redirect('booking:doctor_list')
 
     current_date = datetime.date.today()
@@ -560,11 +567,8 @@ def patient_list(request):
     """
     نمایش لیست تمام بیماران با قابلیت جستجو.
     """
-    if request.user.user_type == 'DOCTOR':
-        doctor_profile = request.user.doctor_profile
-    elif request.user.user_type == 'SECRETARY':
-        doctor_profile = request.user.doctor
-    else:
+    doctor_profile = _get_doctor_profile(request.user)
+    if not doctor_profile:
         return redirect('booking:doctor_list')
 
     queryset = Appointment.objects.filter(
@@ -592,11 +596,8 @@ def daily_patients(request, date=None):
     """
     نمایش و مدیریت لیست بیماران امروز.
     """
-    if request.user.user_type == 'DOCTOR':
-        doctor_profile = request.user.doctor_profile
-    elif request.user.user_type == 'SECRETARY':
-        doctor_profile = request.user.doctor
-    else:
+    doctor_profile = _get_doctor_profile(request.user)
+    if not doctor_profile:
         return redirect('booking:doctor_list')
 
     if date:
@@ -658,11 +659,8 @@ def secretary_payments(request, date=None):
     """
     نمایش و ثبت هزینه‌های روزانه منشی.
     """
-    if request.user.user_type == 'DOCTOR':
-        doctor_profile = request.user.doctor_profile
-    elif request.user.user_type == 'SECRETARY':
-        doctor_profile = request.user.doctor
-    else:
+    doctor_profile = _get_doctor_profile(request.user)
+    if not doctor_profile:
         return redirect('booking:doctor_list')
 
     if date:
@@ -750,11 +748,8 @@ def manage_day(request, date):
     """
     صفحه مدیریت روزانه برای منشی، شامل ثبت نوبت، مسدود کردن و فعال‌سازی نوبت‌ها.
     """
-    if request.user.user_type == 'DOCTOR':
-        doctor_profile = request.user.doctor_profile
-    elif request.user.user_type == 'SECRETARY':
-        doctor_profile = request.user.doctor
-    else:
+    doctor_profile = _get_doctor_profile(request.user)
+    if not doctor_profile:
         return redirect('booking:doctor_list')
 
     try:
@@ -991,11 +986,8 @@ def edit_expense(request, pk):
     """
     ویرایش یک هزینه یا پرداخت ثبت شده.
     """
-    if request.user.user_type == 'DOCTOR':
-        doctor_profile = request.user.doctor_profile
-    elif request.user.user_type == 'SECRETARY':
-        doctor_profile = request.user.doctor
-    else:
+    doctor_profile = _get_doctor_profile(request.user)
+    if not doctor_profile:
         return redirect('booking:doctor_list')
 
     expense = get_object_or_404(DailyExpense, pk=pk, doctor=doctor_profile)
@@ -1024,11 +1016,8 @@ def delete_expense(request, pk):
     """
     حذف یک هزینه یا پرداخت ثبت شده.
     """
-    if request.user.user_type == 'DOCTOR':
-        doctor_profile = request.user.doctor_profile
-    elif request.user.user_type == 'SECRETARY':
-        doctor_profile = request.user.doctor
-    else:
+    doctor_profile = _get_doctor_profile(request.user)
+    if not doctor_profile:
         return redirect('booking:doctor_list')
 
     expense = get_object_or_404(DailyExpense, pk=pk, doctor=doctor_profile)
@@ -1053,9 +1042,13 @@ def delete_expense(request, pk):
 from .decorators import doctor_required
 
 @login_required
-@doctor_required
 def financial_report(request, period='daily', date=None):
-    doctor_profile = request.user.doctor_profile
+    doctor_profile = _get_doctor_profile(request.user)
+    if not doctor_profile:
+        return redirect('booking:doctor_list')
+
+    if request.user.user_type == 'SECRETARY' and period in ['monthly', 'yearly']:
+        return redirect('booking:doctor_dashboard')
 
     # Determine the date range based on the period
     if date:

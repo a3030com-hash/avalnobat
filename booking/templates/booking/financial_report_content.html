@@ -152,6 +152,7 @@
 </div>
 
 <div class="report-section">
+    {% if request.user.user_type == 'DOCTOR' %}
     <div class="settle-up-section" style="margin-top: 1rem; display: flex; gap: 10px;">
         <form method="post" action="{% url 'booking:financial_report' period=period date=today|date:'Y-m-d' %}">
             {% csrf_token %}
@@ -161,5 +162,6 @@
         </form>
        
     </div>
+    {% endif %}
 </div>
 </div>
