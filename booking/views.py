@@ -111,6 +111,7 @@ def doctor_dashboard(request):
     داشبورد پزشک برای مدیریت زمان‌بندی کاری.
     """
     if request.user.user_type == 'DOCTOR':
+        print(request.user.financial_settings_completed)
         doctor_profile = request.user.doctor_profile
     elif request.user.user_type == 'SECRETARY':
         return redirect('booking:daily_patients')
