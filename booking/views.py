@@ -111,7 +111,6 @@ def doctor_dashboard(request):
     داشبورد پزشک برای مدیریت زمان‌بندی کاری.
     """
     if request.user.user_type == 'DOCTOR':
-        print(request.user.financial_settings_completed)
         doctor_profile = request.user.doctor_profile
     elif request.user.user_type == 'SECRETARY':
         return redirect('booking:daily_patients')
@@ -512,10 +511,6 @@ def secretary_panel(request, date=None):
     doctor_profile = _get_doctor_profile(request.user)
     if not doctor_profile:
         return redirect('booking:doctor_list')
-
-    if request.user.user_type == 'DOCTOR' and not doctor_profile.financial_settings_completed:
-        doctor_profile.financial_settings_completed = True
-        doctor_profile.save()
 
     current_date = datetime.date.today()
     if date:
