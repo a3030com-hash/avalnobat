@@ -21,9 +21,8 @@ urlpatterns = [
     path('', include('booking.urls', namespace='booking')),
 
     # Auth URLs
-    path('login/', auth_views.LoginView.as_view(
-        template_name='booking/login.html',
-        redirect_authenticated_user=True # اگر کاربر لاگین کرده باشد، به صفحه دیگری هدایت می‌شود
+    path('login/', booking_views.CustomLoginView.as_view(
+        redirect_authenticated_user=True
     ), name='login'),
 
     path('logout/', auth_views.LogoutView.as_view(
