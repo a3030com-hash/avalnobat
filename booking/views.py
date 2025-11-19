@@ -750,10 +750,13 @@ def manage_day(request, date):
     """
     صفحه مدیریت روزانه برای منشی، شامل ثبت نوبت، مسدود کردن و فعال‌سازی نوبت‌ها.
     """
-    if not request.user.user_type == 'DOCTOR':
+    if request.user.user_type == 'DOCTOR':
+        doctor_profile = request.user.doctor_profile
+    elif request.user.user_type == 'SECRETARY':
+        doctor_profile = request.user.doctor
+    else:
         return redirect('booking:doctor_list')
 
-    doctor_profile = request.user.doctor_profile
     try:
         # The date comes from the URL in Jalali format
         jalali_date = jdatetime.datetime.strptime(date, '%Y-%m-%d').date()
@@ -988,7 +991,17 @@ def edit_expense(request, pk):
     """
     ویرایش یک هزینه یا پرداخت ثبت شده.
     """
-    expense = get_object_or_404(DailyExpense, pk=pk, doctor=request.user.doctor_profile)
+    if request.user.user_type == 'DOCTOR':
+        doctor_profile = request.user.doctor_profile
+    elif request.user.user_type == 'SECRETARY':
+        doctor_profile = request.user.doctor
+    else:
+        return redirect('booking:doctor_list')
+
+    expense = get_object_or_404(DailyExpense, pk=pk, doctor=doctor_profile)
+
+    if request.user.user_type == 'SECRETARY' and expense.date != datetime.date.today():
+        return redirect('booking:secretary_payments')
 
     if request.method == 'POST':
         form = DailyExpenseForm(request.POST, instance=expense)
@@ -1011,7 +1024,18 @@ def delete_expense(request, pk):
     """
     حذف یک هزینه یا پرداخت ثبت شده.
     """
-    expense = get_object_or_404(DailyExpense, pk=pk, doctor=request.user.doctor_profile)
+    if request.user.user_type == 'DOCTOR':
+        doctor_profile = request.user.doctor_profile
+    elif request.user.user_type == 'SECRETARY':
+        doctor_profile = request.user.doctor
+    else:
+        return redirect('booking:doctor_list')
+
+    expense = get_object_or_404(DailyExpense, pk=pk, doctor=doctor_profile)
+
+    if request.user.user_type == 'SECRETARY' and expense.date != datetime.date.today():
+        return redirect('booking:secretary_payments')
+
     expense_date_str = expense.date.strftime('%Y-%m-%d')
 
     if request.method == 'POST':
@@ -1159,6 +1183,7 @@ def financial_report(request, period='daily', date=None):
     return render(request, 'booking/financial_report.html', context)
 
 @login_required
+@doctor_required
 def expense_balance_report(request):
     """
     گزارش تراز هزینه سالانه.
