@@ -125,7 +125,7 @@ import jdatetime
 import locale
 
 try:
-    locale.setlocale(locale.LC_ALL, "fa_IR.UTF-8")
+    locale.setlocale(locale.LC_TIME, "fa_IR.UTF-8")
 except locale.Error:
     pass  # Locale not supported, handle gracefully
 
