@@ -560,12 +560,11 @@ def patient_list(request):
     """
     نمایش لیست تمام بیماران با قابلیت جستجو.
     """
-    if not request.user.user_type == 'DOCTOR':
-        return redirect('booking:doctor_list')
-
-    try:
+    if request.user.user_type == 'DOCTOR':
         doctor_profile = request.user.doctor_profile
-    except DoctorProfile.DoesNotExist:
+    elif request.user.user_type == 'SECRETARY':
+        doctor_profile = request.user.doctor
+    else:
         return redirect('booking:doctor_list')
 
     queryset = Appointment.objects.filter(
@@ -1160,12 +1159,16 @@ def financial_report(request, period='daily', date=None):
     return render(request, 'booking/financial_report.html', context)
 
 @login_required
-@doctor_required
 def expense_balance_report(request):
     """
     گزارش تراز هزینه سالانه.
     """
-    doctor_profile = request.user.doctor_profile
+    if request.user.user_type == 'DOCTOR':
+        doctor_profile = request.user.doctor_profile
+    elif request.user.user_type == 'SECRETARY':
+        doctor_profile = request.user.doctor
+    else:
+        return redirect('booking:doctor_list')
     end_date = datetime.date.today()
     jalali_today = jdatetime.date.fromgregorian(date=end_date)
     start_of_year = jdatetime.date(jalali_today.year, 1, 1).togregorian()
