@@ -42,7 +42,7 @@ def doctor_list(request):
 
     context = {
         'doctors': queryset,
-        'page_title':''  #'لیست پزشکان'
+        'page_title':'لیست پزشکان'
     }
     return render(request, 'booking/doctor_list.html', context)
 
@@ -544,7 +544,7 @@ def secretary_panel(request, date=None):
     context = {
         'today': current_date,
         'future_days': future_days_info,
-        'page_title': 'پنل مدیریت روزانه'
+        'page_title': 'تقویم نوبت‌دهی دستی توسط منشی'
     }
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':

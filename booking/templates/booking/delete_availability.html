@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="form-container" style="text-align: center;">
-    <h1>{{ page_title }}</h1>
+    <h2 class="elegant-title">{{ page_title }}</h2>
     <hr>
     <p>آیا از حذف برنامه کاری زیر اطمینان دارید؟</p>
     <p><strong>{{ availability.get_day_of_week_display }} - شیفت {{ availability.get_shift_display }} ({{ availability.start_time|time:"H:i" }} تا {{ availability.end_time|time:"H:i" }})</strong></p>
