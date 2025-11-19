@@ -122,6 +122,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 import jdatetime
+import locale
+
+try:
+    locale.setlocale(locale.LC_ALL, "fa_IR.UTF-8")
+except locale.Error:
+    pass  # Locale not supported, handle gracefully
+
 jdatetime.set_locale('fa_IR')
 
 LANGUAGE_CODE = "fa-ir"
