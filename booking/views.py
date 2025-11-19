@@ -489,7 +489,7 @@ def confirm_payment(request):
 from django.contrib.auth import login
 from django.http import JsonResponse
 from django.forms import modelformset_factory
-from .forms import AppointmentUpdateForm, DailyExpenseForm, DoctorRegistrationForm, UserUpdateForm, DoctorProfileUpdateForm
+from .forms import AppointmentUpdateForm, DailyExpenseForm, DoctorRegistrationForm, UserUpdateForm, DoctorProfileUpdateForm, SecretarySignUpForm
 from .models import DailyExpense
 from django.db.models import Count
 
