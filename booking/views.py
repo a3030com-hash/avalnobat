@@ -512,10 +512,6 @@ def secretary_panel(request, date=None):
     if not doctor_profile:
         return redirect('booking:doctor_list')
 
-    if request.user.user_type == 'DOCTOR' and not doctor_profile.financial_settings_completed:
-        doctor_profile.financial_settings_completed = True
-        doctor_profile.save()
-
     current_date = datetime.date.today()
     if date:
         try:
@@ -1434,7 +1430,7 @@ class CustomLoginView(LoginView):
         if user.is_authenticated:
             if user.user_type == 'DOCTOR':
                 doctor_profile = getattr(user, 'doctor_profile', None)
-                if doctor_profile and doctor_profile.financial_settings_completed:
+                if doctor_profile and doctor_profile.availabilities.exists():
                     return reverse('booking:financial_report', kwargs={'period': 'yearly'})
                 else:
                     return reverse('booking:doctor_dashboard')
