@@ -513,8 +513,6 @@
                                 <a href="{% url 'booking:doctor_dashboard' %}">مدیریت برنامه کاری</a>
                                 <a href="{% url 'booking:edit_profile' %}">ویرایش پروفایل پزشک</a>
                                 <a href="{% url 'booking:financial_report' %}">گزارش مالی</a>
-                            {% else %}
-                                <a href="{% url 'booking:doctor_dashboard' %}">مشاهده برنامه کاری</a>
                             {% endif %}
                             <form action="{% url 'logout' %}" method="post">
                                 {% csrf_token %}

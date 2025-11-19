@@ -113,7 +113,7 @@ def doctor_dashboard(request):
     if request.user.user_type == 'DOCTOR':
         doctor_profile = request.user.doctor_profile
     elif request.user.user_type == 'SECRETARY':
-        doctor_profile = request.user.doctor
+        return redirect('booking:daily_patients')
     else:
         return redirect('booking:doctor_list')
 
