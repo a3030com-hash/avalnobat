@@ -139,3 +139,31 @@ class DoctorProfileUpdateForm(forms.ModelForm):
             'photo': 'عکس پروفایل',
             'biography': 'بیوگرافی',
         }
+
+class SecretarySignUpForm(forms.ModelForm):
+    doctor_username = forms.CharField(max_length=150, required=True, label="نام کاربری پزشک")
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'username', 'password')
+        widgets = {
+            'password': forms.PasswordInput(),
+        }
+
+    def clean_doctor_username(self):
+        doctor_username = self.cleaned_data.get('doctor_username')
+        try:
+            doctor_user = User.objects.get(username=doctor_username, user_type='DOCTOR')
+            self.doctor_profile = doctor_user.doctor_profile
+        except User.DoesNotExist:
+            raise forms.ValidationError("پزشکی با این نام کاربری یافت نشد.")
+        return doctor_username
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password"])
+        user.user_type = 'SECRETARY'
+        user.doctor = self.doctor_profile
+        if commit:
+            user.save()
+        return user

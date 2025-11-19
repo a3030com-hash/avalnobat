@@ -15,6 +15,7 @@ import requests
 from django.db.models import Q
 from django.http import HttpResponse
 import openpyxl
+from .decorators import doctor_required, secretary_required
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -99,11 +100,11 @@ def doctor_dashboard(request):
     """
     داشبورد پزشک برای مدیریت زمان‌بندی کاری.
     """
-    try:
+    if request.user.user_type == 'DOCTOR':
         doctor_profile = request.user.doctor_profile
-    except DoctorProfile.DoesNotExist:
-        # اگر کاربر پروفایل پزشک نداشته باشد، به صفحه‌ای راهنمایی می‌شود
-        # این بخش در آینده می‌تواند کامل‌تر شود
+    elif request.user.user_type == 'SECRETARY':
+        doctor_profile = request.user.doctor
+    else:
         return redirect('booking:doctor_list')
 
     if request.method == 'POST':
@@ -126,6 +127,7 @@ def doctor_dashboard(request):
     return render(request, 'booking/doctor_dashboard.html', context)
 
 @login_required
+@doctor_required
 def edit_availability(request, pk):
     availability = get_object_or_404(DoctorAvailability, pk=pk, doctor=request.user.doctor_profile)
     if request.method == 'POST':
@@ -496,12 +498,11 @@ def secretary_panel(request, date=None):
     """
     پنل مدیریت منشی (داشبورد).
     """
-    if not request.user.user_type == 'DOCTOR':
-        return redirect('booking:doctor_list')
-
-    try:
+    if request.user.user_type == 'DOCTOR':
         doctor_profile = request.user.doctor_profile
-    except DoctorProfile.DoesNotExist:
+    elif request.user.user_type == 'SECRETARY':
+        doctor_profile = request.user.doctor
+    else:
         return redirect('booking:doctor_list')
 
     current_date = datetime.date.today()
@@ -592,12 +593,11 @@ def daily_patients(request, date=None):
     """
     نمایش و مدیریت لیست بیماران امروز.
     """
-    if not request.user.user_type == 'DOCTOR':
-        return redirect('booking:doctor_list')
-
-    try:
+    if request.user.user_type == 'DOCTOR':
         doctor_profile = request.user.doctor_profile
-    except DoctorProfile.DoesNotExist:
+    elif request.user.user_type == 'SECRETARY':
+        doctor_profile = request.user.doctor
+    else:
         return redirect('booking:doctor_list')
 
     if date:
@@ -659,12 +659,11 @@ def secretary_payments(request, date=None):
     """
     نمایش و ثبت هزینه‌های روزانه منشی.
     """
-    if not request.user.user_type == 'DOCTOR':
-        return redirect('booking:doctor_list')
-
-    try:
+    if request.user.user_type == 'DOCTOR':
         doctor_profile = request.user.doctor_profile
-    except DoctorProfile.DoesNotExist:
+    elif request.user.user_type == 'SECRETARY':
+        doctor_profile = request.user.doctor
+    else:
         return redirect('booking:doctor_list')
 
     if date:
@@ -958,10 +957,8 @@ def verify_doctor_signup(request):
     return render(request, 'booking/verify_doctor_signup.html', {'page_title': 'تأیید ثبت نام پزشک'})
 
 @login_required
+@doctor_required
 def edit_profile(request):
-    if not request.user.user_type == 'DOCTOR':
-        return redirect('booking:doctor_list')
-
     doctor_profile = request.user.doctor_profile
 
     if request.method == 'POST':
@@ -1030,11 +1027,11 @@ def delete_expense(request, pk):
     return render(request, 'booking/delete_expense_confirm.html', context)
 
 
-@login_required
-def financial_report(request, period='daily', date=None):
-    if not request.user.user_type == 'DOCTOR':
-        return redirect('booking:doctor_list')
+from .decorators import doctor_required
 
+@login_required
+@doctor_required
+def financial_report(request, period='daily', date=None):
     doctor_profile = request.user.doctor_profile
 
     # Determine the date range based on the period
@@ -1163,13 +1160,11 @@ def financial_report(request, period='daily', date=None):
     return render(request, 'booking/financial_report.html', context)
 
 @login_required
+@doctor_required
 def expense_balance_report(request):
     """
     گزارش تراز هزینه سالانه.
     """
-    if not request.user.user_type == 'DOCTOR':
-        return redirect('booking:doctor_list')
-
     doctor_profile = request.user.doctor_profile
     end_date = datetime.date.today()
     jalali_today = jdatetime.date.fromgregorian(date=end_date)
@@ -1235,6 +1230,70 @@ def accounting_guide(request):
     Displays the accounting guide page.
     """
     return render(request, 'booking/accounting_guide.html')
+
+
+def secretary_signup(request):
+    if request.method == 'POST':
+        form = SecretarySignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_active = False  # Deactivate account until verification
+            user.save()
+
+            try:
+                AMOOT_SMS_API_TOKEN=settings.AMOOT_SMS_API_TOKEN
+                AMOOT_SMS_API_URL=settings.AMOOT_SMS_API_URL
+                otp_code = str(random.randint(100000, 999999))
+                request.session['otp_code'] = otp_code
+                request.session['new_user_id'] = user.id
+                doctor_mobile_number = user.doctor.mobile_number
+
+                payload = {
+                       'token': AMOOT_SMS_API_TOKEN,
+                       'Mobile': doctor_mobile_number,
+                       'PatternCodeID':4018, # Assuming this is a generic OTP pattern
+                       'PatternValues': otp_code,
+                    }
+                requests.post(AMOOT_SMS_API_URL,data=payload)
+                return redirect('booking:verify_secretary_signup')
+            except requests.exceptions.RequestException as e:
+                user.delete()
+                form.add_error(None, "خطا در ارسال کد تایید. لطفاً مجدداً تلاش کنید.")
+    else:
+        form = SecretarySignUpForm()
+
+    return render(request, 'booking/secretary_signup.html', {'form': form, 'page_title': 'ثبت نام منشی'})
+
+
+def verify_secretary_signup(request):
+    new_user_id = request.session.get('new_user_id')
+    if not new_user_id:
+        return redirect('booking:secretary_signup')
+
+    try:
+        user = User.objects.get(pk=new_user_id)
+    except User.DoesNotExist:
+        return redirect('booking:secretary_signup')
+
+    if request.method == 'POST':
+        otp_from_user = request.POST.get('otp')
+        otp_from_session = request.session.get('otp_code')
+
+        if otp_from_user == otp_from_session:
+            user.is_active = True
+            user.save()
+
+            del request.session['new_user_id']
+            del request.session['otp_code']
+
+            login(request, user)
+            return redirect('booking:doctor_dashboard')
+        else:
+            error = 'کد وارد شده صحیح نمی‌باشد.'
+            return render(request, 'booking/verify_secretary_signup.html', {'error': error})
+
+    return render(request, 'booking/verify_secretary_signup.html', {'page_title': 'تأیید ثبت نام منشی'})
+
 
 @login_required
 def export_patients_to_excel(request):

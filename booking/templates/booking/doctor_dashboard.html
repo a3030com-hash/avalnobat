@@ -9,6 +9,7 @@
 <hr>
 
 <div class="dashboard-container" style="display: flex; flex-wrap: wrap; gap: 2rem;">
+    {% if request.user.user_type == 'DOCTOR' %}
     <div class="form-container" style="flex: 1; min-width: 300px;">
         <h3>افزودن زمان‌بندی جدید</h3>
         <form method="post">
@@ -17,6 +18,7 @@
             <button type="submit" class="btn-submit btn-block">ذخیره زمان‌بندی</button>
         </form>
     </div>
+    {% endif %}
 
     <div class="list-section" style="flex: 2; min-width: 400px;">
         <h3>برنامه کاری شما</h3>
@@ -31,7 +33,9 @@
                             <th>ساعت پایان</th>
                             <th>تعداد ویزیت</th>
                             <th>وضعیت</th>
+                            {% if request.user.user_type == 'DOCTOR' %}
                             <th>عملیات</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -43,6 +47,7 @@
                                 <td data-label="ساعت پایان">{{ avail.end_time|time:"H:i" }}</td>
                                 <td data-label="تعداد ویزیت">{{ avail.visit_count }}</td>
                                 <td data-label="وضعیت">
+                                    {% if request.user.user_type == 'DOCTOR' %}
                                     <a href="{% url 'booking:toggle_availability' pk=avail.pk %}">
                                         {% if avail.is_active %}
                                             <span style="color: green;">● فعال</span>
@@ -50,11 +55,20 @@
                                             <span style="color: red;">● غیرفعال</span>
                                         {% endif %}
                                     </a>
+                                    {% else %}
+                                        {% if avail.is_active %}
+                                            <span style="color: green;">● فعال</span>
+                                        {% else %}
+                                            <span style="color: red;">● غیرفعال</span>
+                                        {% endif %}
+                                    {% endif %}
                                 </td>
+                                {% if request.user.user_type == 'DOCTOR' %}
                                 <td data-label="عملیات">
                                     <a href="{% url 'booking:edit_availability' pk=avail.pk %}" class="btn btn-warning">ویرایش</a>
                                     <a href="{% url 'booking:delete_availability' pk=avail.pk %}" class="btn btn-danger">حذف</a>
                                 </td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                     </tbody>

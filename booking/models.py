@@ -7,9 +7,11 @@ class CustomUser(AbstractUser):
     USER_TYPE_CHOICES = (
         ("PATIENT", "Patient"),
         ("DOCTOR", "Doctor"),
+        ("SECRETARY", "Secretary"),
         ("ADMIN", "Admin"),
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default="PATIENT")
+    doctor = models.ForeignKey('DoctorProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='secretaries')
 
 class Specialty(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="نام تخصص")
