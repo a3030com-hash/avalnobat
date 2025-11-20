@@ -16,11 +16,6 @@ from django.db.models import Q
 from django.http import HttpResponse
 import openpyxl
 from .decorators import doctor_required, secretary_required
-from reportlab.pdfgen import canvas
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import Table, TableStyle
-from reportlab.lib import colors
 
 def _get_doctor_profile(user):
     """
@@ -1370,58 +1365,6 @@ def export_patients_to_excel(request):
     workbook.save(response)
     return response
 
-@login_required
-def export_patients_to_pdf(request):
-    """
-    Export patient list to PDF.
-    """
-    if not request.user.user_type == 'DOCTOR':
-        return redirect('booking:doctor_list')
-
-    doctor_profile = request.user.doctor_profile
-    queryset = Appointment.objects.filter(
-        doctor=doctor_profile, status='BOOKED'
-    ).order_by('-appointment_datetime')
-
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename=patients.pdf'
-    import os
-    font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Vazirmatn-Regular.ttf')
-    pdfmetrics.registerFont(TTFont('Vazir', font_path))
-
-    p = canvas.Canvas(response)
-    p.setFont('Vazir', 10)
-
-    p.drawString(400, 800, 'لیست بیماران')
-
-    data = [['نام بیمار', 'کد ملی', 'شماره همراه', 'نوع بیمه', 'زمان نوبت', 'شرح خدمات']]
-    for app in queryset:
-        data.append([
-            app.patient_name,
-            app.patient_national_id,
-            app.patient_phone,
-            app.get_insurance_type_display(),
-            app.appointment_datetime.strftime('%Y-%m-%d %H:%M'),
-            app.service_description
-        ])
-
-    table = Table(data)
-    style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Vazir'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-    ])
-    table.setStyle(style)
-
-    table.wrapOn(p, 400, 300)
-    table.drawOn(p, 100, 600)
-
-    p.showPage()
-    p.save()
-    return response
 
 from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect
@@ -1503,64 +1446,3 @@ def export_expenses_to_excel(request):
     workbook.save(response)
     return response
 
-@login_required
-def export_expenses_to_pdf(request):
-    """
-    Export expense balance report to PDF.
-    """
-    if not request.user.user_type == 'DOCTOR':
-        return redirect('booking:doctor_list')
-
-    doctor_profile = request.user.doctor_profile
-    end_date = datetime.date.today()
-    jalali_today = jdatetime.date.fromgregorian(date=end_date)
-    start_of_year = jdatetime.date(jalali_today.year, 1, 1).togregorian()
-    start_date = start_of_year
-
-    expenses = DailyExpense.objects.filter(
-        doctor=doctor_profile,
-        date__range=[start_date, end_date],
-        amount__gt=0
-    ).values('description').annotate(
-        count=Count('id'),
-        total_amount=Sum('amount'),
-        average_amount=Avg('amount')
-    ).order_by('-total_amount')
-
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename=expenses.pdf'
-    import os
-    font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Vazirmatn-Regular.ttf')
-    pdfmetrics.registerFont(TTFont('Vazir', font_path))
-
-    p = canvas.Canvas(response)
-    p.setFont('Vazir', 10)
-
-    p.drawString(400, 800, 'گزارش تراز هزینه')
-
-    data = [['شرح', 'تعداد', 'مجموع', 'میانگین']]
-    for expense in expenses:
-        data.append([
-            expense['description'],
-            expense['count'],
-            expense['total_amount'],
-            expense['average_amount'],
-        ])
-
-    table = Table(data)
-    style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Vazir'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-    ])
-    table.setStyle(style)
-
-    table.wrapOn(p, 400, 300)
-    table.drawOn(p, 100, 600)
-
-    p.showPage()
-    p.save()
-    return response

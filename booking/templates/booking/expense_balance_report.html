@@ -12,12 +12,12 @@
         <a href="{% url 'booking:export_expenses_to_excel' %}" class="btn-submit">
             <i class="fas fa-file-excel"></i> اکسل
         </a>
-        <a href="{% url 'booking:export_expenses_to_pdf' %}" class="btn-submit">
-            <i class="fas fa-file-pdf"></i> PDF
-        </a>
+        <button id="copy-expenses-btn" class="btn-submit">
+            <i class="fas fa-copy"></i> کپی
+        </button>
     </div>
     <div class="report-section">
-        <table class="report-table">
+        <table class="report-table" id="expenses-table">
             <thead>
                 <tr>
                     <th>ردیف</th>
@@ -60,6 +60,44 @@
         rows.forEach(row => {
             row.addEventListener('click', () => {
                 window.location.href = row.dataset.href;
+            });
+        });
+
+        // Handle copy to clipboard
+        const copyBtn = document.getElementById('copy-expenses-btn');
+        copyBtn.addEventListener('click', function() {
+            const table = document.getElementById('expenses-table');
+            let text = '';
+
+            // Add headers
+            const headers = table.querySelectorAll('thead th');
+            headers.forEach(header => {
+                text += header.innerText + '\t';
+            });
+            text += '\n';
+
+            // Add rows
+            const tableRows = table.querySelectorAll('tbody tr');
+            tableRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                cells.forEach(cell => {
+                    text += cell.innerText + '\t';
+                });
+                text += '\n';
+            });
+
+            // Add footer
+            const footerCells = table.querySelectorAll('tfoot td');
+            footerCells.forEach(cell => {
+                text += cell.innerText + '\t';
+            });
+            text += '\n';
+
+            navigator.clipboard.writeText(text).then(() => {
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> کپی شد';
+                setTimeout(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-copy"></i> کپی';
+                }, 2000);
             });
         });
     });

@@ -32,7 +32,5 @@ urlpatterns = [
     path('verify-payment/', views.verify_payment, name='verify_payment'),
     path('accounting-guide/', views.accounting_guide, name='accounting_guide'),
     path('export/patients/excel/', views.export_patients_to_excel, name='export_patients_to_excel'),
-    path('export/patients/pdf/', views.export_patients_to_pdf, name='export_patients_to_pdf'),
     path('export/expenses/excel/', views.export_expenses_to_excel, name='export_expenses_to_excel'),
-    path('export/expenses/pdf/', views.export_expenses_to_pdf, name='export_expenses_to_pdf'),
 ]
