@@ -580,7 +580,8 @@ def patient_list(request):
         queryset = queryset.filter(
             Q(patient_name__icontains=query) |
             Q(patient_national_id__icontains=query) |
-            Q(patient_phone__icontains=query)
+            Q(patient_phone__icontains=query) |
+            Q(service_description__icontains=query)
         )
 
     context = {
@@ -1344,6 +1345,7 @@ def export_patients_to_excel(request):
         'شماره همراه',
         'نوع بیمه',
         'زمان نوبت',
+        'شرح خدمات',
     ]
     row_num = 1
 
@@ -1359,6 +1361,7 @@ def export_patients_to_excel(request):
             appointment.patient_phone,
             appointment.get_insurance_type_display(),
             appointment.appointment_datetime.strftime('%Y-%m-%d %H:%M'),
+            appointment.service_description,
         ]
         for col_num, cell_value in enumerate(row, 1):
             cell = worksheet.cell(row=row_num, column=col_num)
@@ -1390,14 +1393,15 @@ def export_patients_to_pdf(request):
 
     p.drawString(400, 800, 'لیست بیماران')
 
-    data = [['نام بیمار', 'کد ملی', 'شماره همراه', 'نوع بیمه', 'زمان نوبت']]
+    data = [['نام بیمار', 'کد ملی', 'شماره همراه', 'نوع بیمه', 'زمان نوبت', 'شرح خدمات']]
     for app in queryset:
         data.append([
             app.patient_name,
             app.patient_national_id,
             app.patient_phone,
             app.get_insurance_type_display(),
-            app.appointment_datetime.strftime('%Y-%m-%d %H:%M')
+            app.appointment_datetime.strftime('%Y-%m-%d %H:%M'),
+            app.service_description
         ])
 
     table = Table(data)

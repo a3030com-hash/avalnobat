@@ -9,11 +9,11 @@
 
     <div class="search-container" style="margin-bottom: 20px; text-align: center;">
         <form method="get" action="{% url 'booking:patient_list' %}" id="search-form" style="display: flex; justify-content: center; align-items: center;">
-            <div style="position: relative; display: inline-block; flex-grow: 1; max-width: 300px; margin-right: 10px;"> <!-- تنظیم عرض باکس -->
-                <input type="text" name="q" placeholder="جستجو بر اساس نام، کد ملی، شماره همراه..." value="{{ search_query }}" class="search-input" style="width: 100%; padding-left: 30px; height: 40px;">
+            <div style="position: relative; display: inline-block; flex-grow: 1; max-width: 300px; margin-right: 5px;"> <!-- تنظیم عرض باکس -->
+                <input type="text" name="q" placeholder="جستجو بر اساس نام، کد ملی، شماره همراه، شرح خدمات..." value="{{ search_query }}" class="search-input" style="width: 100%; padding-left: 30px; height: 40px;">
                 <span class="clear-search" id="clear-search-btn" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: {% if search_query %}inline{% else %}none{% endif %};">&times;</span>
             </div>
-            <button type="submit" class="btn-submit" style="padding: 10px 20px; height: 40px;">جستجو</button> <!-- دکمه جستجو -->
+            <button type="submit" class="btn-submit" style="padding: 10px 15px; height: 40px;">جستجو</button> <!-- دکمه جستجو -->
         </form>
     </div>
 
@@ -34,6 +34,7 @@
                 <th>ساعت ویزیت</th>
                 <th>کد ملی</th>
                 <th>شماره همراه</th>
+                <th>شرح خدمات</th>
             </tr>
         </thead>
         <tbody>
@@ -45,10 +46,11 @@
                     <td data-label="ساعت ویزیت">{{ app.appointment_datetime|time:"H:i" }}</td>
                     <td data-label="کد ملی">{{ app.patient_national_id|default:"-" }}</td>
                     <td data-label="شماره همراه">{{ app.patient_phone }}</td>
+                    <td data-label="شرح خدمات">{{ app.service_description }}</td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="6" style="text-align: center;">هیچ بیماری یافت نشد.</td>
+                    <td colspan="7" style="text-align: center;">هیچ بیماری یافت نشد.</td>
                 </tr>
             {% endfor %}
         </tbody>
