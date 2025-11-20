@@ -67,38 +67,53 @@
         const copyBtn = document.getElementById('copy-expenses-btn');
         copyBtn.addEventListener('click', function() {
             const table = document.getElementById('expenses-table');
-            let text = '';
 
-            // Add headers
-            const headers = table.querySelectorAll('thead th');
-            headers.forEach(header => {
-                text += header.innerText + '\t';
-            });
-            text += '\n';
+            // Create the HTML content with styles
+            const styles = `
+                <style>
+                    table { border-collapse: collapse; width: 100%; font-family: sans-serif; direction: rtl; }
+                    th, td { border: 1px solid #dddddd; text-align: right; padding: 8px; }
+                    thead th { background-color: #f2f2f2; }
+                    tr:nth-child(even) { background-color: #f9f9f9; }
+                    tfoot { font-weight: bold; background-color: #f2f2f2; }
+                </style>
+            `;
+            const htmlContent = styles + table.outerHTML;
 
-            // Add rows
-            const tableRows = table.querySelectorAll('tbody tr');
-            tableRows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                cells.forEach(cell => {
-                    text += cell.innerText + '\t';
+            // Create a plain text fallback
+            let textContent = '';
+            table.querySelectorAll('tr').forEach(row => {
+                row.querySelectorAll('th, td').forEach(cell => {
+                    textContent += cell.innerText + '\t';
                 });
-                text += '\n';
+                textContent += '\n';
             });
 
-            // Add footer
-            const footerCells = table.querySelectorAll('tfoot td');
-            footerCells.forEach(cell => {
-                text += cell.innerText + '\t';
-            });
-            text += '\n';
+            // Use the Clipboard API to write both HTML and plain text
+            try {
+                const blobHtml = new Blob([htmlContent], { type: 'text/html' });
+                const blobText = new Blob([textContent], { type: 'text/plain' });
+                const clipboardItem = new ClipboardItem({
+                    'text/html': blobHtml,
+                    'text/plain': blobText,
+                });
 
-            navigator.clipboard.writeText(text).then(() => {
-                copyBtn.innerHTML = '<i class="fas fa-check"></i> کپی شد';
-                setTimeout(() => {
-                    copyBtn.innerHTML = '<i class="fas fa-copy"></i> کپی';
-                }, 2000);
-            });
+                navigator.clipboard.write([clipboardItem]).then(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> کپی شد';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-copy"></i> کپی';
+                    }, 2000);
+                });
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                navigator.clipboard.writeText(textContent).then(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> کپی شد (متن)';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-copy"></i> کپی';
+                    }, 2000);
+                });
+            }
         });
     });
 </script>
