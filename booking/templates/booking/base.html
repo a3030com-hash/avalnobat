@@ -765,20 +765,28 @@
                 const activePage = getActivePage();
                 if (!activePage) return;
 
-                const savedDate = localStorage.getItem('userDate');
+                const container = document.getElementById(activePage.containerId);
+                const initialDateEl = container.querySelector('#dynamic-content');
+                const initialDateStr = initialDateEl ? initialDateEl.getAttribute('data-current-date') : null;
+
                 let initialDate;
+                const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
-                if (savedDate) {
-                    initialDate = new Date(savedDate);
+                if (initialDateStr && dateRegex.test(initialDateStr)) {
+                    // Server has rendered a specific, valid-looking date. This is the source of truth.
+                    const parts = initialDateStr.split('-');
+                    initialDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                    window.userDate = initialDate;
+                    localStorage.setItem('userDate', initialDateStr);
+                    // The crucial part: DO NOT re-fetch. The content is already correct.
                 } else {
-                    const container = document.getElementById(activePage.containerId);
-                    const initialDateEl = container.querySelector('#dynamic-content');
-                    const initialDateStr = initialDateEl ? initialDateEl.getAttribute('data-current-date') : null;
-                    initialDate = initialDateStr ? new Date(initialDateStr) : new Date();
+                    // No specific/valid date from server. Try localStorage, then default to now.
+                    const savedDate = localStorage.getItem('userDate');
+                    initialDate = savedDate ? new Date(savedDate) : new Date();
+                    window.userDate = initialDate;
+                    // The server rendered a default view, so we fetch the content for our target date.
+                    updateContentForDate(userDate, false);
                 }
-
-                userDate = initialDate;
-                updateContentForDate(userDate, false);
             }
 
             window.updateContentForDate = async function(date, pushState = true) {
