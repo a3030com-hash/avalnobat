@@ -47,7 +47,25 @@ def to_jalali(gregorian_date, format_str="%Y/%m/%d"):
 
     try:
         jalali_date = jdatetime.date.fromgregorian(date=gregorian_date)
-        return jalali_date.strftime(format_str)
+
+        jalali_day_names = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"]
+        jalali_month_names = [
+            "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
+            "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
+        ]
+
+        result = format_str
+        result = result.replace('%Y', str(jalali_date.year))
+        result = result.replace('%m', f'{jalali_date.month:02d}')
+        result = result.replace('%d', f'{jalali_date.day:02d}')
+
+        if '%A' in result:
+            result = result.replace('%A', jalali_day_names[jalali_date.weekday()])
+
+        if '%B' in result:
+            result = result.replace('%B', jalali_month_names[jalali_date.month - 1])
+
+        return result
     except (ValueError, TypeError):
         return gregorian_date
 
