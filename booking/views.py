@@ -1385,8 +1385,9 @@ def export_patients_to_pdf(request):
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'inline; filename=patients.pdf'
-
-    pdfmetrics.registerFont(TTFont('Vazir', 'static/fonts/Vazirmatn-Regular.ttf'))
+    import os
+    font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Vazirmatn-Regular.ttf')
+    pdfmetrics.registerFont(TTFont('Vazir', font_path))
 
     p = canvas.Canvas(response)
     p.setFont('Vazir', 10)
@@ -1528,8 +1529,9 @@ def export_expenses_to_pdf(request):
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'inline; filename=expenses.pdf'
-
-    pdfmetrics.registerFont(TTFont('Vazir', 'static/fonts/Vazirmatn-Regular.ttf'))
+    import os
+    font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'Vazirmatn-Regular.ttf')
+    pdfmetrics.registerFont(TTFont('Vazir', font_path))
 
     p = canvas.Canvas(response)
     p.setFont('Vazir', 10)
