@@ -1384,7 +1384,7 @@ def export_patients_to_pdf(request):
     ).order_by('-appointment_datetime')
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename=patients.pdf'
+    response['Content-Disposition'] = 'inline; filename=patients.pdf'
 
     pdfmetrics.registerFont(TTFont('Vazir', 'static/fonts/Vazirmatn-Regular.ttf'))
 
@@ -1527,7 +1527,7 @@ def export_expenses_to_pdf(request):
     ).order_by('-total_amount')
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename=expenses.pdf'
+    response['Content-Disposition'] = 'inline; filename=expenses.pdf'
 
     pdfmetrics.registerFont(TTFont('Vazir', 'static/fonts/Vazirmatn-Regular.ttf'))
 
