@@ -63,7 +63,7 @@
     }
     .clear-search {
         position: absolute;
-        left: 80px;
+        left: 120px;
         top: 50%;
         transform: translateY(-50%);
         cursor: pointer;
@@ -93,7 +93,7 @@
 <div class="search-container">
     <form method="get" action="{% url 'booking:doctor_list' %}" class="search-form" id="search-form">
         <input type="text" name="q" id="main-search-input" placeholder="جستجو تخصص/نام پزشک/ منطقه" value="{{ request.GET.q }}" style="text-align: right;">
-        <i class="fas fa-times clear-search" id="clear-search-icon"></i>
+        <i class="fas fa-times clear-search"  id="clear-search-icon"></i>
         <button type="submit" class="search-btn">جستجو</button>
     </form>
 </div>
