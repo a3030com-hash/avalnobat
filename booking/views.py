@@ -1431,7 +1431,7 @@ class CustomLoginView(LoginView):
             if user.user_type == 'DOCTOR':
                 doctor_profile = getattr(user, 'doctor_profile', None)
                 if doctor_profile and doctor_profile.financial_settings_completed:
-                    return reverse('booking:financial_report', kwargs={'period': 'yearly'})
+                    return reverse('booking:daily_patients')
                 else:
                     return reverse('booking:doctor_dashboard')
             elif user.user_type == 'SECRETARY':

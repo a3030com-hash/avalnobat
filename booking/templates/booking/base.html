@@ -49,6 +49,7 @@
             flex-direction: column;
             min-height: 50vh;
             background-color: var(--light-gray);
+            background: linear-gradient(135deg, #f0f9f8 0%, #e0f2f1 100%);
             color: var(--dark-gray);
         }
 
@@ -60,7 +61,7 @@
             display: flex; /* اضافه کردن flex برای تراز کردن */
             justify-content: center; /* مرکز کردن محتوا */
             align-items: center; /* مرکز کردن عمودی */
-            background-color:#35c8ed;
+            background-color: #0f978b;
         }
 
         header nav {
@@ -209,17 +210,6 @@
             max-width: 1200px;
             margin: 0 auto;
             width: 100%;
-        }
-
-        footer {
-            background-color: var(--dark-gray);
-            color: var(--white);
-            text-align: center;
-            padding: 1.5rem;
-            margin-top: auto; /* فوتر در انتهای صفحه */
-            display: flex; /* اضافه کردن flex برای تراز کردن */
-            justify-content: center; /* مرکز کردن محتوا */
-            align-items: center; /* درصدهای چپ و راست */
         }
 
         h1,
@@ -476,6 +466,124 @@
     left: 100%;
 }
 
+.studi_pre_footer {
+            width: 100%;
+            margin-top: auto;
+        }
+        
+        .sc_relative {
+            position: relative;
+            width: 100%;
+        }
+        
+        .sc_separator {
+            width: 100%;
+            height: 100px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .editorial {
+            display: block;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+        
+        .parallax1 > use {
+            animation: move-forever1 12s linear infinite;
+        }
+        
+        .parallax2 > use {
+            animation: move-forever2 10s linear infinite;
+        }
+        
+        .parallax3 > use {
+            animation: move-forever3 8s linear infinite;
+        }
+        
+        .parallax4 > use {
+            animation: move-forever4 6s linear infinite;
+        }
+        
+        @keyframes move-forever1 {
+            0% { transform: translate(85px, 0%); }
+            100% { transform: translate(-90px, 0%); }
+        }
+        
+        @keyframes move-forever2 {
+            0% { transform: translate(-90px, 0%); }
+            100% { transform: translate(85px, 0%); }
+        }
+        
+        @keyframes move-forever3 {
+            0% { transform: translate(85px, 0%); }
+            100% { transform: translate(-90px, 0%); }
+        }
+        
+        @keyframes move-forever4 {
+            0% { transform: translate(-90px, 0%); }
+            100% { transform: translate(85px, 0%); }
+        }
+        
+        /* استایل فوتر */
+        footer {
+            background-color: #49c2b7;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: #e0f7fa;
+        }
+        
+        .footer-section ul {
+            list-style: none;
+        }
+        
+        .footer-section ul li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .footer-section a {
+            color: #e0f7fa;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-section a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+        
+      @media (max-width: 768px) {
+            .footer-content {
+                flex-direction: column;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            #expense-form {
+                flex-direction: column;
+                width: 90%;
+            }
+        }
     </style>
     <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -555,22 +663,63 @@
         {% block content %}
         {% endblock %}
     </main>
+   
+    <!-- موج دریا در بالای فوتر -->
+      <div class="studi_pre_footer">
+        <div class="sc_relative">
+            <div id="sc_separator_25" class="sc_separator cz_sep2_65 sc_sep_bottom z99 sc_relative">
+                <svg class="editorial" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" height="100px" width="100%" viewBox="0 24 150 28">
+                    <defs> 
+                        <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"></path> 
+                    </defs> 
+                    <g style="display:none" class="parallax1"> 
+                        <use xlink:href="#gentle-wave" x="50" y="3" fill="#e0f7fa"></use> 
+                    </g> 
+                    <g class="parallax2"> 
+                        <use xlink:href="#gentle-wave" x="50" y="0" fill="#80deea"></use> 
+                    </g> 
+                    <g class="parallax3"> 
+                        <use xlink:href="#gentle-wave" x="50" y="9" fill="#4dd0e1"></use> 
+                    </g> 
+                    <g class="parallax4"> 
+                        <use xlink:href="#gentle-wave" x="50" y="6" fill="#49c2b7"></use> 
+                    </g> 
+                </svg>
+            </div>
+        </div>
+    </div>
+    
     <footer>
-        <div style="width: 100%; max-width: 1200px; margin: 0 auto; display: flex; align-items: center;">
-                    <div style="flex: 1;display: flex; flex-direction: column; ">
-                     <p href="{% url 'booking:accounting_guide' %}">📅 سیستم نوبت‌دهی و حسابداری مطب برای راحتی بیماران و مدیریت بهتر مالی!</p>
-                     <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>درباره ما</h3>
+                    
+    <p href="{% url 'booking:accounting_guide' %}">📅 سیستم نوبت‌دهی و حسابداری مطب برای راحتی بیماران و مدیریت بهتر مالی!</p>
+ <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>
                 <img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=666774&Code=3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'
                  alt='نوبت دهی پزشکان' style='cursor:pointer' code='3IDfXjk2pOGlSbgWK4VAkIXXLpxdMTIf'>         </a>
-            </div>
-            <div style="flex: 1; display: flex; flex-direction: column;  ">
-                 <p>هزینه نوبت دهی  ۱۰۰,۰۰۰ ریال است که پس از دریافت نوبت از طریق درگاه (به پرداخت)دریافت میشود.
+                </div>
+                <div class="footer-section">
+                    <h3>قوانین</h3>
+                    <ul>
+                   <li>
+                       <p>هزینه نوبت دهی  ۱۰۰,۰۰۰ ریال است که پس از دریافت نوبت از طریق درگاه (به پرداخت)دریافت میشود.
                     وجه ویزیت در مطب دریافت میگردد.</p>
-                <a href="{% url 'booking:accounting_guide' %}" >
+                  </li>
+                   <li> <a href="{% url 'booking:accounting_guide' %}" >
                     <img src="/media/hesabdari.png"  alt="avalnobat-icon">
-                </a>
-            </div>  
-   </div>
+                </a></li>
+                </div>
+                <div class="footer-section">
+                    <h3>تماس با ما</h3>
+                    <p>آدرس: مشهد - خیابان کوهسنگی - حکیم نظامی 30</p>
+                    <p>همراه : ۰9151110677</p>
+                    <p>ایمیل: info@avalnobat.ir</p>
+                </div>
+            </div>
+         
+        </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.js"></script>
     <script src="{% static 'booking/custom_jalali.js' %}"></script>

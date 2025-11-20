@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'booking',
     'django.contrib.sitemaps',
     'robots',
+    'jalali_core'
 ]
 
 SITE_ID = 1
@@ -123,11 +124,6 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 import jdatetime
 import locale
-
-try:
-    locale.setlocale(locale.LC_TIME, "fa_IR.UTF-8")
-except locale.Error:
-    pass  # Locale not supported, handle gracefully
 
 jdatetime.set_locale('fa_IR')
 
