@@ -547,17 +547,9 @@ def secretary_panel(request, date=None):
 
     # Get future available days for manual booking
     future_days_info = []
-    j_to_model_weekday_map = {
-        0: 5, 1: 6, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4
-    }
     for i in range(0, 46):  # From today for the next 45 days
         future_date = current_date + datetime.timedelta(days=i)
-
-        # Convert to Jalali to get the correct weekday for our model
-        jalali_future_date = jdatetime.date.fromgregorian(date=future_date)
-        model_weekday = j_to_model_weekday_map[jalali_future_date.weekday()]
-
-        daily_availabilities = availabilities.filter(day_of_week=model_weekday)
+        daily_availabilities = availabilities.filter(day_of_week=future_date.weekday())
 
         if daily_availabilities.exists():
             total_capacity = sum(da.visit_count for da in daily_availabilities)
