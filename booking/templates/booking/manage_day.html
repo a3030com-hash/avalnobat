@@ -158,7 +158,7 @@
 
     <!-- Hidden Action Forms -->
     <div id="form-container" class="hidden-form-container">
-        <form method="post" id="action-form">
+        <form method="post" id="action-form" action="{% url 'booking:manage_day' jalali_date_str %}">
             {% csrf_token %}
             <input type="hidden" name="selected_slot" id="hidden-selected-slot">
             <input type="hidden" name="action" id="hidden-action" value="book">
