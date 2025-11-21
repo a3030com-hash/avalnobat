@@ -758,6 +758,13 @@
                         url: "{% url 'booking:secretary_panel' '0000-00-00' %}"
                     };
                 }
+                if (document.getElementById('manage-day-container')) {
+                    return {
+                        name: 'manage_day',
+                        containerId: 'manage-day-container',
+                        url: "{% url 'booking:manage_day' '0000-00-00' %}"
+                    };
+                }
                 return null;
             }
 
