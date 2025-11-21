@@ -88,9 +88,9 @@ class BookingAppTestCase(TestCase):
     def test_full_booking_flow_for_guest(self):
         """Test the complete booking flow for a guest patient with Jalali date."""
         today_gregorian = datetime.date.today()
-        today_jalali_str = jdatetime.date.fromgregorian(date=today_gregorian).strftime('%Y-%m-%d')
+        today_gregorian_str = today_gregorian.strftime('%Y-%m-%d')
 
-        book_url = reverse('booking:book_appointment', kwargs={'pk': self.doctor_profile.pk, 'date': today_jalali_str})
+        book_url = reverse('booking:book_appointment', kwargs={'pk': self.doctor_profile.pk, 'date': today_gregorian_str})
         response = self.client.get(book_url)
         self.assertEqual(response.status_code, 200)
 

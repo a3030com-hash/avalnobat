@@ -158,7 +158,7 @@
 
     <!-- Hidden Action Forms -->
     <div id="form-container" class="hidden-form-container">
-        <form method="post" id="action-form" action="{% url 'booking:manage_day' jalali_date_str %}">
+        <form method="post" id="action-form">
             {% csrf_token %}
             <input type="hidden" name="selected_slot" id="hidden-selected-slot">
             <input type="hidden" name="action" id="hidden-action" value="book">
@@ -202,6 +202,20 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('manage-day-container');
+        const dynamicContent = document.getElementById('dynamic-content');
+        const currentDate = new Date(dynamicContent.getAttribute('data-current-date'));
+
+        document.getElementById('prev-day-btn').addEventListener('click', function() {
+            const prevDay = new Date(currentDate);
+            prevDay.setDate(currentDate.getDate() - 1);
+            window.location.href = `/manage-day/${prevDay.toISOString().split('T')[0]}/`;
+        });
+
+        document.getElementById('next-day-btn').addEventListener('click', function() {
+            const nextDay = new Date(currentDate);
+            nextDay.setDate(currentDate.getDate() + 1);
+            window.location.href = `/manage-day/${nextDay.toISOString().split('T')[0]}/`;
+        });
 
         container.addEventListener('submit', async function(e) {
             if (e.target.tagName === 'FORM') {
