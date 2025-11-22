@@ -7,6 +7,7 @@ from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from .models import DoctorProfile, DoctorAvailability, Appointment, TimeSlotException
 from .forms import DoctorAvailabilityForm, AppointmentBookingForm
 from django.urls import reverse
@@ -435,6 +436,9 @@ def verify_payment(request):
                         requests.post(AMOOT_SMS_API_URL, data=payload)
                     except requests.exceptions.RequestException as e:
                         print(f"Error sending confirmation SMS: {e}")
+
+                    login(request, appointment.patient)
+                    return redirect('booking:patient_dashboard')
 
                 else:
                     message = f"خطا در تسویه حساب: {settle_result}"
@@ -1364,6 +1368,39 @@ def export_patients_to_excel(request):
 
     workbook.save(response)
     return response
+
+
+@login_required
+def patient_dashboard(request):
+    """
+    Displays the patient's dashboard with their appointments.
+    Allows patients to cancel their future appointments.
+    """
+    if request.user.user_type != 'PATIENT':
+        # Or redirect to a more appropriate page
+        return redirect('booking:doctor_list')
+
+    if request.method == 'POST':
+        appointment_id = request.POST.get('appointment_id')
+        appointment_to_cancel = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)
+
+        # Allow cancellation only if the appointment is for today or a future date
+        if appointment_to_cancel.appointment_datetime.date() >= datetime.date.today():
+            appointment_to_cancel.status = 'CANCELED'
+            appointment_to_cancel.save()
+            messages.success(request, 'نوبت شما با موفقیت لغو شد.')
+        else:
+            messages.error(request, 'شما نمی‌توانید نوبت‌های گذشته را لغو کنید.')
+        return redirect('booking:patient_dashboard')
+
+    appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_datetime')
+
+    context = {
+        'appointments': appointments,
+        'page_title': 'نوبت‌های من',
+        'today': datetime.date.today()
+    }
+    return render(request, 'booking/patient_dashboard.html', context)
 
 
 from django.contrib.auth.views import LoginView

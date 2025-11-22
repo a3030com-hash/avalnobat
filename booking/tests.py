@@ -204,3 +204,59 @@ class BookingAppTestCase(TestCase):
         self.assertTrue(DoctorProfile.objects.filter(user__username='newdoctor').exists())
         doctor_profile = DoctorProfile.objects.get(user__username='newdoctor')
         self.assertEqual(doctor_profile.mobile_number, '09123456789')
+
+    def test_patient_dashboard_access(self):
+        """Test patient dashboard access rules."""
+        dashboard_url = reverse('booking:patient_dashboard')
+
+        # Test unauthenticated access
+        response = self.client.get(dashboard_url)
+        self.assertEqual(response.status_code, 302) # Should redirect to login
+
+        # Test access for a doctor (should be redirected)
+        self.client.login(username='doctor', password='password123')
+        response = self.client.get(dashboard_url)
+        self.assertEqual(response.status_code, 302) # Redirects to doctor_list
+
+        # Test access for a patient
+        self.client.login(username='patient', password='password123')
+        response = self.client.get(dashboard_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'booking/patient_dashboard.html')
+
+    def test_patient_can_cancel_appointment(self):
+        """Test that a patient can cancel a future appointment."""
+        self.client.login(username='patient', password='password123')
+
+        # Create a future appointment
+        future_date = timezone.now() + datetime.timedelta(days=5)
+        future_appointment = Appointment.objects.create(
+            doctor=self.doctor_profile,
+            patient=self.patient_user,
+            appointment_datetime=future_date,
+            status='BOOKED'
+        )
+
+        # Create a past appointment
+        past_date = timezone.now() - datetime.timedelta(days=2)
+        past_appointment = Appointment.objects.create(
+            doctor=self.doctor_profile,
+            patient=self.patient_user,
+            appointment_datetime=past_date,
+            status='BOOKED'
+        )
+
+        # Attempt to cancel the future appointment
+        dashboard_url = reverse('booking:patient_dashboard')
+        response = self.client.post(dashboard_url, {'appointment_id': future_appointment.id})
+        self.assertEqual(response.status_code, 302) # Should redirect
+
+        future_appointment.refresh_from_db()
+        self.assertEqual(future_appointment.status, 'CANCELED')
+
+        # Attempt to cancel the past appointment
+        response = self.client.post(dashboard_url, {'appointment_id': past_appointment.id})
+        self.assertEqual(response.status_code, 302)
+
+        past_appointment.refresh_from_db()
+        self.assertEqual(past_appointment.status, 'BOOKED') # Status should not change
