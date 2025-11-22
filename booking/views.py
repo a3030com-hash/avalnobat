@@ -17,6 +17,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 import openpyxl
 from .decorators import doctor_required, secretary_required
+from .constants import MELLAT_BANK_ERRORS
 
 def _get_doctor_profile(user):
     """
@@ -313,54 +314,6 @@ def verify_appointment(request):
 
     return render(request, 'booking/verify_appointment.html', {'page_title': 'تأیید نوبت'})
 
-MELLAT_BANK_ERRORS = {
-    '0': 'تراکنش با موفقیت انجام شد',
-    '11': 'شماره کارت نامعتبر است',
-    '12': 'موجودی کافی نیست',
-    '13': 'رمز نادرست است',
-    '14': 'تعداد دفعات وارد کردن رمز بیش از حد مجاز است',
-    '15': 'کارت نامعتبر است',
-    '16': 'دفعات برداشت وجه بیش از حد مجاز است',
-    '17': 'کاربر از انجام تراکنش منصرف شده است',
-    '18': 'تاریخ انقضای کارت گذشته است',
-    '19': 'مبلغ برداشت وجه بیش از حد مجاز است',
-    '21': 'پذیرنده نامعتبر است',
-    '23': 'خطای امنیتی رخ داده است',
-    '24': 'اطلاعات کاربری پذیرنده نامعتبر است',
-    '25': 'مبلغ نامعتبر است',
-    '31': 'پاسخ نامعتبر است',
-    '32': 'فرمت اطلاعات وارد شده صحیح نمی باشد',
-    '33': 'حساب نامعتبر است',
-    '34': 'خطای سیستمی',
-    '35': 'تاریخ نامعتبر است',
-    '41': 'شماره درخواست تکراری است',
-    '42': 'تراکنش Sale یافت نشد',
-    '43': 'قبلا درخواست Verify داده شده است',
-    '44': 'درخواست Verfiy یافت نشد',
-    '45': 'تراکنش Settle (تسویه) شده است',
-    '46': 'تراکنش Settle (تسویه)نشده است',
-    '47': 'تراکنش Settle یافت نشد',
-    '48': 'تراکنش Reverse شده است',
-    '49': 'تراکنش Refund یافت نشد',
-    '51': 'تراکنش تکراری است',
-    '54': 'تراکنش مرجع موجود نیست',
-    '55': 'تراکنش نامعتبر است',
-    '61': 'خطا در واریز',
-    '111': 'صادر کننده کارت نامعتبر است',
-    '112': 'خطای سوییچ صادر کننده کارت',
-    '113': 'پاسخی از صادر کننده کارت دریافت نشد',
-    '114': 'دارنده کارت مجاز به انجام این تراکنش نیست',
-    '412': 'شناسه قبض نادرست است',
-    '413': 'شناسه پرداخت نادرست است',
-    '414': 'سازمان صادر کننده قبض نامعتبر است',
-    '415': 'زمان جلسه کاری به پایان رسیده است',
-    '416': 'خطا در ثبت اطلاعات',
-    '417': 'شناسه پرداخت کننده نامعتبر است',
-    '418': 'اشکال در تعریف اطلاعات مشتری',
-    '419': 'تعداد دفعات ورود اطلاعات از حد مجاز گذشته است',
-    '421': 'IP نامعتبر است',
-}
-
 def payment_page(request):
     """
     Initiates a payment request with the Beh Pardakht gateway.
@@ -434,15 +387,11 @@ def verify_payment(request):
     sale_order_id = request.POST.get('SaleOrderId')
     sale_reference_id = request.POST.get('SaleReferenceId')
 
-    payment_successful = False
-    message = ''
-
     # 1. Check if the initial transaction was successful at the bank's end.
     if res_code != '0':
         message = MELLAT_BANK_ERRORS.get(res_code, f"تراکنش ناموفق بود. کد خطا: {res_code}")
-        return render(request, 'booking/payment_result.html', {
-            'payment_successful': False, 'message': message, 'page_title': 'نتیجه پرداخت'
-        })
+        messages.error(request, message)
+        return redirect('booking:patient_dashboard')
 
     # 2. If successful, proceed to verify and settle.
     try:
@@ -472,8 +421,15 @@ def verify_payment(request):
 
                 # --- Send SMS Confirmation ---
                 try:
-                    # ... (SMS logic remains the same)
-                    pass
+                    AMOOT_SMS_API_TOKEN = settings.AMOOT_SMS_API_TOKEN
+                    AMOOT_SMS_API_URL = settings.AMOOT_SMS_API_URL
+                    payload = {
+                        'token': AMOOT_SMS_API_TOKEN,
+                        'Mobile': appointment.patient_phone,
+                        'PatternCodeID': 4161,
+                        'PatternValues': f"{appointment.patient_name};{appointment.doctor.user.get_full_name()};{appointment.appointment_datetime.strftime('%Y-%m-%d %H:%M')};{appointment.doctor.address};{appointment.doctor.phone_number}",
+                    }
+                    requests.post(AMOOT_SMS_API_URL, data=payload)
                 except requests.exceptions.RequestException as e:
                     print(f"Error sending confirmation SMS: {e}")
 
@@ -500,9 +456,8 @@ def verify_payment(request):
     except Exception as e:
         message = f"خطا در ارتباط با وب سرویس به پرداخت: {e}. لطفاً با پشتیبانی تماس بگیرید."
 
-    return render(request, 'booking/payment_result.html', {
-        'payment_successful': payment_successful, 'message': message, 'page_title': 'نتیجه پرداخت'
-    })
+    messages.error(request, message)
+    return redirect('booking:patient_dashboard')
 
 
 def initiate_payment(request, appointment_id):
