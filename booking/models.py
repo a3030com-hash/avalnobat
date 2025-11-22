@@ -90,7 +90,7 @@ class Appointment(models.Model):
     INSURANCE_CHOICES = (
         ('TAMIN', 'بیمه تامین اجتماعی'),
         ('KHADAMAT', 'بیمه خدمات درمانی'),
-        ('MOSALAH', 'بیمه نیروهای مسلح'),
+        ('MOSALAH', 'بیمه نیروهای مصلح'),
         ('AZAD', 'آزاد'),
     )
 

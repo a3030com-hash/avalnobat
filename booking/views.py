@@ -175,24 +175,13 @@ def book_appointment(request, pk, date):
     """
     doctor = get_object_or_404(DoctorProfile, pk=pk)
     try:
-        # First, try parsing as Gregorian (the new, correct format)
-        target_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+        jalali_date = jdatetime.datetime.strptime(date, '%Y-%m-%d').date()
+        target_date = jalali_date.togregorian()
     except ValueError:
-        # If that fails, try parsing as Jalali (the old, cached format)
-        try:
-            target_date = jdatetime.datetime.strptime(date, '%Y-%m-%d').date().togregorian()
-        except ValueError:
-            # If both fail, it's an invalid date format
-            return redirect('booking:doctor_detail', pk=doctor.pk)
+        return redirect('booking:doctor_detail', pk=doctor.pk)
 
-    # Convert to Jalali to get the correct weekday for our model
-    jalali_target_date = jdatetime.date.fromgregorian(date=target_date)
-    j_to_model_weekday_map = {
-        0: 5, 1: 6, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4
-    }
-    model_weekday = j_to_model_weekday_map[jalali_target_date.weekday()]
-
-    availabilities = DoctorAvailability.objects.filter(doctor=doctor, day_of_week=model_weekday, is_active=True)
+    day_of_week = target_date.weekday()
+    availabilities = DoctorAvailability.objects.filter(doctor=doctor, day_of_week=day_of_week, is_active=True)
 
     if not availabilities.exists():
         return redirect('booking:doctor_detail', pk=doctor.pk)
@@ -760,22 +749,11 @@ def manage_day(request, date):
         return redirect('booking:doctor_list')
 
     try:
-        # First, try parsing as Gregorian (the new, correct format)
-        target_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
+        # The date comes from the URL in Jalali format
+        jalali_date = jdatetime.datetime.strptime(date, '%Y-%m-%d').date()
+        target_date = jalali_date.togregorian()
     except ValueError:
-        # If that fails, try parsing as Jalali (the old, cached format)
-        try:
-            target_date = jdatetime.datetime.strptime(date, '%Y-%m-%d').date().togregorian()
-        except ValueError:
-            # If both fail, it's an invalid date format
-            return redirect('booking:secretary_panel')
-
-    # Convert to Jalali to get the correct weekday for our model
-    jalali_target_date = jdatetime.date.fromgregorian(date=target_date)
-    j_to_model_weekday_map = {
-        0: 5, 1: 6, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4
-    }
-    model_weekday = j_to_model_weekday_map[jalali_target_date.weekday()]
+        return redirect('booking:secretary_panel')
 
     # --- Logic to calculate and display all time slots ---
     all_slots = []
@@ -795,7 +773,7 @@ def manage_day(request, date):
 
     availabilities = DoctorAvailability.objects.filter(
         doctor=doctor_profile,
-        day_of_week=model_weekday,
+        day_of_week=target_date.weekday(),
         is_active=True
     )
 
@@ -832,14 +810,14 @@ def manage_day(request, date):
                     doctor=doctor_profile,
                     datetime_slot=slot_datetime
                 )
-                return redirect('booking:manage_day', date=target_date.strftime('%Y-%m-%d'))
+                return redirect('booking:manage_day', date=date)
 
             elif action == 'unblock':
                 TimeSlotException.objects.filter(
                     doctor=doctor_profile,
                     datetime_slot=slot_datetime
                 ).delete()
-                return redirect('booking:manage_day', date=target_date.strftime('%Y-%m-%d'))
+                return redirect('booking:manage_day', date=date)
 
             elif action == 'book':
                 form = AppointmentBookingForm(request.POST)

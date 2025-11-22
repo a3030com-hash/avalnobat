@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 choices=[
                     ("TAMIN", "بیمه تامین اجتماعی"),
                     ("KHADAMAT", "بیمه خدمات درمانی"),
-                    ("MOSALAH", "بیمه نیروهای مسلح"),
+                    ("MOSALAH", "بیمه نیروهای مصلح"),
                     ("AZAD", "آزاد"),
                 ],
                 default="AZAD",
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                 choices=[
                     ("TAMIN", "بیمه تامین اجتماعی"),
                     ("KHADAMAT", "بیمه خدمات درمانی"),
-                    ("MOSALAH", "بیمه نیروهای مسلح"),
+                    ("MOSALAH", "بیمه نیروهای مصلح"),
                     ("AZAD", "آزاد"),
                 ],
                 max_length=10,

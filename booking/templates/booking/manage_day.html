@@ -96,20 +96,10 @@
     }
 </style>
 
-<div id="manage-day-container">
-    <div id="dynamic-content" class="booking-container" data-current-date="{{ date|date:"Y-m-d" }}">
-        <a href="{% url 'booking:secretary_panel' %}"> &larr; بازگشت به پنل مدیریت</a>
-        <div class="date-navigation local-date-nav" style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 1rem;">
-            <button id="prev-day-btn" title="روز قبل" class="btn-date-nav">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-            <span id="date-display" style="font-weight: bold; font-size: 1.2rem; color: var(--primary-color);">{{ date|to_jalali:"%A, %d %B %Y" }}</span>
-            <button id="next-day-btn" title="روز بعد" class="btn-date-nav">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-        </div>
-        <hr>
-        <h2 class="elegant-title">{{ page_title }}</h2>
+<div id="dynamic-content" class="booking-container" data-current-date="{{ date|date:"Y-m-d" }}">
+    <a href="{% url 'booking:secretary_panel' %}"> &larr; بازگشت به پنل مدیریت</a>
+    <hr>
+    <h2 class="elegant-title">{{ page_title }}</h2>
     <p>برای مدیریت نوبت‌ها، یک ساعت را انتخاب کنید.</p>
 
     <div class="time-slots" id="time-slots-container">
@@ -199,57 +189,5 @@
             formContainer.scrollIntoView({ behavior: 'smooth' });
         }
     }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const container = document.getElementById('manage-day-container');
-        const dynamicContent = document.getElementById('dynamic-content');
-        const currentDate = new Date(dynamicContent.getAttribute('data-current-date'));
-
-        document.getElementById('prev-day-btn').addEventListener('click', function() {
-            const prevDay = new Date(currentDate);
-            prevDay.setDate(currentDate.getDate() - 1);
-            window.location.href = `/manage-day/${prevDay.toISOString().split('T')[0]}/`;
-        });
-
-        document.getElementById('next-day-btn').addEventListener('click', function() {
-            const nextDay = new Date(currentDate);
-            nextDay.setDate(currentDate.getDate() + 1);
-            window.location.href = `/manage-day/${nextDay.toISOString().split('T')[0]}/`;
-        });
-
-        container.addEventListener('submit', async function(e) {
-            if (e.target.tagName === 'FORM') {
-                e.preventDefault();
-                const form = e.target;
-                const formData = new FormData(form);
-                const url = window.location.pathname;
-
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-
-                    if (response.ok) {
-                        // Reload the content of the page dynamically
-                        if (window.updateContentForDate && window.userDate) {
-                            window.updateContentForDate(window.userDate, false);
-                        } else {
-                            window.location.reload(); // Fallback
-                        }
-                    } else {
-                        console.error('Form submission failed');
-                    }
-                } catch (error) {
-                    console.error('Error submitting form:', error);
-                }
-            }
-        });
-    });
 </script>
-</div>
 {% endblock %}
