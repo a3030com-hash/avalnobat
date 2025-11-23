@@ -385,7 +385,6 @@ def payment_page(request):
     additional_data = f'Appointment for {appointment.patient_name}'
     callback_url = request.build_absolute_uri(reverse('booking:verify_payment'))
     payer_id = 0
-
     try:
         result = client.service.bpPayRequest(
             terminalId=terminal_id,
@@ -399,9 +398,7 @@ def payment_page(request):
             callBackUrl=callback_url,
             payerId=payer_id
         )
-        
         res_code, ref_id = result.split(',')
-
         if res_code == '0':
             context = {
                 'ref_id': ref_id,
