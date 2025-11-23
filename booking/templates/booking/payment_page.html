@@ -64,7 +64,7 @@
         {% else %}
             <p>در حال انتقال به درگاه پرداخت به پرداخت ملت...</p>
             <form id="payment-form" action="https://bpm.shaparak.ir/pgwchannel/startpay.mellat" method="POST">
-                <input type="hidden" name="RefId" value="{{ ref_id }}">
+                <input type="hidden" name="refId" value="{{ ref_id }}">
             </form>
             <script>
                 document.getElementById('payment-form').submit();

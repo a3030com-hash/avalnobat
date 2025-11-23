@@ -398,18 +398,22 @@ def payment_page(request):
             callBackUrl=callback_url,
             payerId=payer_id
         )
-        res_code, ref_id = result.split(',')
-        if res_code == '0':
-            context = {
-                'ref_id': ref_id,
-                'post_url': 'https://bpm.shaparak.ir/pgwchannel/startpay.mellat',
-                'appointment': appointment,
-                'payment_amount': amount,
-                'page_title': 'صفحه پرداخت',
-                'error_message': None
-            }
-            return render(request, 'booking/payment_page.html', context)
+        if ',' in result:
+            res_code, ref_id = result.split(',')
+            if res_code == '0':
+                context = {
+                    'ref_id': ref_id,
+                    'post_url': 'https://bpm.shaparak.ir/pgwchannel/startpay.mellat',
+                    'appointment': appointment,
+                    'payment_amount': amount,
+                    'page_title': 'صفحه پرداخت',
+                    'error_message': None
+                }
+                return render(request, 'booking/payment_page.html', context)
+            else:
+                error_message = MELLAT_BANK_ERRORS.get(res_code, f"خطای نامشخص از بانک: {res_code}")
         else:
+            res_code = result
             error_message = MELLAT_BANK_ERRORS.get(res_code, f"خطای نامشخص از بانک: {res_code}")
             
     except Exception as e:
