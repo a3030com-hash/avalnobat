@@ -66,6 +66,8 @@ def doctor_detail(request, pk):
     today = datetime.date.today()
     booking_days = doctor.booking_days
 
+    # jdatetime: Saturday=0..Friday=6
+    # Django model: Monday=0..Sunday=6
     j_to_model_weekday_map = {
         0: 5, 1: 6, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4
     }
@@ -178,12 +180,17 @@ def book_appointment(request, pk, date):
     """
     doctor = get_object_or_404(DoctorProfile, pk=pk)
     try:
+        # The date comes from the URL in Jalali format
         jalali_date = jdatetime.datetime.strptime(date, '%Y-%m-%d').date()
         target_date = jalali_date.togregorian()
     except ValueError:
-        return redirect('booking:doctor_detail', pk=doctor.pk)
+        # If the date format is incorrect, redirect to the main doctor page
+        return redirect('booking:doctor_detail', pk=pk)
 
-    day_of_week = target_date.weekday()
+    j_to_model_weekday_map = {
+        0: 5, 1: 6, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4
+    }
+    day_of_week = j_to_model_weekday_map[jalali_date.weekday()]
     availabilities = DoctorAvailability.objects.filter(doctor=doctor, day_of_week=day_of_week, is_active=True)
 
     if not availabilities.exists():
