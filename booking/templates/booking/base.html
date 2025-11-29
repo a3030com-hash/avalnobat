@@ -639,6 +639,11 @@
                     </div>
 
                     <div class="dropdown" style="margin-right:auto; " >
+                        {% if not user.is_authenticated or user.user_type == 'PATIENT' %}
+                            <a href="{% url 'booking:patient_dashboard' %}" title="نوبت‌های من">
+                                <img src="/media/entezar.png" style="display: block; width: 100%; height: auto; border-radius: 8px;margin-left:10px;" alt="patient-dashboard-icon">
+                            </a>
+                        {% endif %}
                         <span class="dropbtn nav-item">
                             <img src="/media/doctor.png" style="padding: 0; " alt="avalnobat-icon">
                         </span>

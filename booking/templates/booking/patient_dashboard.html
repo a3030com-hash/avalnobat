@@ -1,0 +1,43 @@
+{% extends 'booking/base.html' %}
+
+{% block title %}داشبورد بیمار - AvalNobat{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>نوبت‌های من</h1>
+
+    {% if messages %}
+        <ul class="error-list">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if appointments %}
+        <ul class="list-group">
+            {% for appointment in appointments %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>دکتر {{ appointment.doctor.user.get_full_name }}</strong><br>
+                        {{ appointment.appointment_datetime }}
+                    </div>
+                    <div>
+                        {% if appointment.status == 'BOOKED' and appointment.appointment_datetime.date >= today %}
+                            <form method="post" action="{% url 'booking:patient_dashboard' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">لغو نوبت</button>
+                            </form>
+                        {% elif appointment.status == 'CANCELED' %}
+                            <span class="badge bg-secondary">لغو شده</span>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>شما هیچ نوبتی ندارید.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -2,6 +2,7 @@
 import datetime
 import jdatetime
 import random
+import time
 from django.conf import settings
 from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
@@ -379,6 +380,11 @@ def payment_page(request):
 
     appointment = get_object_or_404(Appointment, pk=order_id_int) # استفاده از order_id_int
     
+    # Generate a unique order ID for this specific payment attempt
+    unique_order_id = int(f"{appointment.id}{int(time.time())}")
+    appointment.payment_order_id = unique_order_id
+    appointment.save()
+
     from zeep import Client
     
     client = Client('https://bpm.shaparak.ir/pgwchannel/services/pgw?wsdl')
@@ -386,12 +392,12 @@ def payment_page(request):
     terminal_id = settings.BEH_PARDAKHT_TERMINAL_ID
     user_name = settings.BEH_PARDAKHT_USERNAME
     user_password = settings.BEH_PARDAKHT_PASSWORD
-    order_id = order_id_int # ⬅️ استفاده از متغیر ایمن شده
+    order_id = unique_order_id # ⬅️ استفاده از متغیر ایمن شده
     amount = int(appointment.doctor.visit_fee)
     local_date = datetime.datetime.now().strftime('%Y%m%d')
     local_time = datetime.datetime.now().strftime('%H%M%S')
     additional_data = f'Appointment for {appointment.patient_name}'
-    callback_url = request.build_absolute_uri(reverse('booking:verify_payment'))
+    callback_url = request.build_absolute_uri(reverse('booking:verify_payment')).replace("http://", "https://")
     payer_id = 0
     
     try:
@@ -498,9 +504,8 @@ def verify_payment(request):
             if settle_result == '0':
                 # 4. All steps successful. Finalize appointment.
                 # ⭐️ خط ۴۹: استفاده از نسخه عددی برای کوئری دیتابیس
-                appointment = get_object_or_404(Appointment, pk=sale_order_id_int)
+                appointment = get_object_or_404(Appointment, payment_order_id=sale_order_id_int)
                 appointment.status = 'BOOKED'
-                appointment.is_paid = True
                 appointment.save()
 
                 # --- Send SMS Confirmation ---
@@ -1477,6 +1482,10 @@ def patient_dashboard(request):
         'today': datetime.date.today()
     }
     return render(request, 'booking/patient_dashboard.html', context)
+
+
+
+
 
 
 from django.contrib.auth.views import LoginView

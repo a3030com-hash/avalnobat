@@ -104,6 +104,7 @@ class Appointment(models.Model):
     problem_description = models.TextField(blank=True, verbose_name="شرح مشکل")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING_PAYMENT')
     created_at = models.DateTimeField(auto_now_add=True)
+    payment_order_id = models.BigIntegerField(unique=True, null=True, blank=True, verbose_name="شناسه یکتای پرداخت")
 
     # Fields for secretary panel
     PAYMENT_METHOD_CHOICES = (
