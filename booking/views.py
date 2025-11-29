@@ -8,6 +8,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
 from .models import DoctorProfile, DoctorAvailability, Appointment, TimeSlotException
 from .forms import DoctorAvailabilityForm, AppointmentBookingForm
 from django.urls import reverse
@@ -385,12 +386,13 @@ def payment_page(request):
     terminal_id = settings.BEH_PARDAKHT_TERMINAL_ID
     user_name = settings.BEH_PARDAKHT_USERNAME
     user_password = settings.BEH_PARDAKHT_PASSWORD
-    order_id = order_id_int # ⬅️ استفاده از متغیر ایمن شده
+    unique_suffix = str(random.randint(100, 999))
+    order_id = int(str(order_id_int) + unique_suffix)
     amount = int(appointment.doctor.visit_fee)
     local_date = datetime.datetime.now().strftime('%Y%m%d')
     local_time = datetime.datetime.now().strftime('%H%M%S')
     additional_data = f'Appointment for {appointment.patient_name}'
-    callback_url = request.build_absolute_uri(reverse('booking:verify_payment'))
+    callback_url = request.build_absolute_uri(reverse('booking:verify_payment')).replace("http://", "https://")
     payer_id = 0
     
     try:
@@ -410,7 +412,7 @@ def payment_page(request):
         # ⭐️ خطوط ۴۰-۵۸: اصلاح حیاتی برای مدیریت خطای unpack
         if ',' in result:
             res_code, ref_id = result.split(',')
-            if res_code == '0':
+            if res_code == '0' and ref_id:
                 context = {
                     'ref_id': ref_id,
                     'post_url': 'https://bpm.shaparak.ir/pgwchannel/startpay.mellat',
@@ -438,14 +440,15 @@ def payment_page(request):
     }
     return render(request, 'booking/payment_page.html', context)
 
+@csrf_exempt
 def verify_payment(request):
     """
     Verifies a payment with the Beh Pardakht gateway, handles errors, and reverses if necessary.
     """
     res_code = request.POST.get('ResCode')
     # 🟢 خطوط ۷-۸: تغییر نام متغیرهای دریافتی برای تمایز با نسخه عددی
-    sale_order_id_str = request.POST.get('SaleOrderId')
-    sale_reference_id_str = request.POST.get('SaleReferenceId')
+    sale_order_id_str = request.POST.get('SaleOrderId') or request.POST.get('saleOrderId')
+    sale_reference_id_str = request.POST.get('SaleReferenceId') or request.POST.get('saleReferenceId')
 
     payment_successful = False
     message = ''
@@ -460,9 +463,11 @@ def verify_payment(request):
     # 2. If successful, proceed to verify and settle.
     # 🟢 خطوط ۲۶-۲۹: تبدیل امن به عدد صحیح
     try:
-        sale_order_id_int = int(sale_order_id_str)
+        # 🔻 Extract the original appointment ID by removing the 3-digit suffix
+        original_appointment_id_str = sale_order_id_str[:-3]
+        sale_order_id_int = int(original_appointment_id_str)
         sale_reference_id_int = int(sale_reference_id_str)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, IndexError):
         message = "خطا: شناسه تراکنش نامعتبر است."
         return render(request, 'booking/payment_result.html', {
             'payment_successful': False, 'message': message, 'page_title': 'نتیجه پرداخت'
