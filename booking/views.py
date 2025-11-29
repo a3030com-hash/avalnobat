@@ -481,8 +481,8 @@ def verify_payment(request):
             'terminalId': terminal_id, 'userName': user_name, 'userPassword': user_password,
             'orderId': sale_order_id_int, 'saleOrderId': sale_order_id_int, 'saleReferenceId': sale_reference_id_int
         }
-
-        verify_result = str(client.service.bpVerifyRequest(**common_params))
+      
+         verify_result = str(client.service.bpVerifyRequest(**common_params))
 
         if verify_result == '0':
             # 3. Payment is verified, now settle it.
