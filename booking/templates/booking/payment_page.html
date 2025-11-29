@@ -4,6 +4,15 @@
 {% block title %}{{ page_title }} - AvalNobat{% endblock %}
 
 {% block content %}
+{% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+            <div class="alert alert-info" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
 <style>
     .center-container {
         max-width: 600px;
@@ -64,7 +73,7 @@
         {% else %}
             <p>در حال انتقال به درگاه پرداخت به پرداخت ملت...</p>
             <form id="payment-form" action="https://bpm.shaparak.ir/pgwchannel/startpay.mellat" method="POST">
-                <input type="hidden" name="refId" value="{{ ref_id }}">
+                <input type="hidden" name="RefId" value="{{ ref_id }}">
             </form>
             <script>
                 document.getElementById('payment-form').submit();

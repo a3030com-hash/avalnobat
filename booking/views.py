@@ -411,7 +411,11 @@ def payment_page(request):
         # ⭐️ خطوط ۴۰-۵۸: اصلاح حیاتی برای مدیریت خطای unpack
         if ',' in result:
             res_code, ref_id = result.split(',')
-            if res_code == '0':
+            if res_code == '0' and ref_id:
+                messages.info(request, f"DEBUG: Sending to bank with RefId: {ref_id}")
+                messages.info(request, f"DEBUG: OrderId: {order_id}")
+                messages.info(request, f"DEBUG: Amount: {amount}")
+                messages.info(request, f"DEBUG: Callback URL: {callback_url}")
                 context = {
                     'ref_id': ref_id,
                     'post_url': 'https://bpm.shaparak.ir/pgwchannel/startpay.mellat',
@@ -444,6 +448,8 @@ def verify_payment(request):
     """
     Verifies a payment with the Beh Pardakht gateway, handles errors, and reverses if necessary.
     """
+    messages.info(request, f"DEBUG: Callback POST data: {request.POST}")
+    messages.info(request, f"DEBUG: Callback GET data: {request.GET}")
     res_code = request.POST.get('ResCode')
     # 🟢 خطوط ۷-۸: تغییر نام متغیرهای دریافتی برای تمایز با نسخه عددی
     sale_order_id_str = request.POST.get('SaleOrderId') or request.POST.get('saleOrderId')
