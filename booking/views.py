@@ -8,6 +8,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
 from .models import DoctorProfile, DoctorAvailability, Appointment, TimeSlotException
 from .forms import DoctorAvailabilityForm, AppointmentBookingForm
 from django.urls import reverse
@@ -438,13 +439,14 @@ def payment_page(request):
     }
     return render(request, 'booking/payment_page.html', context)
 
+@csrf_exempt
 def verify_payment(request):
     """
     Verifies a payment with the Beh Pardakht gateway, handles errors, and reverses if necessary.
     """
     res_code = request.POST.get('ResCode')
     # 🟢 خطوط ۷-۸: تغییر نام متغیرهای دریافتی برای تمایز با نسخه عددی
-    sale_order_id_str = request.POST.get('SaleOrderId')
+    sale_order_id_str = request.POST.get('SaleOrderId') or request.POST.get('saleOrderId')
     sale_reference_id_str = request.POST.get('SaleReferenceId') or request.POST.get('saleReferenceId')
 
     payment_successful = False
@@ -481,8 +483,8 @@ def verify_payment(request):
             'terminalId': terminal_id, 'userName': user_name, 'userPassword': user_password,
             'orderId': sale_order_id_int, 'saleOrderId': sale_order_id_int, 'saleReferenceId': sale_reference_id_int
         }
-      
-         verify_result = str(client.service.bpVerifyRequest(**common_params))
+
+        verify_result = str(client.service.bpVerifyRequest(**common_params))
 
         if verify_result == '0':
             # 3. Payment is verified, now settle it.
