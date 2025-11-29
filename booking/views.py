@@ -2,6 +2,7 @@
 import datetime
 import jdatetime
 import random
+import time
 from django.conf import settings
 from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
@@ -386,7 +387,10 @@ def payment_page(request):
     terminal_id = settings.BEH_PARDAKHT_TERMINAL_ID
     user_name = settings.BEH_PARDAKHT_USERNAME
     user_password = settings.BEH_PARDAKHT_PASSWORD
-    order_id = order_id_int # ⬅️ استفاده از متغیر ایمن شده
+    unique_order_id = int(f"{appointment.id}{int(time.time())}")
+    appointment.payment_order_id = unique_order_id
+    appointment.save()
+    order_id = unique_order_id
     amount = int(appointment.doctor.visit_fee)
     local_date = datetime.datetime.now().strftime('%Y%m%d')
     local_time = datetime.datetime.now().strftime('%H%M%S')
@@ -498,7 +502,7 @@ def verify_payment(request):
             if settle_result == '0':
                 # 4. All steps successful. Finalize appointment.
                 # ⭐️ خط ۴۹: استفاده از نسخه عددی برای کوئری دیتابیس
-                appointment = get_object_or_404(Appointment, pk=sale_order_id_int)
+                appointment = get_object_or_404(Appointment, payment_order_id=sale_order_id_int)
                 appointment.status = 'BOOKED'
                 appointment.is_paid = True
                 appointment.save()
@@ -510,7 +514,6 @@ def verify_payment(request):
                 except requests.exceptions.RequestException as e:
                     print(f"Error sending confirmation SMS: {e}")
 
-                login(request, appointment.patient)
                 messages.success(request, "پرداخت با موفقیت انجام شد و نوبت شما ثبت گردید.")
                 return redirect('booking:patient_dashboard')
             else:

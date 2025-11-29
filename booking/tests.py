@@ -1,8 +1,8 @@
 import datetime
 import jdatetime
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import Specialty, DoctorProfile, Appointment, DoctorAvailability, DailyExpense
@@ -260,3 +260,79 @@ class BookingAppTestCase(TestCase):
 
         past_appointment.refresh_from_db()
         self.assertEqual(past_appointment.status, 'BOOKED') # Status should not change
+
+    @override_settings(
+        BEH_PARDAKHT_TERMINAL_ID='test_terminal',
+        BEH_PARDAKHT_USERNAME='test_user',
+        BEH_PARDAKHT_PASSWORD='test_password'
+    )
+    @patch('zeep.Client')
+    def test_beh_pardakht_payment_flow(self, MockZeepClient):
+        """Test the full Beh Pardakht payment flow, including request and verification."""
+        # Setup mock for Zeep client
+        mock_service = MagicMock()
+        mock_client_instance = MagicMock()
+        mock_client_instance.service = mock_service
+        MockZeepClient.return_value = mock_client_instance
+
+        # 1. Create a pending appointment
+        appointment = Appointment.objects.create(
+            doctor=self.doctor_profile,
+            patient=self.patient_user,
+            appointment_datetime=timezone.now() + datetime.timedelta(days=1),
+            status='PENDING_PAYMENT',
+            patient_name='پرداخت تستی',
+            patient_phone='09151234567'
+        )
+
+        # 2. Simulate user session and go to payment page
+        session = self.client.session
+        session['pending_appointment_id'] = appointment.id
+        session.save()
+
+        # Mock the bpPayRequest response
+        mock_service.bpPayRequest.return_value = '0,test_ref_id'
+
+        payment_url = reverse('booking:payment_page')
+        response = self.client.get(payment_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'booking/payment_page.html')
+
+        # 3. Verify bpPayRequest was called correctly and payment_order_id was saved
+        appointment.refresh_from_db()
+        self.assertIsNotNone(appointment.payment_order_id)
+        mock_service.bpPayRequest.assert_called_once()
+        called_args, called_kwargs = mock_service.bpPayRequest.call_args
+        self.assertEqual(called_kwargs['orderId'], appointment.payment_order_id)
+
+        # 4. Simulate callback from the bank
+        verify_url = reverse('booking:verify_payment')
+        callback_data = {
+            'ResCode': '0',
+            'SaleOrderId': str(appointment.payment_order_id),
+            'SaleReferenceId': 'test_sale_ref_id',
+        }
+
+        # Mock verify and settle responses
+        mock_service.bpVerifyRequest.return_value = '0'
+        mock_service.bpSettleRequest.return_value = '0'
+
+        response = self.client.post(verify_url, callback_data, follow=True)
+
+        # 5. Verify the final outcome
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse('booking:patient_dashboard'))
+
+        appointment.refresh_from_db()
+        self.assertEqual(appointment.status, 'BOOKED')
+        self.assertTrue(appointment.is_paid)
+
+        # Verify that verify and settle were called with the correct IDs
+        mock_service.bpVerifyRequest.assert_called_once()
+        _, verify_kwargs = mock_service.bpVerifyRequest.call_args
+        self.assertEqual(verify_kwargs['orderId'], appointment.payment_order_id)
+
+        mock_service.bpSettleRequest.assert_called_once()
+        _, settle_kwargs = mock_service.bpSettleRequest.call_args
+        self.assertEqual(settle_kwargs['orderId'], appointment.payment_order_id)

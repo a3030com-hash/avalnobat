@@ -115,6 +115,9 @@ class Appointment(models.Model):
     visit_fee_paid = models.DecimalField(max_digits=10, decimal_places=0, null=True, blank=True, verbose_name="مبلغ ویزیت دریافتی")
     service_description = models.CharField(max_length=255, default="حق ویزیت", verbose_name="شرح خدمات")
     payment_method = models.IntegerField(choices=PAYMENT_METHOD_CHOICES, null=True, blank=True, verbose_name="نوع پرداخت")
+    is_paid = models.BooleanField(default=False, verbose_name="پرداخت شده")
+    payment_order_id = models.BigIntegerField(null=True, blank=True, unique=True, verbose_name="شناسه سفارش پرداخت")
+
 
     def __str__(self):
         return f"نوبت برای {self.patient_name} نزد {self.doctor} در تاریخ {self.appointment_datetime.strftime('%Y-%m-%d %H:%M')}"
