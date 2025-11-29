@@ -445,7 +445,7 @@ def verify_payment(request):
     res_code = request.POST.get('ResCode')
     # 🟢 خطوط ۷-۸: تغییر نام متغیرهای دریافتی برای تمایز با نسخه عددی
     sale_order_id_str = request.POST.get('SaleOrderId')
-    sale_reference_id_str = request.POST.get('SaleReferenceId')
+    sale_reference_id_str = request.POST.get('SaleReferenceId') or request.POST.get('saleReferenceId')
 
     payment_successful = False
     message = ''
