@@ -369,7 +369,14 @@ def payment_page(request):
     if not pending_appointment_id:
         return redirect('booking:doctor_list')
 
-    appointment = get_object_or_404(Appointment, pk=pending_appointment_id)
+    # 🟢 خطوط ۱۸-۲۲: تبدیل امن شناسه سفارش به عدد صحیح
+    try:
+        order_id_int = int(pending_appointment_id)
+    except (ValueError, TypeError):
+        error_message = "خطا: شناسه سفارش برای ارسال به بانک نامعتبر است."
+        return render(request, 'booking/payment_page.html', {'error_message': error_message})
+
+    appointment = get_object_or_404(Appointment, pk=order_id_int) # استفاده از order_id_int
     
     from zeep import Client
     
@@ -378,13 +385,14 @@ def payment_page(request):
     terminal_id = settings.BEH_PARDAKHT_TERMINAL_ID
     user_name = settings.BEH_PARDAKHT_USERNAME
     user_password = settings.BEH_PARDAKHT_PASSWORD
-    order_id = pending_appointment_id
+    order_id = order_id_int # ⬅️ استفاده از متغیر ایمن شده
     amount = int(appointment.doctor.visit_fee)
     local_date = datetime.datetime.now().strftime('%Y%m%d')
     local_time = datetime.datetime.now().strftime('%H%M%S')
     additional_data = f'Appointment for {appointment.patient_name}'
     callback_url = request.build_absolute_uri(reverse('booking:verify_payment'))
     payer_id = 0
+    
     try:
         result = client.service.bpPayRequest(
             terminalId=terminal_id,
@@ -398,6 +406,8 @@ def payment_page(request):
             callBackUrl=callback_url,
             payerId=payer_id
         )
+        
+        # ⭐️ خطوط ۴۰-۵۸: اصلاح حیاتی برای مدیریت خطای unpack
         if ',' in result:
             res_code, ref_id = result.split(',')
             if res_code == '0':
@@ -413,6 +423,7 @@ def payment_page(request):
             else:
                 error_message = MELLAT_BANK_ERRORS.get(res_code, f"خطای نامشخص از بانک: {res_code}")
         else:
+            # پاسخ فقط کد خطا است
             res_code = result
             error_message = MELLAT_BANK_ERRORS.get(res_code, f"خطای نامشخص از بانک: {res_code}")
             
@@ -432,8 +443,9 @@ def verify_payment(request):
     Verifies a payment with the Beh Pardakht gateway, handles errors, and reverses if necessary.
     """
     res_code = request.POST.get('ResCode')
-    sale_order_id = request.POST.get('SaleOrderId')
-    sale_reference_id = request.POST.get('SaleReferenceId')
+    # 🟢 خطوط ۷-۸: تغییر نام متغیرهای دریافتی برای تمایز با نسخه عددی
+    sale_order_id_str = request.POST.get('SaleOrderId')
+    sale_reference_id_str = request.POST.get('SaleReferenceId')
 
     payment_successful = False
     message = ''
@@ -446,6 +458,16 @@ def verify_payment(request):
         })
 
     # 2. If successful, proceed to verify and settle.
+    # 🟢 خطوط ۲۶-۲۹: تبدیل امن به عدد صحیح
+    try:
+        sale_order_id_int = int(sale_order_id_str)
+        sale_reference_id_int = int(sale_reference_id_str)
+    except (ValueError, TypeError):
+        message = "خطا: شناسه تراکنش نامعتبر است."
+        return render(request, 'booking/payment_result.html', {
+            'payment_successful': False, 'message': message, 'page_title': 'نتیجه پرداخت'
+        })
+
     try:
         from zeep import Client
         client = Client('https://bpm.shaparak.ir/pgwchannel/services/pgw?wsdl')
@@ -454,9 +476,10 @@ def verify_payment(request):
         user_name = settings.BEH_PARDAKHT_USERNAME
         user_password = settings.BEH_PARDAKHT_PASSWORD
         
+        # ⭐️ خطوط ۳۹-۴۱: استفاده از نسخه‌های عددی برای متد zeep
         common_params = {
             'terminalId': terminal_id, 'userName': user_name, 'userPassword': user_password,
-            'orderId': sale_order_id, 'saleOrderId': sale_order_id, 'saleReferenceId': sale_reference_id
+            'orderId': sale_order_id_int, 'saleOrderId': sale_order_id_int, 'saleReferenceId': sale_reference_id_int
         }
 
         verify_result = str(client.service.bpVerifyRequest(**common_params))
@@ -466,7 +489,8 @@ def verify_payment(request):
             settle_result = str(client.service.bpSettleRequest(**common_params))
             if settle_result == '0':
                 # 4. All steps successful. Finalize appointment.
-                appointment = get_object_or_404(Appointment, pk=sale_order_id)
+                # ⭐️ خط ۴۹: استفاده از نسخه عددی برای کوئری دیتابیس
+                appointment = get_object_or_404(Appointment, pk=sale_order_id_int)
                 appointment.status = 'BOOKED'
                 appointment.is_paid = True
                 appointment.save()
