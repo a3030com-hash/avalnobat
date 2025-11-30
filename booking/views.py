@@ -501,10 +501,33 @@ def verify_payment(request):
 
                 # --- Send SMS Confirmation ---
                 try:
-                    # ... (SMS logic remains the same)
-                    pass
+                    # ✜ بخش ارسال پیامک تایید نوبت ✜
+                    jalali_datetime = jdatetime.datetime.fromgregorian(datetime=appointment.appointment_datetime)
+                    formatted_time = jalali_datetime.strftime('%Y/%m/%d ساعت %H:%M')
+
+                    bimar_name = appointment.patient_name
+                    dr_name = appointment.doctor.user.get_full_name()
+                    time_str = formatted_time
+                    address_str = appointment.doctor.address
+                    tel_str = appointment.doctor.phone_number
+
+                    pattern_values = f"{bimar_name};{dr_name};{time_str};{address_str};{tel_str}"
+
+                    AMOOT_SMS_API_TOKEN = settings.AMOOT_SMS_API_TOKEN
+                    AMOOT_SMS_API_URL = settings.AMOOT_SMS_API_URL
+                    payload = {
+                        'token': AMOOT_SMS_API_TOKEN,
+                        'Mobile': appointment.patient_phone,
+                        'PatternCodeID': 4161,
+                        'PatternValues': pattern_values,
+                    }
+                    requests.post(AMOOT_SMS_API_URL, data=payload)
                 except requests.exceptions.RequestException as e:
-                    print(f"Error sending confirmation SMS: {e}")
+                    # حتی اگر پیامک ارسال نشود، نباید جلوی تکمیل فرآیند نوبت‌گیری را بگیرد
+                    print(f"خطا در ارسال پیامک تایید نوبت: {e}")
+                except Exception as e:
+                    print(f"یک خطای پیش‌بینی نشده در ارسال پیامک رخ داد: {e}")
+
 
                 login(request, appointment.patient)
                 messages.success(request, "پرداخت با موفقیت انجام شد و نوبت شما ثبت گردید.")
