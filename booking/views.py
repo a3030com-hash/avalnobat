@@ -841,6 +841,9 @@ def manage_day(request, date):
     except ValueError:
         return redirect('booking:secretary_panel')
 
+    jalali_day_names = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"]
+    persian_weekday = jalali_day_names[jalali_date.weekday()]
+
     # --- Logic to calculate and display all time slots ---
     all_slots = []
     booked_datetimes = list(Appointment.objects.filter(

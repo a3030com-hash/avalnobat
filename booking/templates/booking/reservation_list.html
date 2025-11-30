@@ -11,8 +11,8 @@
 {% block content %}
 <div class="panel-container">
     <h2 class="elegant-title">{{ page_title }}</h2>
-    <div class="alert alert-info" style="text-align: center; margin-bottom: 1rem; background-color: #e7f3fe; color: #31708f; border: 1px solid #bce8f1; padding: 15px; border-radius: 4px;">
-        راهنما: برای مدیریت یا ثبت نوبت جدید در یک روز خاص، روی ردیف مورد نظر در جدول کلیک کنید.
+    <div class="alert alert-info" style="text-align: center; margin-bottom: 1rem; background-color: #e7f3fe; color: #089e53; border: 1px solid #bce8f1; padding: 15px; border-radius: 4px;">
+         برای  ثبت نوبت جدید به صورت دستی در یک روز خاص، روی ردیف مورد نظر در جدول زیر کلیک کنید.
     </div>
     <div style="text-align:left; margin-bottom: 1rem;">
         <a href="{% url 'booking:daily_patients' %}" class="btn-submit">لیست بیماران امروز</a>
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const url = this.dataset.url;
             if (url) {
-                window.open(url, '_blank');
+                window.location.href = url;
             }
         });
     });
