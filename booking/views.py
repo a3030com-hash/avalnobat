@@ -241,12 +241,15 @@ def book_appointment(request, pk, date):
                         otp_code = str(random.randint(100000, 999999))
                         request.session['otp_code'] = otp_code
                         request.session['pending_appointment_id'] = appointment.id
+                        message = (
+                            f"کد تایید شما: {otp_code}\n"
+                            f"@avalnobat.ir #{otp_code}"
+                        )
                         payload = {
-                               'token': AMOOT_SMS_API_TOKEN,
-                               'Mobile': appointment.patient_phone,
-                               'PatternCodeID':4018,
-                               'PatternValues': otp_code,
-                            }
+                            'token': AMOOT_SMS_API_TOKEN,
+                            'Mobile': appointment.patient_phone,
+                            'Content': message,
+                        }
                         response=requests.post(AMOOT_SMS_API_URL,data=payload)
                     except requests.exceptions.RequestException as e:
                         print("خطا در ارسال پیامک:", e)
@@ -990,12 +993,15 @@ def doctor_signup(request):
                 request.session['new_user_id'] = user.id
                 mob_number = form.cleaned_data.get('mobile_number')
 
+                message = (
+                    f"کد تایید شما: {otp_code}\n"
+                    f"@avalnobat.ir #{otp_code}"
+                )
                 payload = {
-                       'token': AMOOT_SMS_API_TOKEN,
-                       'Mobile': mob_number,
-                       'PatternCodeID':4018,
-                       'PatternValues': otp_code,
-                    }
+                    'token': AMOOT_SMS_API_TOKEN,
+                    'Mobile': mob_number,
+                    'Content': message,
+                }
                 requests.post(AMOOT_SMS_API_URL,data=payload)
                 return redirect('booking:verify_doctor_signup')
             except requests.exceptions.RequestException as e:
@@ -1354,12 +1360,15 @@ def secretary_signup(request):
                 request.session['new_user_id'] = user.id
                 doctor_mobile_number = user.doctor.mobile_number
 
+                message = (
+                    f"کد تایید شما: {otp_code}\n"
+                    f"@avalnobat.ir #{otp_code}"
+                )
                 payload = {
-                       'token': AMOOT_SMS_API_TOKEN,
-                       'Mobile': doctor_mobile_number,
-                       'PatternCodeID':4018, # Assuming this is a generic OTP pattern
-                       'PatternValues': otp_code,
-                    }
+                    'token': AMOOT_SMS_API_TOKEN,
+                    'Mobile': doctor_mobile_number,
+                    'Content': message,
+                }
                 requests.post(AMOOT_SMS_API_URL,data=payload)
                 return redirect('booking:verify_secretary_signup')
             except requests.exceptions.RequestException as e:
@@ -1544,11 +1553,15 @@ def patient_login(request):
             request.session['mobile_number_login'] = mobile_number
             request.session.set_expiry(300) # 5 minutes expiry for OTP
 
+            message = (
+                f"کد تایید شما: {otp_code}\n"
+                f"@avalnobat.ir #{otp_code}"
+            )
+
             payload = {
                 'token': AMOOT_SMS_API_TOKEN,
                 'Mobile': mobile_number,
-                'PatternCodeID': 4018,
-                'PatternValues': otp_code,
+                'Content': message,
             }
             response = requests.post(AMOOT_SMS_API_URL, data=payload)
             return redirect('booking:verify_patient_login')
