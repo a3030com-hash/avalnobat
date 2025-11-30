@@ -418,10 +418,6 @@ def payment_page(request):
         if ',' in result:
             res_code, ref_id = result.split(',')
             if res_code == '0' and ref_id:
-                messages.info(request, f"DEBUG: Sending to bank with RefId: {ref_id}")
-                messages.info(request, f"DEBUG: OrderId: {order_id}")
-                messages.info(request, f"DEBUG: Amount: {amount}")
-                messages.info(request, f"DEBUG: Callback URL: {callback_url}")
                 context = {
                     'ref_id': ref_id,
                     'post_url': 'https://bpm.shaparak.ir/pgwchannel/startpay.mellat',
@@ -958,7 +954,7 @@ def manage_day(request, date):
         'all_slots': sorted(all_slots, key=lambda x: x['time']),
         'form': booking_form,
         'has_availability': bool(availabilities),
-        'page_title': f'مدیریت نوبت‌های روز {jalali_date.strftime("%A")} {jalali_date.strftime("%Y/%m/%d")}'
+        'page_title': f'مدیریت نوبت‌های روز {jalali_date.strftime("%A")} {jalali_date.strftime("%Y/%m/%d")}'    
     }
     return render(request, 'booking/manage_day.html', context)
 

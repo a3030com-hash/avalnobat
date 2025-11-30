@@ -28,17 +28,22 @@
         window.addEventListener('DOMContentLoaded', e => {
             const input = document.querySelector('input[autocomplete="one-time-code"]');
             if (!input) return;
+
             const ac = new AbortController();
             navigator.credentials.get({
-                otp: { transport:['sms'] },
+                otp: { transport: ['sms'] },
                 signal: ac.signal
             }).then(otp => {
-                input.value = otp.code;
-                document.getElementById('verify-form').submit();
+                if (otp) {
+                    input.value = otp.code; // کد OTP به فیلد ورودی اختصاص می‌یابد
+                }
             }).catch(err => {
                 console.log(err);
             });
         });
+    } else {
+        // اگر 'OTPCredential' در مرورگر پشتیبانی نشود، می‌توانید از این کد برای نمایش پیام استفاده کنید.
+        console.log("خدمات OTP در این مرورگر پشتیبانی نمی‌شود.");
     }
 </script>
 {% endblock %}
