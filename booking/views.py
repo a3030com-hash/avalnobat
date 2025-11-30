@@ -1451,6 +1451,68 @@ def export_patients_to_excel(request):
     return response
 
 
+from itertools import groupby
+from operator import attrgetter
+
+@login_required
+def reservation_list(request):
+    """
+    Displays a list of all future reserved appointments for the doctor/secretary.
+    """
+    doctor_profile = _get_doctor_profile(request.user)
+    if not doctor_profile:
+        return redirect('booking:doctor_list')
+
+    today = datetime.date.today()
+    reservations_qs = Appointment.objects.filter(
+        doctor=doctor_profile,
+        status='BOOKED',
+        appointment_datetime__gte=today
+    ).order_by('appointment_datetime')
+
+    colors = ["#E0FFFF", "#FFFACD", "#FFE4E1", "#F0FFF0", "#F0F8FF", "#E6E6FA", "#FAFAD2"]
+    grouped_reservations = []
+
+    # Pre-process to add a 'date' attribute for grouping
+    reservations_list = []
+    for r in reservations_qs:
+        r.date = r.appointment_datetime.date()
+        reservations_list.append(r)
+
+    for i, (date, group) in enumerate(groupby(reservations_list, key=attrgetter('date'))):
+        group_list = list(group)
+        color = colors[i % len(colors)]
+        grouped_reservations.append({
+            'date': date,
+            'reservations': group_list,
+            'color': color
+        })
+
+    context = {
+        'grouped_reservations': grouped_reservations,
+        'page_title': 'لیست رزروها'
+    }
+    return render(request, 'booking/reservation_list.html', context)
+
+
+from django.views.decorators.http import require_POST
+
+@login_required
+@require_POST
+def cancel_reservation(request, pk):
+    """
+    Cancels a reservation.
+    """
+    doctor_profile = _get_doctor_profile(request.user)
+    if not doctor_profile:
+        return redirect('booking:doctor_list')
+
+    reservation = get_object_or_404(Appointment, pk=pk, doctor=doctor_profile)
+    reservation.delete()
+
+    return redirect('booking:reservation_list')
+
+
 from django.contrib.auth import login, logout
 
 def patient_dashboard_entry(request):

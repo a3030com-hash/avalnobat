@@ -1,0 +1,58 @@
+{% extends 'booking/base.html' %}
+{% load static %}
+{% load booking_filters %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'booking/css/custom.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="panel-container">
+    <h2 class="elegant-title">{{ page_title }}</h2>
+    <div style="text-align:left; margin-bottom: 1rem;">
+        <a href="{% url 'booking:daily_patients' %}" class="btn-submit">لیست بیماران امروز</a>
+    </div>
+
+    <table class="report-table">
+        <thead>
+            <tr>
+                <th>ردیف</th>
+                <th>تاریخ</th>
+                <th>روز</th>
+                <th>ساعت</th>
+                <th>نام و نام خانوادگی</th>
+                <th>شماره موبایل</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if grouped_reservations %}
+                {% for group in grouped_reservations %}
+                    {% for reservation in group.reservations %}
+                        <tr style="background-color: {{ group.color }};">
+                            <td data-label="ردیف">{{ forloop.counter }}</td>
+                            <td data-label="تاریخ">{{ group.date|to_jalali_date }}</td>
+                            <td data-label="روز">{{ group.date|to_persian_weekday }}</td>
+                            <td data-label="ساعت">{{ reservation.appointment_datetime|time:"H:i" }}</td>
+                            <td data-label="نام و نام خانوادگی">{{ reservation.patient_name }}</td>
+                            <td data-label="شماره موبایل">{{ reservation.patient_phone }}</td>
+                            <td data-label="عملیات">
+                                <form action="{% url 'booking:cancel_reservation' reservation.pk %}" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-cancel" onclick="return confirm('آیا از لغو این رزرو اطمینان دارید؟');">کنسلی</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" style="text-align:center;">هیچ رزروی برای آینده ثبت نشده است.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
