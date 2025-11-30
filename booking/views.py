@@ -505,13 +505,13 @@ def verify_payment(request):
                     jalali_datetime = jdatetime.datetime.fromgregorian(datetime=appointment.appointment_datetime)
                     formatted_time = jalali_datetime.strftime('%Y/%m/%d ساعت %H:%M')
 
-                    bimar_name = appointment.patient_name
-                    dr_name = appointment.doctor.user.get_full_name()
-                    time_str = formatted_time
-                    address_str = appointment.doctor.address
-                    tel_str = appointment.doctor.phone_number
+                    bimar = appointment.patient_name
+                    dr = appointment.doctor.user.get_full_name()
+                    time = formatted_time
+                    adders = appointment.doctor.address
+                    tel = appointment.doctor.phone_number
 
-                    pattern_values = f"{bimar_name};{dr_name};{time_str};{address_str};{tel_str}"
+                    pattern_values = f"{bimar};{dr};{time};{adders};{tel}"
 
                     AMOOT_SMS_API_TOKEN = settings.AMOOT_SMS_API_TOKEN
                     AMOOT_SMS_API_URL = settings.AMOOT_SMS_API_URL
