@@ -94,10 +94,18 @@
     .toggleable-block-btn {
         display: none;
     }
+    .nav-links {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 </style>
 
 <div id="dynamic-content" class="booking-container" data-current-date="{{ date|date:"Y-m-d" }}">
-    <a href="{% url 'booking:secretary_panel' %}"> &larr; بازگشت به پنل مدیریت</a>
+    <div class="nav-links">
+        <a href="{% url 'booking:secretary_panel' %}"> &larr; بازگشت به پنل مدیریت</a>
+        <a href="{% url 'booking:reservation_list' %}">بازگشت به لیست رزروها &rarr;</a>
+    </div>
     <hr>
     <h2 class="elegant-title">{{ page_title }}</h2>
     <p>برای مدیریت نوبت‌ها، یک ساعت را انتخاب کنید.</p>
