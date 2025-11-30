@@ -11,6 +11,9 @@
 {% block content %}
 <div class="panel-container">
     <h2 class="elegant-title">{{ page_title }}</h2>
+    <div class="alert alert-info" style="text-align: center; margin-bottom: 1rem; background-color: #e7f3fe; color: #31708f; border: 1px solid #bce8f1; padding: 15px; border-radius: 4px;">
+        راهنما: برای مدیریت یا ثبت نوبت جدید در یک روز خاص، روی ردیف مورد نظر در جدول کلیک کنید.
+    </div>
     <div style="text-align:left; margin-bottom: 1rem;">
         <a href="{% url 'booking:daily_patients' %}" class="btn-submit">لیست بیماران امروز</a>
     </div>
@@ -31,7 +34,7 @@
             {% if grouped_reservations %}
                 {% for group in grouped_reservations %}
                     {% for reservation in group.reservations %}
-                        <tr style="background-color: {{ group.color }};">
+                        <tr style="background-color: {{ group.color }}; cursor: pointer;" class="clickable-row" data-url="{% url 'booking:manage_day' date=group.date|to_jalali:'%Y-%m-%d' %}">
                             <td data-label="ردیف">{{ forloop.counter }}</td>
                             <td data-label="تاریخ">{{ group.date|to_jalali_date }}</td>
                             <td data-label="روز">{{ group.date|to_persian_weekday }}</td>
@@ -55,4 +58,25 @@
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('.clickable-row');
+    rows.forEach(row => {
+        row.addEventListener('click', function(event) {
+            // Stop propagation if the click is on the cancel button or its form
+            if (event.target.closest('.btn-cancel')) {
+                return;
+            }
+
+            const url = this.dataset.url;
+            if (url) {
+                window.open(url, '_blank');
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
