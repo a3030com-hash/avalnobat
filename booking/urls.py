@@ -33,5 +33,9 @@ urlpatterns = [
     path('accounting-guide/', views.accounting_guide, name='accounting_guide'),
     path('export/patients/excel/', views.export_patients_to_excel, name='export_patients_to_excel'),
     path('export/expenses/excel/', views.export_expenses_to_excel, name='export_expenses_to_excel'),
+    path('patient-login/', views.patient_login, name='patient_login'),
+    path('patient-login/verify/', views.verify_patient_login, name='verify_patient_login'),
+    path('patient-dashboard-entry/', views.patient_dashboard_entry, name='patient_dashboard_entry'),
+    path('patient-logout/', views.patient_logout, name='patient_logout'),
     path('patient-dashboard/', views.patient_dashboard, name='patient_dashboard'),
 ]

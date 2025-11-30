@@ -1451,6 +1451,88 @@ def export_patients_to_excel(request):
     return response
 
 
+from django.contrib.auth import login, logout
+
+def patient_dashboard_entry(request):
+    """
+    Entry point for patient dashboard.
+    This page will have JS to check localStorage and redirect.
+    """
+    return render(request, 'booking/patient_dashboard_entry.html')
+
+def patient_login(request):
+    """
+    Handles patient login by sending an OTP to their mobile number.
+    """
+    if request.method == 'POST':
+        mobile_number = request.POST.get('mobile_number', '').strip()
+        if not (mobile_number.isdigit() and len(mobile_number) == 11 and mobile_number.startswith('09')):
+             return render(request, 'booking/patient_login.html', {'error': 'شماره موبایل نامعتبر است. باید 11 رقم باشد و با 09 شروع شود.'})
+
+        # --- OTP & SMS Sending Logic ---
+        try:
+            AMOOT_SMS_API_TOKEN = settings.AMOOT_SMS_API_TOKEN
+            AMOOT_SMS_API_URL = settings.AMOOT_SMS_API_URL
+            otp_code = str(random.randint(100000, 999999))
+            request.session['otp_code_login'] = otp_code
+            request.session['mobile_number_login'] = mobile_number
+            request.session.set_expiry(300) # 5 minutes expiry for OTP
+
+            payload = {
+                'token': AMOOT_SMS_API_TOKEN,
+                'Mobile': mobile_number,
+                'PatternCodeID': 4018,
+                'PatternValues': otp_code,
+            }
+            response = requests.post(AMOOT_SMS_API_URL, data=payload)
+            return redirect('booking:verify_patient_login')
+
+        except requests.exceptions.RequestException as e:
+            print("خطا در ارسال پیامک:", e)
+            return render(request, 'booking/patient_login.html', {'error': 'سیستم قادر به ارسال پیامک نمیباشد. لطفا با پشتیبانی تماس بگیرید.'})
+
+    return render(request, 'booking/patient_login.html')
+
+def verify_patient_login(request):
+    """
+    Verifies the OTP sent to the patient's mobile number and logs them in.
+    """
+    mobile_number = request.session.get('mobile_number_login')
+    if not mobile_number:
+        messages.error(request, 'اعتبار سنجی شما به پایان رسیده است. لطفا مجددا تلاش کنید.')
+        return redirect('booking:patient_login')
+
+    if request.method == 'POST':
+        otp_from_user = request.POST.get('otp')
+        otp_from_session = request.session.get('otp_code_login')
+
+        if otp_from_user == otp_from_session:
+            patient_user, created = User.objects.get_or_create(
+                username=mobile_number,
+                defaults={'user_type': 'PATIENT'}
+            )
+            login(request, patient_user)
+
+            for key in ['otp_code_login', 'mobile_number_login']:
+                if key in request.session:
+                    del request.session[key]
+
+            messages.success(request, 'شما با موفقیت وارد شدید.')
+            return redirect('booking:patient_dashboard')
+        else:
+            return render(request, 'booking/verify_patient_login.html', {'error': 'کد وارد شده صحیح نمی‌باشد.', 'mobile_number': mobile_number})
+
+    return render(request, 'booking/verify_patient_login.html', {'mobile_number': mobile_number})
+
+def patient_logout(request):
+    """
+    Logs the patient out.
+    """
+    logout(request)
+    messages.success(request, 'شما با موفقیت خارج شدید.')
+    return redirect('booking:patient_login')
+
+
 @login_required
 def patient_dashboard(request):
     """

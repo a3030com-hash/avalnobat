@@ -1,0 +1,23 @@
+{% extends "booking/base.html" %}
+
+{% block title %}تایید کد{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>تایید شماره موبایل</h2>
+    <p>کد ۶ رقمی ارسال شده به شماره {{ mobile_number }} را وارد کنید.</p>
+
+    {% if error %}
+        <p class="error-list">{{ error }}</p>
+    {% endif %}
+
+    <form method="post" action="{% url 'booking:verify_patient_login' %}" id="verify-form">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="otp">کد تایید</label>
+            <input type="text" id="otp" name="otp" required pattern="\d{6}" title="کد تایید باید ۶ رقمی باشد.">
+        </div>
+        <button type="submit" class="btn-submit btn-block">تایید و ورود</button>
+    </form>
+</div>
+{% endblock %}
