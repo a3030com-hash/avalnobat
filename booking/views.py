@@ -447,11 +447,6 @@ def payment_page(request):
 
 @csrf_exempt
 def verify_payment(request):
-    """
-    Verifies a payment with the Beh Pardakht gateway, handles errors, and reverses if necessary.
-    """
-    messages.info(request, f"DEBUG: Callback POST data: {request.POST}")
-    messages.info(request, f"DEBUG: Callback GET data: {request.GET}")
     res_code = request.POST.get('ResCode')
     # 🟢 خطوط ۷-۸: تغییر نام متغیرهای دریافتی برای تمایز با نسخه عددی
     sale_order_id_str = request.POST.get('SaleOrderId') or request.POST.get('saleOrderId')
