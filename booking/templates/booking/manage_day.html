@@ -30,7 +30,7 @@
         font-size: 1rem;
         cursor: pointer;
     }
-    .slot-available:hover {
+    .slot-available:hover, .slot.selected {
         background-color: #007bff;
         color: white;
     }
@@ -109,7 +109,7 @@
                     <button
                         type="button"
                         class="slot slot-{{ slot.status }}"
-                        onclick="showActionForms('{{ slot.time.isoformat }}', '{{ slot.status }}')"
+                        onclick="showActionForms(this, '{{ slot.time.isoformat }}', '{{ slot.status }}')"
                         {% if slot.status == 'booked' %}disabled{% endif %}>
                         {{ slot.time|time:"H:i" }}
                     </button>
@@ -179,8 +179,17 @@
     const hiddenSlotInput = document.getElementById('hidden-selected-slot');
     const formTimeSpans = document.querySelectorAll('.form-time');
 
-    function showActionForms(slot_iso, status) {
+    function showActionForms(element, slot_iso, status) {
         if (status === 'available') {
+            // Remove 'selected' class from all other slots
+            const allSlots = document.querySelectorAll('.slot');
+            allSlots.forEach(slot => {
+                slot.classList.remove('selected');
+            });
+
+            // Add 'selected' class to the clicked slot
+            element.classList.add('selected');
+
             const slot_time = new Date(slot_iso).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
             hiddenSlotInput.value = slot_iso;
             formTimeSpans.forEach(span => span.textContent = slot_time);
