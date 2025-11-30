@@ -834,8 +834,9 @@ def manage_day(request, date):
         return redirect('booking:doctor_list')
 
     try:
-        # The date comes from the URL in Jalali format
-        jalali_date = jdatetime.datetime.strptime(date, '%Y-%m-%d').date()
+        # The date comes from the URL in Jalali format. Replace '/' with '-' to support both formats.
+        normalized_date = date.replace('/', '-')
+        jalali_date = jdatetime.datetime.strptime(normalized_date, '%Y-%m-%d').date()
         target_date = jalali_date.togregorian()
     except ValueError:
         return redirect('booking:secretary_panel')
@@ -954,7 +955,7 @@ def manage_day(request, date):
         'all_slots': sorted(all_slots, key=lambda x: x['time']),
         'form': booking_form,
         'has_availability': bool(availabilities),
-        'page_title': f'مدیریت نوبت‌های روز {date}'
+        'page_title': f'مدیریت نوبت‌های روز {jalali_date.strftime("%A")} {jalali_date.strftime("%Y/%m/%d")}'
     }
     return render(request, 'booking/manage_day.html', context)
 
