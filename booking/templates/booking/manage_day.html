@@ -137,11 +137,10 @@
 
     <!-- Add Slot Button -->
     <div class="add-slot-container">
-        <form method="post">
+        <button type="button" class="submit-btn book-btn" id="toggle-block-btns">x فعال و غیر فعال ساعت نوبت</button>
+        <form method="post" style="display: inline;">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_slot">
-            <button type="button" class="submit-btn book-btn" id="toggle-block-btns">x فعال و غیر فعال ساعت نوبت</button>
-  
             <button type="submit" class="submit-btn book-btn">+ ایجاد ساعت نوبت</button>
         </form>
     </div>
