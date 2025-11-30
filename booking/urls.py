@@ -33,4 +33,5 @@ urlpatterns = [
     path('accounting-guide/', views.accounting_guide, name='accounting_guide'),
     path('export/patients/excel/', views.export_patients_to_excel, name='export_patients_to_excel'),
     path('export/expenses/excel/', views.export_expenses_to_excel, name='export_expenses_to_excel'),
+    path('patient-dashboard/', views.patient_dashboard, name='patient_dashboard'),
 ]

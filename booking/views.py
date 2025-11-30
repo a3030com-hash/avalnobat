@@ -397,7 +397,7 @@ def payment_page(request):
     local_date = datetime.datetime.now().strftime('%Y%m%d')
     local_time = datetime.datetime.now().strftime('%H%M%S')
     additional_data = f'Appointment for {appointment.patient_name}'
-    callback_url = request.build_absolute_uri(reverse('booking:verify_payment'))
+    callback_url = request.build_absolute_uri(reverse('booking:verify_payment')).replace("http://", "https://")
     payer_id = 0
     
     try:
@@ -1482,6 +1482,10 @@ def patient_dashboard(request):
         'today': datetime.date.today()
     }
     return render(request, 'booking/patient_dashboard.html', context)
+
+
+
+
 
 
 from django.contrib.auth.views import LoginView
