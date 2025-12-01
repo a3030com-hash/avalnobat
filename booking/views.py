@@ -3,6 +3,7 @@ import datetime
 import jdatetime
 import random
 import time
+import logging
 from django.conf import settings
 from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
@@ -510,9 +511,7 @@ def verify_payment(request):
                     time = formatted_time
                     adders = appointment.doctor.address
                     tel = appointment.doctor.phone_number
-
                     pattern_values = f"{bimar};{dr};{time};{adders};{tel}"
-
                     AMOOT_SMS_API_TOKEN = settings.AMOOT_SMS_API_TOKEN
                     AMOOT_SMS_API_URL = settings.AMOOT_SMS_API_URL
                     payload = {
@@ -521,12 +520,14 @@ def verify_payment(request):
                         'PatternCodeID': 4161,
                         'PatternValues': pattern_values,
                     }
-                    requests.post(AMOOT_SMS_API_URL, data=payload)
+                    response = requests.post(AMOOT_SMS_API_URL, data=payload)
+                    logging.info(f"SMS API Response for order {sale_order_id_int}: {response.status_code} - {response.text}")
+
                 except requests.exceptions.RequestException as e:
                     # حتی اگر پیامک ارسال نشود، نباید جلوی تکمیل فرآیند نوبت‌گیری را بگیرد
-                    print(f"خطا در ارسال پیامک تایید نوبت: {e}")
+                    logging.error(f"خطا در ارسال پیامک تایید نوبت برای سفارش {sale_order_id_int}: {e}")
                 except Exception as e:
-                    print(f"یک خطای پیش‌بینی نشده در ارسال پیامک رخ داد: {e}")
+                    logging.error(f"یک خطای پیش‌بینی نشده در ارسال پیامک برای سفارش {sale_order_id_int} رخ داد: {e}")
 
 
                 login(request, appointment.patient)
