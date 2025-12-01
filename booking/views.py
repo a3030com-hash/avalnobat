@@ -1623,30 +1623,27 @@ def patient_logout(request):
     return redirect('booking:patient_login')
 
 
-@login_required
 def patient_dashboard(request):
     """
     Displays the patient's dashboard with their appointments.
     Allows patients to cancel their future appointments.
     """
-    if request.user.user_type != 'PATIENT':
-        # Or redirect to a more appropriate page
-        return redirect('booking:doctor_list')
+    appointments = []
+    if request.user.is_authenticated and request.user.user_type == 'PATIENT':
+        if request.method == 'POST':
+            appointment_id = request.POST.get('appointment_id')
+            appointment_to_cancel = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)
 
-    if request.method == 'POST':
-        appointment_id = request.POST.get('appointment_id')
-        appointment_to_cancel = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)
+            # Allow cancellation only if the appointment is for today or a future date
+            if appointment_to_cancel.appointment_datetime.date() >= datetime.date.today():
+                appointment_to_cancel.status = 'CANCELED'
+                appointment_to_cancel.save()
+                messages.success(request, 'نوبت شما با موفقیت لغو شد.')
+            else:
+                messages.error(request, 'شما نمی‌توانید نوبت‌های گذشته را لغو کنید.')
+            return redirect('booking:patient_dashboard')
 
-        # Allow cancellation only if the appointment is for today or a future date
-        if appointment_to_cancel.appointment_datetime.date() >= datetime.date.today():
-            appointment_to_cancel.status = 'CANCELED'
-            appointment_to_cancel.save()
-            messages.success(request, 'نوبت شما با موفقیت لغو شد.')
-        else:
-            messages.error(request, 'شما نمی‌توانید نوبت‌های گذشته را لغو کنید.')
-        return redirect('booking:patient_dashboard')
-
-    appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_datetime')
+        appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_datetime')
 
     verified_phone = request.session.pop('verified_patient_phone', None)
 

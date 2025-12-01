@@ -11,15 +11,7 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const storedPhone = localStorage.getItem('patientPhoneNumber');
-        if (storedPhone) {
-            // If the phone number is stored, we assume the user is logged in
-            // and redirect them to their dashboard.
-            window.location.href = "{% url 'booking:patient_dashboard' %}";
-        } else {
-            // Otherwise, redirect to the login page.
-            window.location.href = "{% url 'booking:patient_login' %}";
-        }
+        window.location.href = "{% url 'booking:patient_dashboard' %}";
     });
 </script>
 {% endblock %}
