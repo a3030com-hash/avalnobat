@@ -6,9 +6,6 @@
 <div class="form-container">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>نوبت‌های من</h1>
-        {% if user.is_authenticated %}
-            <a href="{% url 'booking:patient_logout' %}" class="btn btn-outline-secondary">خروج</a>
-        {% endif %}
     </div>
 
     {% if messages %}
@@ -19,50 +16,32 @@
         </ul>
     {% endif %}
 
-    {% if user.is_authenticated %}
-        {% if appointments %}
-            <ul class="list-group">
-                {% for appointment in appointments %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>دکتر {{ appointment.doctor.user.get_full_name }}</strong><br>
-                            {{ appointment.appointment_datetime }}
-                        </div>
-                        <div>
-                            {% if appointment.status == 'BOOKED' and appointment.appointment_datetime.date >= today %}
-                                <form method="post" action="{% url 'booking:patient_dashboard' %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
-                                    <button type="submit" class="btn btn-danger btn-sm">لغو نوبت</button>
-                                </form>
-                            {% elif appointment.status == 'CANCELED' %}
-                                <span class="badge bg-secondary">لغو شده</span>
-                            {% endif %}
-                        </div>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>شما در حال حاضر هیچ نوبت رزرو شده‌ای ندارید.</p>
-        {% endif %}
+    {% if appointments %}
+        <ul class="list-group">
+            {% for appointment in appointments %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>دکتر {{ appointment.doctor.user.get_full_name }}</strong><br>
+                        {{ appointment.appointment_datetime }}
+                    </div>
+                    <div>
+                        {% if appointment.status == 'BOOKED' and appointment.appointment_datetime.date >= today %}
+                            <form method="post" action="{% url 'booking:patient_dashboard' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">لغو نوبت</button>
+                            </form>
+                        {% elif appointment.status == 'CANCELED' %}
+                            <span class="badge bg-secondary">لغو شده</span>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
     {% else %}
-        <p>برای مشاهده نوبت‌های خود، لطفاً وارد شوید.</p>
-        <div class="text-center mt-4">
-            <a href="{% url 'booking:patient_login' %}" class="btn btn-primary">ورود / ثبت نام</a>
-        </div>
+        <p>شما تاکنون نوبتی رزرو نکرده‌اید یا از سیستم خارج شده‌اید.</p>
     {% endif %}
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // This script runs only when the dashboard is successfully loaded,
-        // meaning the user is authenticated.
-        const verifiedPhone = "{{ verified_phone }}";
-        if (verifiedPhone) {
-            localStorage.setItem('patientPhoneNumber', verifiedPhone);
-        }
-    });
-</script>
-{% endblock %}
+{% block extra_js %}{% endblock %}

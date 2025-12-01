@@ -309,8 +309,9 @@ def verify_appointment(request):
             appointment.patient = patient_user
             appointment.save()
 
-            # Store the phone number for the payment page to pick up
-            request.session['verified_patient_phone'] = appointment.patient_phone
+            # Store the patient's phone in the session permanently
+            request.session['patient_phone'] = appointment.patient_phone
+            request.session.set_expiry(31536000)  # Expire after 1 year
 
             return redirect('booking:payment_page')
         else:
@@ -1549,70 +1550,9 @@ def patient_dashboard_entry(request):
 
 def patient_login(request):
     """
-    Handles patient login by sending an OTP to their mobile number.
+    Redirects to the patient dashboard, which will handle session checking.
     """
-    if request.method == 'POST':
-        mobile_number = request.POST.get('mobile_number', '').strip()
-        if not (mobile_number.isdigit() and len(mobile_number) == 11 and mobile_number.startswith('09')):
-             return render(request, 'booking/patient_login.html', {'error': 'شماره موبایل نامعتبر است. باید 11 رقم باشد و با 09 شروع شود.'})
-
-        # --- OTP & SMS Sending Logic ---
-        try:
-            AMOOT_SMS_API_TOKEN = settings.AMOOT_SMS_API_TOKEN
-            AMOOT_SMS_API_URL = settings.AMOOT_SMS_API_URL
-            otp_code = str(random.randint(100000, 999999))
-            request.session['otp_code_login'] = otp_code
-            request.session['mobile_number_login'] = mobile_number
-            request.session.set_expiry(300) # 5 minutes expiry for OTP
-
-            payload = {
-                'token': AMOOT_SMS_API_TOKEN,
-                'Mobile': mobile_number,
-                'PatternCodeID': 4018,
-                'PatternValues': otp_code,
-            }
-            response = requests.post(AMOOT_SMS_API_URL, data=payload)
-            return redirect('booking:verify_patient_login')
-
-        except requests.exceptions.RequestException as e:
-            print("خطا در ارسال پیامک:", e)
-            return render(request, 'booking/patient_login.html', {'error': 'سیستم قادر به ارسال پیامک نمیباشد. لطفا با پشتیبانی تماس بگیرید.'})
-
-    return render(request, 'booking/patient_login.html')
-
-def verify_patient_login(request):
-    """
-    Verifies the OTP sent to the patient's mobile number and logs them in.
-    """
-    mobile_number = request.session.get('mobile_number_login')
-    if not mobile_number:
-        messages.error(request, 'اعتبار سنجی شما به پایان رسیده است. لطفا مجددا تلاش کنید.')
-        return redirect('booking:patient_login')
-
-    if request.method == 'POST':
-        otp_from_user = request.POST.get('otp')
-        otp_from_session = request.session.get('otp_code_login')
-
-        if otp_from_user == otp_from_session:
-            patient_user, created = User.objects.get_or_create(
-                username=mobile_number,
-                defaults={'user_type': 'PATIENT'}
-            )
-            login(request, patient_user)
-
-            # Store the phone number for the dashboard to pick up
-            request.session['verified_patient_phone'] = mobile_number
-
-            for key in ['otp_code_login', 'mobile_number_login']:
-                if key in request.session:
-                    del request.session[key]
-
-            messages.success(request, 'شما با موفقیت وارد شدید.')
-            return redirect('booking:patient_dashboard')
-        else:
-            return render(request, 'booking/verify_patient_login.html', {'error': 'کد وارد شده صحیح نمی‌باشد.', 'mobile_number': mobile_number})
-
-    return render(request, 'booking/verify_patient_login.html', {'mobile_number': mobile_number})
+    return redirect('booking:patient_dashboard')
 
 def patient_logout(request):
     """
@@ -1625,33 +1565,37 @@ def patient_logout(request):
 
 def patient_dashboard(request):
     """
-    Displays the patient's dashboard with their appointments.
-    Allows patients to cancel their future appointments.
+    Displays the patient's dashboard based on the phone number in the session.
+    If no session is found, it shows a message that no appointments are booked.
     """
+    patient_phone = request.session.get('patient_phone')
     appointments = []
-    if request.user.is_authenticated and request.user.user_type == 'PATIENT':
-        if request.method == 'POST':
-            appointment_id = request.POST.get('appointment_id')
-            appointment_to_cancel = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)
+    patient_user = None
 
-            # Allow cancellation only if the appointment is for today or a future date
-            if appointment_to_cancel.appointment_datetime.date() >= datetime.date.today():
-                appointment_to_cancel.status = 'CANCELED'
-                appointment_to_cancel.save()
-                messages.success(request, 'نوبت شما با موفقیت لغو شد.')
-            else:
-                messages.error(request, 'شما نمی‌توانید نوبت‌های گذشته را لغو کنید.')
-            return redirect('booking:patient_dashboard')
+    if patient_phone:
+        try:
+            patient_user = User.objects.get(username=patient_phone, user_type='PATIENT')
+            appointments = Appointment.objects.filter(patient=patient_user).order_by('-appointment_datetime')
+        except User.DoesNotExist:
+            # If the user somehow doesn't exist, clear the session.
+            request.session.flush()
 
-        appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_datetime')
+    if request.method == 'POST' and patient_user:
+        appointment_id = request.POST.get('appointment_id')
+        appointment_to_cancel = get_object_or_404(Appointment, pk=appointment_id, patient=patient_user)
 
-    verified_phone = request.session.pop('verified_patient_phone', None)
+        if appointment_to_cancel.appointment_datetime.date() >= datetime.date.today():
+            appointment_to_cancel.status = 'CANCELED'
+            appointment_to_cancel.save()
+            messages.success(request, 'نوبت شما با موفقیت لغو شد.')
+        else:
+            messages.error(request, 'شما نمی‌توانید نوبت‌های گذشته را لغو کنید.')
+        return redirect('booking:patient_dashboard')
 
     context = {
         'appointments': appointments,
         'page_title': 'نوبت‌های من',
         'today': datetime.date.today(),
-        'verified_phone': verified_phone,
     }
     return render(request, 'booking/patient_dashboard.html', context)
 

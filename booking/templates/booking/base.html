@@ -638,26 +638,34 @@
                     </a>
                     </div>
 
-                         <a id="my-appointments-btn" href="{% url 'booking:patient_dashboard_entry' %}" title="نوبت‌های من" style="display: none;">
-                              <i class="fas fa-stethoscope icon"></i>
+                        {% if is_patient_logged_in %}
+                            <a href="{% url 'booking:patient_dashboard' %}" title="نوبت‌های من">
+                                <i class="fas fa-calendar-check icon"></i> نوبت‌های من
                             </a>
-                     
-                    <div class="dropdown" style="margin-right:auto; " >
-                         
-                        <span class="dropbtn nav-item">
-                            <img src="/media/doctor.png" style="padding: 0; " alt="avalnobat-icon">
-                        </span>
-                        <div class="dropdown-content">
-                            <a href="{% url 'booking:signup' %}">
-                                <span class="fas fa-user-plus"></span> ثبت نام پزشک
+                            <a href="{% url 'booking:patient_logout' %}" title="خروج">
+                                <i class="fas fa-sign-out-alt icon"></i> خروج
                             </a>
-                            <a href="{% url 'booking:secretary_signup' %}">
-                                <span class="fas fa-user-plus"></span> ثبت نام منشی
+                        {% else %}
+                            <a id="my-appointments-btn" href="{% url 'booking:patient_login' %}" title="نوبت‌های من">
+                                 <i class="fas fa-stethoscope icon"></i>
                             </a>
-                            <a href="{% url 'login' %}">
-                                <span class="fas fa-sign-in-alt"></span> ورود
-                            </a>
-                        </div>
+                            <div class="dropdown" style="margin-right:auto;">
+                                <span class="dropbtn nav-item">
+                                    <img src="/media/doctor.png" style="padding: 0; " alt="avalnobat-icon">
+                                </span>
+                                <div class="dropdown-content">
+                                    <a href="{% url 'booking:signup' %}">
+                                        <span class="fas fa-user-plus"></span> ثبت نام پزشک
+                                    </a>
+                                    <a href="{% url 'booking:secretary_signup' %}">
+                                        <span class="fas fa-user-plus"></span> ثبت نام منشی
+                                    </a>
+                                    <a href="{% url 'login' %}">
+                                        <span class="fas fa-sign-in-alt"></span> ورود
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             {% endif %}
@@ -731,13 +739,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const myAppointmentsBtn = document.getElementById('my-appointments-btn');
-            const patientPhoneNumber = localStorage.getItem('patientPhoneNumber');
-
-            if (patientPhoneNumber) {
-                myAppointmentsBtn.style.display = 'block';
-            }
-
             window.userDate = null;
             let pageConfig = {};
 
