@@ -309,6 +309,9 @@ def verify_appointment(request):
             appointment.patient = patient_user
             appointment.save()
 
+            # Store the phone number for the payment page to pick up
+            request.session['verified_patient_phone'] = appointment.patient_phone
+
             return redirect('booking:payment_page')
         else:
             # کد اشتباه است
@@ -381,6 +384,8 @@ def payment_page(request):
 
     appointment = get_object_or_404(Appointment, pk=order_id_int) # استفاده از order_id_int
     
+    verified_phone = request.session.pop('verified_patient_phone', None)
+
     # Generate a unique order ID for this specific payment attempt
     unique_order_id = int(f"{appointment.id}{int(time.time())}")
     appointment.payment_order_id = unique_order_id
@@ -425,7 +430,8 @@ def payment_page(request):
                     'appointment': appointment,
                     'payment_amount': amount,
                     'page_title': 'صفحه پرداخت',
-                    'error_message': None
+                    'error_message': None,
+                    'verified_phone': verified_phone
                 }
                 return render(request, 'booking/payment_page.html', context)
             else:
@@ -1594,6 +1600,9 @@ def verify_patient_login(request):
             )
             login(request, patient_user)
 
+            # Store the phone number for the dashboard to pick up
+            request.session['verified_patient_phone'] = mobile_number
+
             for key in ['otp_code_login', 'mobile_number_login']:
                 if key in request.session:
                     del request.session[key]
@@ -1639,10 +1648,13 @@ def patient_dashboard(request):
 
     appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_datetime')
 
+    verified_phone = request.session.pop('verified_patient_phone', None)
+
     context = {
         'appointments': appointments,
         'page_title': 'نوبت‌های من',
-        'today': datetime.date.today()
+        'today': datetime.date.today(),
+        'verified_phone': verified_phone,
     }
     return render(request, 'booking/patient_dashboard.html', context)
 

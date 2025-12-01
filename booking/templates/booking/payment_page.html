@@ -85,3 +85,15 @@
     {% endif %}
 </div>
 {% endblock %}
+
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const verifiedPhone = "{{ verified_phone }}";
+        if (verifiedPhone) {
+            localStorage.setItem('patientPhoneNumber', verifiedPhone);
+        }
+    });
+</script>
+{% endblock %}

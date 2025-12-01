@@ -638,7 +638,7 @@
                     </a>
                     </div>
 
-                         <a href="{% url 'booking:patient_dashboard' %}" title="نوبت‌های من">
+                         <a id="my-appointments-btn" href="{% url 'booking:patient_dashboard' %}" title="نوبت‌های من" style="display: none;">
                               <i class="fas fa-stethoscope icon"></i>
                             </a>
                      
@@ -731,6 +731,13 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const myAppointmentsBtn = document.getElementById('my-appointments-btn');
+            const patientPhoneNumber = localStorage.getItem('patientPhoneNumber');
+
+            if (patientPhoneNumber) {
+                myAppointmentsBtn.style.display = 'block';
+            }
+
             window.userDate = null;
             let pageConfig = {};
 

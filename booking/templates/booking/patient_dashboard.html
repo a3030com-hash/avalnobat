@@ -47,9 +47,9 @@
     document.addEventListener('DOMContentLoaded', function() {
         // This script runs only when the dashboard is successfully loaded,
         // meaning the user is authenticated.
-        const userMobile = "{{ request.user.username }}";
-        if (userMobile) {
-            localStorage.setItem('patientMobileNumber', userMobile);
+        const verifiedPhone = "{{ verified_phone }}";
+        if (verifiedPhone) {
+            localStorage.setItem('patientPhoneNumber', verifiedPhone);
         }
     });
 </script>
