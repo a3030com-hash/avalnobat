@@ -19,7 +19,7 @@ import requests
 from django.db.models import Q
 from django.http import HttpResponse
 import openpyxl
-from .decorators import doctor_required, secretary_required, patient_login_required
+from .decorators import doctor_required, secretary_required
 
 def _get_doctor_profile(user):
     """
@@ -1623,7 +1623,7 @@ def patient_logout(request):
     return redirect('booking:patient_login')
 
 
-@patient_login_required
+@login_required
 def patient_dashboard(request):
     """
     Displays the patient's dashboard with their appointments.
