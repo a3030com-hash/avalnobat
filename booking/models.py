@@ -1,5 +1,4 @@
 import datetime
-import jdatetime
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
@@ -120,13 +119,6 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"نوبت برای {self.patient_name} نزد {self.doctor} در تاریخ {self.appointment_datetime.strftime('%Y-%m-%d %H:%M')}"
-
-    @property
-    def jalali_date_str(self):
-        if not self.appointment_datetime:
-            return ""
-        jalali_datetime = jdatetime.datetime.fromgregorian(datetime=self.appointment_datetime)
-        return jalali_datetime.strftime('%A %Y/%m/%d ساعت %H:%M')
 
     class Meta:
         verbose_name = "نوبت"
