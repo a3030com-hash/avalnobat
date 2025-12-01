@@ -309,8 +309,9 @@ def verify_appointment(request):
             appointment.patient = patient_user
             appointment.save()
 
-            # Store the phone number for the payment page to pick up
-            request.session['verified_patient_phone'] = appointment.patient_phone
+            # Store the patient's phone in the session permanently
+            request.session['patient_phone'] = appointment.patient_phone
+            request.session.set_expiry(31536000)  # Expire after 1 year
 
             return redirect('booking:payment_page')
         else:
@@ -1594,18 +1595,18 @@ def verify_patient_login(request):
         otp_from_session = request.session.get('otp_code_login')
 
         if otp_from_user == otp_from_session:
-            patient_user, created = User.objects.get_or_create(
-                username=mobile_number,
-                defaults={'user_type': 'PATIENT'}
-            )
-            login(request, patient_user)
+            # Store the patient's phone in the session permanently
+            request.session['patient_phone'] = mobile_number
+            request.session.set_expiry(31536000)  # Expire after 1 year
 
-            # Store the phone number for the dashboard to pick up
-            request.session['verified_patient_phone'] = mobile_number
-
-            for key in ['otp_code_login', 'mobile_number_login']:
+            # Clean up temporary session data
+            for key in ['otp_code_login', 'mobile_number_login', 'verified_patient_phone']:
                 if key in request.session:
                     del request.session[key]
+
+            # No need to use Django's auth login for patients anymore
+            # user, created = User.objects.get_or_create(username=mobile_number, defaults={'user_type': 'PATIENT'})
+            # login(request, user)
 
             messages.success(request, 'شما با موفقیت وارد شدید.')
             return redirect('booking:patient_dashboard')
