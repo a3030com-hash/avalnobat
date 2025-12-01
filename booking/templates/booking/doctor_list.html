@@ -88,7 +88,10 @@
     }
 </style>
 
-<h2 class="elegant-title">{{ page_title }}</h2>
+<div class="d-flex justify-content-between align-items-center">
+    <h2 class="elegant-title">{{ page_title }}</h2>
+    <a href="{% url 'booking:patient_login' %}" class="btn btn-secondary">ورود / ثبت نام بیمار</a>
+</div>
 
 <div class="search-container">
     <form method="get" action="{% url 'booking:doctor_list' %}" class="search-form" id="search-form">

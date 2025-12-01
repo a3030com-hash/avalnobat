@@ -1637,7 +1637,7 @@ def patient_dashboard(request):
             messages.error(request, 'شما نمی‌توانید نوبت‌های گذشته را لغو کنید.')
         return redirect('booking:patient_dashboard')
 
-    appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_datetime')
+    appointments = Appointment.objects.filter(patient=request.user).select_related('doctor__user').order_by('-appointment_datetime')
 
     context = {
         'appointments': appointments,
