@@ -511,7 +511,7 @@ def verify_payment(request):
                     time = formatted_time
                     adders = appointment.doctor.address
                     tel = appointment.doctor.phone_number
-                    pattern_values = f"{bimar};{dr};{time};{adders};{tel}"
+                    pattern_values = f"{bimar},{dr},{time},{adders},{tel}"
                     AMOOT_SMS_API_TOKEN = settings.AMOOT_SMS_API_TOKEN
                     AMOOT_SMS_API_URL = settings.AMOOT_SMS_API_URL
                     payload = {
