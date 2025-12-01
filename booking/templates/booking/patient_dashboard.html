@@ -1,56 +1,164 @@
-{% extends 'booking/base.html' %}
 
-{% block title %}داشبورد بیمار - AvalNobat{% endblock %}
+{% extends 'booking/base.html' %}
+{% load booking_filters %}
+
+{% block title %}{{ page_title }} - AvalNobat{% endblock %}
 
 {% block content %}
 <div class="form-container">
-    <h1>نوبت‌های من</h1>
+    <h2 class="elegant-title">{{ page_title }}</h2>
 
-    {% if messages %}
-        <ul class="error-list">
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+    <!-- Phone Number Input Form -->
+    <div id="phone-form-container">
+        <p>برای مشاهده و مدیریت نوبت‌های خود، لطفاً شماره موبایلی که با آن نوبت گرفته‌اید را وارد کنید.</p>
+        <form id="phone-form" class="form-group">
+            <label for="phone-input">شماره موبایل:</label>
+            <input type="tel" id="phone-input" class="form-control" placeholder="مثال: 09123456789" required>
+            <button type="submit" class="btn-submit btn-block mt-3">مشاهده نوبت‌ها</button>
+        </form>
+    </div>
 
-    {% if appointments %}
-        <ul class="list-group">
-            {% for appointment in appointments %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>دکتر {{ appointment.doctor.user.get_full_name }}</strong><br>
-                        {{ appointment.appointment_datetime }}
-                    </div>
-                    <div>
-                        {% if appointment.status == 'BOOKED' and appointment.appointment_datetime.date >= today %}
-                            <form method="post" action="{% url 'booking:patient_dashboard' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
-                                <button type="submit" class="btn btn-danger btn-sm">لغو نوبت</button>
-                            </form>
-                        {% elif appointment.status == 'CANCELED' %}
-                            <span class="badge bg-secondary">لغو شده</span>
-                        {% endif %}
-                    </div>
-                </li>
-            {% endfor %}
+    <!-- Appointments Display Area -->
+    <div id="appointments-container" style="display: none;">
+        <h3 id="appointments-header"></h3>
+        <ul id="appointments-list" class="list-group">
+            <!-- Appointments will be injected here by JavaScript -->
         </ul>
-    {% else %}
-        <p>شما هیچ نوبتی ندارید.</p>
-    {% endif %}
+        <p id="no-appointments-msg" style="display: none;">هیچ نوبتی برای این شماره موبایل یافت نشد.</p>
+        <button id="change-phone-btn" class="btn-secondary mt-3">تغییر شماره موبایل</button>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // This script runs only when the dashboard is successfully loaded,
-        // meaning the user is authenticated.
-        const userMobile = "{{ request.user.username }}";
-        if (userMobile) {
-            localStorage.setItem('patientMobileNumber', userMobile);
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneFormContainer = document.getElementById('phone-form-container');
+    const appointmentsContainer = document.getElementById('appointments-container');
+    const phoneForm = document.getElementById('phone-form');
+    const phoneInput = document.getElementById('phone-input');
+    const appointmentsList = document.getElementById('appointments-list');
+    const appointmentsHeader = document.getElementById('appointments-header');
+    const noAppointmentsMsg = document.getElementById('no-appointments-msg');
+    const changePhoneBtn = document.getElementById('change-phone-btn');
+
+    const getAppointmentsEndpoint = "{% url 'booking:get_appointments' %}";
+    const cancelAppointmentEndpoint = "{% url 'booking:cancel_appointment' %}";
+
+    async function cancelAppointment(appointmentId, phoneNumber) {
+        try {
+            const response = await fetch(cancelAppointmentEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}' // Django CSRF token
+                },
+                body: JSON.stringify({
+                    appointment_id: appointmentId,
+                    phone_number: phoneNumber
+                })
+            });
+
+            const result = await response.json();
+            if (response.ok && result.success) {
+                alert('نوبت شما با موفقیت لغو شد.');
+                fetchAndDisplayAppointments(phoneNumber); // Refresh the list
+            } else {
+                throw new Error(result.error || 'Failed to cancel appointment');
+            }
+        } catch (error) {
+            console.error('Cancellation error:', error);
+            alert(`خطا در لغو نوبت: ${error.message}`);
+        }
+    }
+
+    async function fetchAndDisplayAppointments(phoneNumber) {
+        try {
+            const response = await fetch(`${getAppointmentsEndpoint}?phone=${phoneNumber}`);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const appointments = await response.json();
+
+            appointmentsList.innerHTML = ''; // Clear previous list
+
+            if (appointments.length > 0) {
+                appointments.forEach(app => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+                    const localDateTime = new Date(app.appointment_datetime);
+
+                    const appointmentDate = new Date(app.appointment_datetime);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0); // Compare dates only
+
+                    let cancelButtonHTML = '';
+                    if (app.status === 'BOOKED' && appointmentDate >= today) {
+                        cancelButtonHTML = `<button class="btn btn-danger btn-sm cancel-btn" data-id="${app.id}">لغو نوبت</button>`;
+                    }
+
+                    listItem.innerHTML = `
+                        <div>
+                            <strong>دکتر ${app.doctor_name}</strong><br>
+                            <small>${appointmentDate.toLocaleString('fa-IR')}</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge ${app.status === 'BOOKED' ? 'bg-success' : 'bg-secondary'} me-2">${app.status_display}</span>
+                            ${cancelButtonHTML}
+                        </div>
+                    `;
+                    appointmentsList.appendChild(listItem);
+                });
+
+                // Add event listeners for the new cancel buttons
+                document.querySelectorAll('.cancel-btn').forEach(button => {
+                    button.addEventListener('click', async function() {
+                        const appointmentId = this.dataset.id;
+                        const phoneNumber = localStorage.getItem('patientPhoneNumber');
+                        if (confirm('آیا از لغو این نوبت اطمینان دارید؟')) {
+                            await cancelAppointment(appointmentId, phoneNumber);
+                        }
+                    });
+                });
+                noAppointmentsMsg.style.display = 'none';
+            } else {
+                noAppointmentsMsg.style.display = 'block';
+            }
+
+            appointmentsHeader.textContent = `نوبت‌های شما برای شماره: ${phoneNumber}`;
+            phoneFormContainer.style.display = 'none';
+            appointmentsContainer.style.display = 'block';
+
+        } catch (error) {
+            console.error('Failed to fetch appointments:', error);
+            alert('خطا در دریافت اطلاعات نوبت‌ها. لطفاً دوباره تلاش کنید.');
+        }
+    }
+
+    // Check localStorage on page load
+    const savedPhoneNumber = localStorage.getItem('patientPhoneNumber');
+    if (savedPhoneNumber) {
+        fetchAndDisplayAppointments(savedPhoneNumber);
+    }
+
+    // Handle form submission
+    phoneForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const phoneNumber = phoneInput.value.trim();
+        if (phoneNumber) {
+            localStorage.setItem('patientPhoneNumber', phoneNumber);
+            fetchAndDisplayAppointments(phoneNumber);
         }
     });
+
+    // Handle change phone number button click
+    changePhoneBtn.addEventListener('click', function() {
+        localStorage.removeItem('patientPhoneNumber');
+        phoneFormContainer.style.display = 'block';
+        appointmentsContainer.style.display = 'none';
+        phoneInput.value = '';
+    });
+});
 </script>
 {% endblock %}

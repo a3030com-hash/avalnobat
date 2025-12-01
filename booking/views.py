@@ -4,6 +4,7 @@ import jdatetime
 import random
 import time
 import logging
+import json
 from django.conf import settings
 from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
@@ -309,6 +310,9 @@ def verify_appointment(request):
             appointment.patient = patient_user
             appointment.save()
 
+            # Store the phone number for the payment page to pick up
+            request.session['verified_patient_phone'] = appointment.patient_phone
+
             return redirect('booking:payment_page')
         else:
             # کد اشتباه است
@@ -381,6 +385,8 @@ def payment_page(request):
 
     appointment = get_object_or_404(Appointment, pk=order_id_int) # استفاده از order_id_int
     
+    verified_phone = request.session.pop('verified_patient_phone', None)
+
     # Generate a unique order ID for this specific payment attempt
     unique_order_id = int(f"{appointment.id}{int(time.time())}")
     appointment.payment_order_id = unique_order_id
@@ -425,7 +431,8 @@ def payment_page(request):
                     'appointment': appointment,
                     'payment_amount': amount,
                     'page_title': 'صفحه پرداخت',
-                    'error_message': None
+                    'error_message': None,
+                    'verified_phone': verified_phone
                 }
                 return render(request, 'booking/payment_page.html', context)
             else:
@@ -1532,117 +1539,60 @@ def cancel_reservation(request, pk):
     return redirect('booking:reservation_list')
 
 
-from django.contrib.auth import login, logout
+from django.contrib.auth import logout
+from django.http import JsonResponse
+from .models import Appointment
 
-def patient_dashboard_entry(request):
-    """
-    Entry point for patient dashboard.
-    This page will have JS to check localStorage and redirect.
-    """
-    return render(request, 'booking/patient_dashboard_entry.html')
+def get_appointments(request):
+    phone_number = request.GET.get('phone')
+    if not phone_number:
+        return JsonResponse({'error': 'Phone number is required'}, status=400)
 
-def patient_login(request):
-    """
-    Handles patient login by sending an OTP to their mobile number.
-    """
+    appointments = Appointment.objects.filter(patient_phone=phone_number).order_by('-appointment_datetime')
+
+    data = [
+        {
+            'id': app.id,
+            'doctor_name': app.doctor.user.get_full_name(),
+            'appointment_datetime': app.appointment_datetime.isoformat(),
+            'status': app.status,
+            'status_display': app.get_status_display(),
+        }
+        for app in appointments
+    ]
+
+    return JsonResponse(data, safe=False)
+
+def cancel_appointment(request):
     if request.method == 'POST':
-        mobile_number = request.POST.get('mobile_number', '').strip()
-        if not (mobile_number.isdigit() and len(mobile_number) == 11 and mobile_number.startswith('09')):
-             return render(request, 'booking/patient_login.html', {'error': 'شماره موبایل نامعتبر است. باید 11 رقم باشد و با 09 شروع شود.'})
-
-        # --- OTP & SMS Sending Logic ---
         try:
-            AMOOT_SMS_API_TOKEN = settings.AMOOT_SMS_API_TOKEN
-            AMOOT_SMS_API_URL = settings.AMOOT_SMS_API_URL
-            otp_code = str(random.randint(100000, 999999))
-            request.session['otp_code_login'] = otp_code
-            request.session['mobile_number_login'] = mobile_number
-            request.session.set_expiry(300) # 5 minutes expiry for OTP
+            data = json.loads(request.body)
+            appointment_id = data.get('appointment_id')
+            phone_number = data.get('phone_number')
 
-            payload = {
-                'token': AMOOT_SMS_API_TOKEN,
-                'Mobile': mobile_number,
-                'PatternCodeID': 4018,
-                'PatternValues': otp_code,
-            }
-            response = requests.post(AMOOT_SMS_API_URL, data=payload)
-            return redirect('booking:verify_patient_login')
+            appointment = get_object_or_404(Appointment, pk=appointment_id)
 
-        except requests.exceptions.RequestException as e:
-            print("خطا در ارسال پیامک:", e)
-            return render(request, 'booking/patient_login.html', {'error': 'سیستم قادر به ارسال پیامک نمیباشد. لطفا با پشتیبانی تماس بگیرید.'})
+            if appointment.patient_phone != phone_number:
+                return JsonResponse({'error': 'Unauthorized'}, status=403)
 
-    return render(request, 'booking/patient_login.html')
-
-def verify_patient_login(request):
-    """
-    Verifies the OTP sent to the patient's mobile number and logs them in.
-    """
-    mobile_number = request.session.get('mobile_number_login')
-    if not mobile_number:
-        messages.error(request, 'اعتبار سنجی شما به پایان رسیده است. لطفا مجددا تلاش کنید.')
-        return redirect('booking:patient_login')
-
-    if request.method == 'POST':
-        otp_from_user = request.POST.get('otp')
-        otp_from_session = request.session.get('otp_code_login')
-
-        if otp_from_user == otp_from_session:
-            patient_user, created = User.objects.get_or_create(
-                username=mobile_number,
-                defaults={'user_type': 'PATIENT'}
-            )
-            login(request, patient_user)
-
-            for key in ['otp_code_login', 'mobile_number_login']:
-                if key in request.session:
-                    del request.session[key]
-
-            messages.success(request, 'شما با موفقیت وارد شدید.')
-            return redirect('booking:patient_dashboard')
-        else:
-            return render(request, 'booking/verify_patient_login.html', {'error': 'کد وارد شده صحیح نمی‌باشد.', 'mobile_number': mobile_number})
-
-    return render(request, 'booking/verify_patient_login.html', {'mobile_number': mobile_number})
-
-def patient_logout(request):
-    """
-    Logs the patient out.
-    """
-    logout(request)
-    messages.success(request, 'شما با موفقیت خارج شدید.')
-    return redirect('booking:patient_login')
+            if appointment.appointment_datetime.date() >= datetime.date.today():
+                appointment.status = 'CANCELED'
+                appointment.save()
+                return JsonResponse({'success': True})
+            else:
+                return JsonResponse({'error': 'Cannot cancel past appointments'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 
-@login_required
 def patient_dashboard(request):
     """
-    Displays the patient's dashboard with their appointments.
-    Allows patients to cancel their future appointments.
+    Displays a page where patients can view their appointments by entering their phone number.
     """
-    if request.user.user_type != 'PATIENT':
-        # Or redirect to a more appropriate page
-        return redirect('booking:doctor_list')
-
-    if request.method == 'POST':
-        appointment_id = request.POST.get('appointment_id')
-        appointment_to_cancel = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)
-
-        # Allow cancellation only if the appointment is for today or a future date
-        if appointment_to_cancel.appointment_datetime.date() >= datetime.date.today():
-            appointment_to_cancel.status = 'CANCELED'
-            appointment_to_cancel.save()
-            messages.success(request, 'نوبت شما با موفقیت لغو شد.')
-        else:
-            messages.error(request, 'شما نمی‌توانید نوبت‌های گذشته را لغو کنید.')
-        return redirect('booking:patient_dashboard')
-
-    appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_datetime')
-
+    # This view now simply renders the template. All logic is handled by the frontend via API calls.
     context = {
-        'appointments': appointments,
         'page_title': 'نوبت‌های من',
-        'today': datetime.date.today()
     }
     return render(request, 'booking/patient_dashboard.html', context)
 
