@@ -537,6 +537,7 @@ def verify_payment(request):
 
 
                 login(request, appointment.patient)
+                request.session.save()
                 messages.success(request, "پرداخت با موفقیت انجام شد و نوبت شما ثبت گردید.")
                 return redirect('booking:patient_dashboard')
             else:
@@ -1599,7 +1600,7 @@ def verify_patient_login(request):
                 defaults={'user_type': 'PATIENT'}
             )
             login(request, patient_user)
-
+            request.session.save()
             # Store the phone number for the dashboard to pick up
             request.session['verified_patient_phone'] = mobile_number
 
