@@ -1630,7 +1630,8 @@ def patient_dashboard(request):
     Allows patients to cancel their future appointments.
     """
     appointments = []
-    if request.user.is_authenticated and request.user.user_type == 'PATIENT':
+    #print(request.user.user_type)
+    if  request.user.user_type == 'PATIENT':
         if request.method == 'POST':
             appointment_id = request.POST.get('appointment_id')
             appointment_to_cancel = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)

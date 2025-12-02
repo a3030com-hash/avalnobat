@@ -638,18 +638,12 @@
                     </a>
                     </div>
 
-                        {% if is_patient_logged_in %}
-                            <a href="{% url 'booking:patient_dashboard' %}" title="نوبت‌های من">
+                             <a href="{% url 'booking:patient_dashboard' %}" title="نوبت‌های من">
                                 <i class="fas fa-calendar-check icon"></i> نوبت‌های من
                             </a>
-                            <a href="{% url 'booking:patient_logout' %}" title="خروج">
-                                <i class="fas fa-sign-out-alt icon"></i> خروج
-                            </a>
-                        {% else %}
-                            <a id="my-appointments-btn" href="{% url 'booking:patient_login' %}" title="نوبت‌های من">
-                                 <i class="fas fa-stethoscope icon"></i>
-                            </a>
-                            <div class="dropdown" style="margin-right:auto;">
+                           
+               
+                               <div class="dropdown" style="margin-right:auto;">
                                 <span class="dropbtn nav-item">
                                     <img src="/media/doctor.png" style="padding: 0; " alt="avalnobat-icon">
                                 </span>
@@ -665,7 +659,7 @@
                                     </a>
                                 </div>
                             </div>
-                        {% endif %}
+                       
                     </div>
                 </div>
             {% endif %}
