@@ -596,7 +596,7 @@
         <nav>
       
 
-            {% if user.is_authenticated %}
+            {% if user.user_type == 'DOCTOR' or user.user_type == 'SECRETARY' %}
                 <div style="width: 100%;display: flex"  class="icon-links">
                     <div>
                     <a href="{% url 'booking:doctor_list' %}" title="صفحه اصلی">
