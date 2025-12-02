@@ -18,6 +18,7 @@ from django.db.models import Q
 import requests
 from django.db.models import Q, Avg
 from django.http import HttpResponse
+import pytz
 import openpyxl
 from .decorators import doctor_required, secretary_required
 
@@ -512,9 +513,10 @@ def verify_payment(request):
                 # --- Send SMS Confirmation ---
                 try:
                     # ✜ بخش ارسال پیامک تایید نوبت ✜
-                    jalali_datetime = jdatetime.datetime.fromgregorian(datetime=appointment.appointment_datetime)
+                    tehran_tz = pytz.timezone('Asia/Tehran')
+                    appointment_datetime_local = appointment.appointment_datetime.astimezone(tehran_tz)
+                    jalali_datetime = jdatetime.datetime.fromgregorian(datetime=appointment_datetime_local)
                     formatted_time = jalali_datetime.strftime('%Y/%m/%d ساعت %H:%M')
-
                     bimar = appointment.patient_name
                     dr = appointment.doctor.user.get_full_name()
                     time = formatted_time
@@ -1697,6 +1699,8 @@ class CustomLoginView(LoginView):
                     return reverse('booking:doctor_dashboard')
             elif user.user_type == 'SECRETARY':
                 return reverse('booking:daily_patients')
+            elif user.user_type == 'PATIENT':
+                return reverse('booking:patient_dashboard')
         return reverse('booking:doctor_list')
 
 @login_required

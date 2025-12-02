@@ -64,11 +64,9 @@
                     </div>
                     <div>
                         {% if appointment.status == 'BOOKED' and appointment.appointment_datetime.date >= today %}
-                            <form method="post" action="{% url 'booking:patient_dashboard' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
-                                <button type="submit" class="btn btn-danger btn-sm">لغو نوبت</button>
-                            </form>
+                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmCancelModal-{{ appointment.id }}">
+                                لغو نوبت
+                            </button>
                         {% elif appointment.status == 'CANCELED' %}
                             <span class="badge bg-secondary">لغو شده</span>
                         {% elif appointment.status == 'COMPLETED' %}
@@ -96,6 +94,29 @@
                                 <p>نظر شما: {{ appointment.review.rating }} ستاره</p>
                             {% endif %}
                         {% endif %}
+                    </div>
+                </div>
+
+                <!-- Modal for each appointment -->
+                <div class="modal fade" id="confirmCancelModal-{{ appointment.id }}" tabindex="-1" aria-labelledby="confirmCancelModalLabel-{{ appointment.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="confirmCancelModalLabel-{{ appointment.id }}">تایید لغو نوبت</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                آیا مایلید این نوبت لغو شود؟
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">خیر</button>
+                                <form method="post" action="{% url 'booking:patient_dashboard' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
+                                    <button type="submit" class="btn btn-danger">بله، لغو کن</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             {% endfor %}
