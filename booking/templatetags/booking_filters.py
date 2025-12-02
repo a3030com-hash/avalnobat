@@ -78,9 +78,14 @@ def to_jalali_datetime(gregorian_datetime, format_str="%A %Y/%m/%d, ساعت %H:
     """
     if not gregorian_datetime:
         return ""
-
     try:
-        jalali_datetime = jdatetime.datetime.fromgregorian(datetime=gregorian_datetime)
+        # Convert to the 'Asia/Tehran' timezone
+        tehran_tz = jdatetime.timezone.pytz.timezone('Asia/Tehran')
+        if gregorian_datetime.tzinfo is None:
+            gregorian_datetime = jdatetime.timezone.pytz.utc.localize(gregorian_datetime)
+
+        local_datetime = gregorian_datetime.astimezone(tehran_tz)
+        jalali_datetime = jdatetime.datetime.fromgregorian(datetime=local_datetime)
 
         jalali_day_names = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"]
         jalali_month_names = [
