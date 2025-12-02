@@ -1,4 +1,5 @@
 {% extends 'booking/base.html' %}
+{% load booking_filters %}
 
 {% block title %}داشبورد بیمار - AvalNobat{% endblock %}
 
@@ -84,6 +85,11 @@
                                     </div>
                                     {{ review_form.comment.label_tag }}
                                     {{ review_form.comment }}
+                                     {% if review_form.errors %}
+                                        <div class="error-list">
+                                             {{ review_form.errors }}
+                                        </div>
+                                     {% endif %}
                                     <button type="submit" class="btn btn-primary btn-sm mt-2">ثبت نظر</button>
                                 </form>
                             {% else %}

@@ -1633,6 +1633,8 @@ def patient_dashboard(request):
     Allows patients to cancel their future appointments.
     """
     appointments = []
+    review_form = ReviewForm()  # Initialize the form
+
     if hasattr(request.user, 'user_type') and request.user.user_type == 'PATIENT':
         if request.method == 'POST':
             if 'appointment_id' in request.POST and 'rating' not in request.POST:
@@ -1645,8 +1647,9 @@ def patient_dashboard(request):
                 else:
                     messages.error(request, 'شما نمی‌توانید نوبت‌های گذشته را لغو کنید.')
                 return redirect('booking:patient_dashboard')
+
             elif 'appointment_id_review' in request.POST:
-                review_form = ReviewForm(request.POST)
+                review_form = ReviewForm(request.POST)  # Populate with POST data
                 if review_form.is_valid():
                     appointment_id = request.POST.get('appointment_id_review')
                     appointment = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)
@@ -1655,10 +1658,11 @@ def patient_dashboard(request):
                     review.save()
                     messages.success(request, 'نظر شما با موفقیت ثبت شد.')
                     return redirect('booking:patient_dashboard')
+                # If form is invalid, execution continues and renders the page
+                # with the populated, invalid form instance.
 
         appointments = Appointment.objects.filter(patient=request.user).select_related('doctor__user', 'doctor__specialty', 'review').order_by('-appointment_datetime')
 
-    review_form = ReviewForm()
     verified_phone = request.session.pop('verified_patient_phone', None)
 
     context = {
@@ -1666,7 +1670,7 @@ def patient_dashboard(request):
         'page_title': 'نوبت‌های من',
         'today': datetime.date.today(),
         'verified_phone': verified_phone,
-        'review_form': review_form,
+        'review_form': review_form, # This now contains the invalid form if submission failed
     }
     return render(request, 'booking/patient_dashboard.html', context)
 
