@@ -1,38 +1,47 @@
-{% extends "booking/base.html" %}
+{% extends 'booking/base.html' %}
 
-{% block title %}ورود بیمار{% endblock %}
+{% block title %}داشبورد بیمار - AvalNobat{% endblock %}
 
 {% block content %}
 <div class="form-container">
-    <h2>ورود به حساب کاربری</h2>
-    <p>لطفا برای ورود یا ثبت نام شماره موبایل خود را وارد کنید.</p>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>نوبت‌های من</h1>
+    </div>
 
-    {% if error %}
-        <p class="error-list">{{ error }}</p>
-    {% endif %}
     {% if messages %}
-        {% for message in messages %}
-             <p class="error-list">{{ message }}</p>
-        {% endfor %}
+        <ul class="error-list">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
     {% endif %}
 
-    <form method="post" action="{% url 'booking:patient_login' %}">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="mobile_number">شماره موبایل</label>
-            <input type="text" id="mobile_number" name="mobile_number" required placeholder="مثال: 09123456789">
-        </div>
-        <button type="submit" class="btn-submit btn-block">ارسال کد تایید</button>
-    </form>
+    {% if appointments %}
+        <ul class="list-group">
+            {% for appointment in appointments %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>دکتر {{ appointment.doctor.user.get_full_name }}</strong><br>
+                        {{ appointment.appointment_datetime }}
+                    </div>
+                    <div>
+                        {% if appointment.status == 'BOOKED' and appointment.appointment_datetime.date >= today %}
+                            <form method="post" action="{% url 'booking:patient_dashboard' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">لغو نوبت</button>
+                            </form>
+                        {% elif appointment.status == 'CANCELED' %}
+                            <span class="badge bg-secondary">لغو شده</span>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>شما تاکنون نوبتی رزرو نکرده‌اید یا از سیستم خارج شده‌اید.</p>
+    {% endif %}
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // When the user lands on the login page, it's often after logging out.
-        // Clear any stored mobile number to ensure a clean login flow.
-        localStorage.removeItem('patientMobileNumber');
-    });
-</script>
-{% endblock %}
+{% block extra_js %}{% endblock %}
