@@ -69,6 +69,42 @@ def to_jalali(gregorian_date, format_str="%Y/%m/%d"):
     except (ValueError, TypeError):
         return gregorian_date
 
+@register.filter(name='to_jalali_datetime')
+def to_jalali_datetime(gregorian_datetime, format_str="%A %Y/%m/%d, ساعت %H:%M"):
+    """
+    Converts a Gregorian datetime object to a Jalali datetime string.
+    Example usage: {{ my_datetime|to_jalali_datetime }}
+    Or with format: {{ my_datetime|to_jalali_datetime:"%A, %d %B %Y - %H:%M" }}
+    """
+    if not gregorian_datetime:
+        return ""
+
+    try:
+        jalali_datetime = jdatetime.datetime.fromgregorian(datetime=gregorian_datetime)
+
+        jalali_day_names = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"]
+        jalali_month_names = [
+            "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
+            "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
+        ]
+
+        result = format_str
+        result = result.replace('%Y', str(jalali_datetime.year))
+        result = result.replace('%m', f'{jalali_datetime.month:02d}')
+        result = result.replace('%d', f'{jalali_datetime.day:02d}')
+        result = result.replace('%H', f'{jalali_datetime.hour:02d}')
+        result = result.replace('%M', f'{jalali_datetime.minute:02d}')
+
+        if '%A' in result:
+            result = result.replace('%A', jalali_day_names[jalali_datetime.weekday()])
+
+        if '%B' in result:
+            result = result.replace('%B', jalali_month_names[jalali_datetime.month - 1])
+
+        return result
+    except (ValueError, TypeError):
+        return gregorian_datetime
+
 @register.filter(name='intcomma')
 def intcomma(value):
     """
