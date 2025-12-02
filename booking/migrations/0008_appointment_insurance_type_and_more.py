@@ -17,9 +17,8 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("TAMIN", "تامین اجتماعی"),
-                    ("SALAMAT", "سلامت"),
                     ("KHADAMAT", "خدمات درمانی"),
-                    ("ARTESH", "ارتش"),
+                    ("ARTESH", "نیروی مسلح"),
                     ("AZAD", "آزاد"),
                 ],
                 default="AZAD",
@@ -50,11 +49,10 @@ class Migration(migrations.Migration):
                     "insurance_type",
                     models.CharField(
                         choices=[
-                            ("TAMIN", "تامین اجتماعی"),
-                            ("SALAMAT", "سلامت"),
-                            ("KHADAMAT", "خدمات درمانی"),
-                            ("ARTESH", "ارتش"),
-                            ("AZAD", "آزاد"),
+                           ("TAMIN", "تامین اجتماعی"),
+                           ("KHADAMAT", "خدمات درمانی"),
+                           ("ARTESH", "نیروی مسلح"),
+                           ("AZAD", "آزاد"),
                         ],
                         max_length=10,
                         verbose_name="نوع بیمه",

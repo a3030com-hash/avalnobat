@@ -656,13 +656,24 @@
                        <img src="/media/avalnobat.png" style="padding: 0; " alt="avalnobat-icon">
                     </a>
                     </div>
-
-                             <a href="{% url 'booking:patient_dashboard' %}" title="نوبت‌های من">
+                     <div class="dropdown" style="margin-right:auto;margin-left:15px">
+                                <span class="dropbtn nav-item">
+                                    <img src="/media/doctor2.png" style="padding: 0; " alt="avalnobat-icon">
+                                </span>
+                         <div class="dropdown-content">
+                         <a href="{% url 'booking:patient_dashboard' %}" title="نوبت‌های من">
                                 <i class="fas fa-calendar-check icon"></i> نوبت‌های من
                             </a>
-                           
-               
-                               <div class="dropdown" style="margin-right:auto;">
+                             <a href="{% url 'booking:patient_login' %}" title="ورود">
+                                <i class="fas fa-sign-in-alt icon"></i> ورود
+                            </a>
+                            <a href="{% url 'booking:patient_logout' %}" title="خروج">
+                                <i class="fas fa-sign-out-alt icon"></i> خروج
+                            </a>
+                        </div>
+                      </div>
+
+                      <div class="dropdown" >
                                 <span class="dropbtn nav-item">
                                     <img src="/media/doctor.png" style="padding: 0; " alt="avalnobat-icon">
                                 </span>
