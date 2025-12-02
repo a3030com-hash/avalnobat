@@ -1631,7 +1631,7 @@ def patient_dashboard(request):
     """
     appointments = []
     #print(request.user.user_type)
-    if  request.user.user_type == 'PATIENT':
+    if hasattr(request.user, 'user_type') and request.user.user_type == 'PATIENT':
         if request.method == 'POST':
             appointment_id = request.POST.get('appointment_id')
             appointment_to_cancel = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)
