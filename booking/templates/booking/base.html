@@ -526,6 +526,25 @@
             100% { transform: translate(85px, 0%); }
         }
         
+        .rating {
+            display: inline-block;
+            font-size: 0;
+        }
+        .rating > input {
+            display: none;
+        }
+        .rating > label {
+            float: right;
+            cursor: pointer;
+            color: #ccc;
+            font-size: 2rem;
+        }
+        .rating > input:checked ~ label,
+        .rating:not(:checked) > label:hover,
+        .rating:not(:checked) > label:hover ~ label {
+            color: #f7d106;
+        }
+
         /* استایل فوتر */
         footer {
             background-color: #49c2b7;

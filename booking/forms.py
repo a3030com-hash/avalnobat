@@ -1,7 +1,7 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 from django import forms
-from .models import DoctorAvailability, Appointment, Specialty, DoctorProfile
+from .models import DoctorAvailability, Appointment, Specialty, DoctorProfile, Review
 
 User = get_user_model()
 
@@ -79,6 +79,18 @@ class AppointmentBookingForm(forms.ModelForm):
         }
         widgets = {
             'problem_description': forms.Textarea(attrs={'rows': 3}),
+        }
+
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ['rating', 'comment']
+        labels = {
+            'rating': 'امتیاز',
+            'comment': 'نظر',
+        }
+        widgets = {
+            'comment': forms.Textarea(attrs={'rows': 3}),
         }
 
 class AppointmentUpdateForm(forms.ModelForm):

@@ -2,9 +2,32 @@
 
 {% block title %}داشبورد بیمار - AvalNobat{% endblock %}
 
+{% block extra_head %}
+<style>
+    .appointment-cards .card {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+        padding: 1.5rem;
+        transition: transform 0.2s;
+    }
+    .appointment-cards .card:hover {
+        transform: translateY(-5px);
+    }
+    .doctor-photo-small {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="form-container">
     <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'booking:doctor_list' %}" class="btn btn-secondary mb-3">بازگشت به صفحه اصلی</a>
         <h1>نوبت‌های من</h1>
     </div>
 
@@ -17,14 +40,21 @@
     {% endif %}
 
     {% if appointments %}
-        <ul class="list-group">
+        <div class="appointment-cards">
             {% for appointment in appointments %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>دکتر {{ appointment.doctor.user.get_full_name }}</strong><br>
-                        {{ appointment.appointment_datetime }}
-                    </div>
-                    <div>
+                <div class="card">
+                    <div class="card-body">
+                        {% if appointment.doctor.photo %}
+                            <img src="{{ appointment.doctor.photo.url }}" alt="عکس دکتر {{ appointment.doctor.user.get_full_name }}" class="doctor-photo-small">
+                        {% endif %}
+                        <h5 class="card-title">
+                            <a href="{% url 'booking:doctor_detail' pk=appointment.doctor.pk %}">
+                                دکتر {{ appointment.doctor.user.get_full_name }}
+                            </a>
+                        </h5>
+                        <p class="card-text">{{ appointment.appointment_datetime }}</p>
+                        <p class="card-text"><strong>آدرس:</strong> {{ appointment.doctor.address }}</p>
+                        <p class="card-text"><strong>تلفن:</strong> {{ appointment.doctor.phone_number }}</p>
                         {% if appointment.status == 'BOOKED' and appointment.appointment_datetime.date >= today %}
                             <form method="post" action="{% url 'booking:patient_dashboard' %}">
                                 {% csrf_token %}
@@ -33,11 +63,30 @@
                             </form>
                         {% elif appointment.status == 'CANCELED' %}
                             <span class="badge bg-secondary">لغو شده</span>
+                        {% elif appointment.status == 'COMPLETED' %}
+                            {% if not appointment.review %}
+                                <form method="post" action="{% url 'booking:patient_dashboard' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="appointment_id_review" value="{{ appointment.id }}">
+                                    <div class="rating">
+                                        <input type="radio" id="star5-{{ appointment.id }}" name="rating" value="5" /><label for="star5-{{ appointment.id }}" title="5 stars"></label>
+                                        <input type="radio" id="star4-{{ appointment.id }}" name="rating" value="4" /><label for="star4-{{ appointment.id }}" title="4 stars"></label>
+                                        <input type="radio" id="star3-{{ appointment.id }}" name="rating" value="3" /><label for="star3-{{ appointment.id }}" title="3 stars"></label>
+                                        <input type="radio" id="star2-{{ appointment.id }}" name="rating" value="2" /><label for="star2-{{ appointment.id }}" title="2 stars"></label>
+                                        <input type="radio" id="star1-{{ appointment.id }}" name="rating" value="1" /><label for="star1-{{ appointment.id }}" title="1 star"></label>
+                                    </div>
+                                    {{ review_form.comment.label_tag }}
+                                    {{ review_form.comment }}
+                                    <button type="submit" class="btn btn-primary btn-sm mt-2">ثبت نظر</button>
+                                </form>
+                            {% else %}
+                                <p>نظر شما: {{ appointment.review.rating }} ستاره</p>
+                            {% endif %}
                         {% endif %}
                     </div>
-                </li>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     {% else %}
         <p>شما تاکنون نوبتی رزرو نکرده‌اید یا از سیستم خارج شده‌اید.</p>
     {% endif %}

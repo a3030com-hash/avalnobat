@@ -16,10 +16,12 @@
         padding: 2rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    .profile-container img {
+    .profile-container .doctor-photo {
         max-width: 150px;
         border-radius: 50%;
         margin-bottom: 1rem;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     .calendar {
         display: grid;
@@ -84,12 +86,15 @@
 <div class="profile-container">
     <h2 class="elegant-title">{{ page_title }}</h2>
     {% if doctor.photo %}
-        <img src="{{ doctor.photo.url }}" alt="عکس دکتر {{ doctor.user.get_full_name }}">
+        <img src="{{ doctor.photo.url }}" alt="عکس دکتر {{ doctor.user.get_full_name }}" class="doctor-photo">
     {% endif %}
     <p><strong>نام کامل:</strong> دکتر {{ doctor.user.get_full_name }}</p>
     <p><strong>تخصص:</strong> {{ doctor.specialty.name|default:"-" }}</p>
     <p><strong>شماره تلفن مطب:</strong> {{ doctor.phone_number }}</p>
     <p><strong>آدرس:</strong> {{ doctor.address }}</p>
+    {% if average_rating %}
+        <p><strong>میانگین امتیاز:</strong> {{ average_rating|floatformat:1 }} ستاره</p>
+    {% endif %}
     <p><strong>بیوگرافی:</strong></p>
     <p>{{ doctor.biography|linebreaks|default:"بیوگرافی ثبت نشده است." }}</p>
 

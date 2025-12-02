@@ -11,12 +11,12 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
-from .models import DoctorProfile, DoctorAvailability, Appointment, TimeSlotException
-from .forms import DoctorAvailabilityForm, AppointmentBookingForm
+from .models import DoctorProfile, DoctorAvailability, Appointment, TimeSlotException, Review
+from .forms import DoctorAvailabilityForm, AppointmentBookingForm, ReviewForm
 from django.urls import reverse
 from django.db.models import Q
 import requests
-from django.db.models import Q
+from django.db.models import Q, Avg
 from django.http import HttpResponse
 import openpyxl
 from .decorators import doctor_required, secretary_required
@@ -62,6 +62,8 @@ def doctor_detail(request, pk):
     """
     doctor = get_object_or_404(DoctorProfile.objects.select_related('user', 'specialty'), pk=pk)
     availabilities = doctor.availabilities.filter(is_active=True)
+    reviews = Review.objects.filter(appointment__doctor=doctor)
+    average_rating = reviews.aggregate(Avg('rating'))['rating__avg']
 
     # محاسبه تقویم برای 45 روز آینده
     today = datetime.date.today()
@@ -100,6 +102,7 @@ def doctor_detail(request, pk):
     context = {
         'doctor': doctor,
         'available_days': available_days,
+        'average_rating': average_rating,
         'page_title': f'پروفایل دکتر {doctor.user.get_full_name()}'
     }
     return render(request, 'booking/doctor_detail.html', context)
@@ -1630,23 +1633,32 @@ def patient_dashboard(request):
     Allows patients to cancel their future appointments.
     """
     appointments = []
-    #print(request.user.user_type)
     if hasattr(request.user, 'user_type') and request.user.user_type == 'PATIENT':
         if request.method == 'POST':
-            appointment_id = request.POST.get('appointment_id')
-            appointment_to_cancel = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)
+            if 'appointment_id' in request.POST and 'rating' not in request.POST:
+                appointment_id = request.POST.get('appointment_id')
+                appointment_to_cancel = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)
+                if appointment_to_cancel.appointment_datetime.date() >= datetime.date.today():
+                    appointment_to_cancel.status = 'CANCELED'
+                    appointment_to_cancel.save()
+                    messages.success(request, 'نوبت شما با موفقیت لغو شد.')
+                else:
+                    messages.error(request, 'شما نمی‌توانید نوبت‌های گذشته را لغو کنید.')
+                return redirect('booking:patient_dashboard')
+            elif 'appointment_id_review' in request.POST:
+                review_form = ReviewForm(request.POST)
+                if review_form.is_valid():
+                    appointment_id = request.POST.get('appointment_id_review')
+                    appointment = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)
+                    review = review_form.save(commit=False)
+                    review.appointment = appointment
+                    review.save()
+                    messages.success(request, 'نظر شما با موفقیت ثبت شد.')
+                    return redirect('booking:patient_dashboard')
 
-            # Allow cancellation only if the appointment is for today or a future date
-            if appointment_to_cancel.appointment_datetime.date() >= datetime.date.today():
-                appointment_to_cancel.status = 'CANCELED'
-                appointment_to_cancel.save()
-                messages.success(request, 'نوبت شما با موفقیت لغو شد.')
-            else:
-                messages.error(request, 'شما نمی‌توانید نوبت‌های گذشته را لغو کنید.')
-            return redirect('booking:patient_dashboard')
+        appointments = Appointment.objects.filter(patient=request.user).select_related('doctor__user', 'doctor__specialty', 'review').order_by('-appointment_datetime')
 
-        appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_datetime')
-
+    review_form = ReviewForm()
     verified_phone = request.session.pop('verified_patient_phone', None)
 
     context = {
@@ -1654,6 +1666,7 @@ def patient_dashboard(request):
         'page_title': 'نوبت‌های من',
         'today': datetime.date.today(),
         'verified_phone': verified_phone,
+        'review_form': review_form,
     }
     return render(request, 'booking/patient_dashboard.html', context)
 
