@@ -18,6 +18,7 @@ from django.db.models import Q
 import requests
 from django.db.models import Q, Avg
 from django.http import HttpResponse
+import pytz
 import openpyxl
 from .decorators import doctor_required, secretary_required
 
@@ -146,7 +147,7 @@ def edit_availability(request, pk):
         form = DoctorAvailabilityForm(request.POST, instance=availability)
         if form.is_valid():
             form.save()
-            return redirect('booking:doctor_dashboard')
+            return redirect('booking:doctor_oard')
     else:
         form = DoctorAvailabilityForm(instance=availability)
 
@@ -512,7 +513,8 @@ def verify_payment(request):
                 # --- Send SMS Confirmation ---
                 try:
                     # ✜ بخش ارسال پیامک تایید نوبت ✜
-                    tehran_tz = timezone.pytz.timezone('Asia/Tehran')
+
+                    tehran_tz = pytz.timezone('Asia/Tehran')
                     appointment_datetime_local = appointment.appointment_datetime.astimezone(tehran_tz)
                     jalali_datetime = jdatetime.datetime.fromgregorian(datetime=appointment_datetime_local)
                     formatted_time = jalali_datetime.strftime('%Y/%m/%d ساعت %H:%M')

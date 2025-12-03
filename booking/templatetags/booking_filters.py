@@ -1,5 +1,6 @@
 from django import template
 import jdatetime
+import pytz
 
 register = template.Library()
 
@@ -80,9 +81,10 @@ def to_jalali_datetime(gregorian_datetime, format_str="%A %Y/%m/%d, ساعت %H:
         return ""
     try:
         # Convert to the 'Asia/Tehran' timezone
-        tehran_tz = jdatetime.timezone.pytz.timezone('Asia/Tehran')
+
+        tehran_tz = pytz.timezone('Asia/Tehran')
         if gregorian_datetime.tzinfo is None:
-            gregorian_datetime = jdatetime.timezone.pytz.utc.localize(gregorian_datetime)
+            gregorian_datetime = pytz.utc.localize(gregorian_datetime)
 
         local_datetime = gregorian_datetime.astimezone(tehran_tz)
         jalali_datetime = jdatetime.datetime.fromgregorian(datetime=local_datetime)
