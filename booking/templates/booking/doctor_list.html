@@ -1,4 +1,5 @@
 {% extends 'booking/base.html' %}
+{% load static %}
 
 {% block title %}{{ page_title }} - AvalNobat{% endblock %}
 
@@ -157,6 +158,18 @@
             toggleClearIcon();
             searchForm.submit();
         });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!sessionStorage.getItem('welcomePlayed')) {
+            var audio = new Audio("{% static 'audio/welcome.mp3' %}");
+            audio.play().catch(function(error) {
+                console.log("Autoplay was prevented:", error);
+            });
+            sessionStorage.setItem('welcomePlayed', 'true');
+        }
     });
 </script>
 {% endblock %}
