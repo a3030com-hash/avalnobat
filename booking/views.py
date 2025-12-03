@@ -22,6 +22,7 @@ import pytz
 import openpyxl
 from .decorators import doctor_required, secretary_required
 
+
 def _get_doctor_profile(user):
     """
     Helper function to get the doctor profile for a doctor or secretary.
@@ -1626,7 +1627,7 @@ def patient_logout(request):
     Logs the patient out.
     """
     logout(request)
-    messages.success(request, 'شما با موفقیت خارج شدید.')
+    #messages.success(request, 'شما با موفقیت خارج شدید.')
     return redirect('booking:patient_login')
 
 
