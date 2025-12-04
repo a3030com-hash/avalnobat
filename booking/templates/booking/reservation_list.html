@@ -67,25 +67,13 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Function to close all open confirmations
-    function closeAllConfirmations() {
-        document.querySelectorAll('.cancel-confirmation').forEach(div => {
-            div.classList.add('hidden');
-        });
-        document.querySelectorAll('.btn-cancel-initial').forEach(btn => {
-            btn.classList.remove('hidden');
-        });
-    }
-
     // Handle clickable rows
-    const rows = document.querySelectorAll('.clickable-row');
-    rows.forEach(row => {
+    document.querySelectorAll('.clickable-row').forEach(row => {
         row.addEventListener('click', function(event) {
             // Stop row navigation if the click is on an action button
             if (event.target.closest('[data-label="عملیات"]')) {
                 return;
             }
-
             const url = this.dataset.url;
             if (url) {
                 window.location.href = url;
@@ -93,31 +81,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Show confirmation on initial cancel click
-    document.querySelectorAll('.btn-cancel-initial').forEach(button => {
-        button.addEventListener('click', function(event) {
-            event.stopPropagation();
-            closeAllConfirmations(); // Close any other open confirmations
-            this.classList.add('hidden');
-            this.nextElementSibling.classList.remove('hidden');
-        });
-    });
+    // Event delegation for the whole table
+    const table = document.querySelector('.report-table');
+    if (!table) return;
 
-    // Hide confirmation on "No" click
-    document.querySelectorAll('.btn-confirm-no').forEach(button => {
-        button.addEventListener('click', function(event) {
-            event.stopPropagation();
-            const confirmationDiv = this.parentElement;
-            confirmationDiv.classList.add('hidden');
-            confirmationDiv.previousElementSibling.classList.remove('hidden');
-        });
-    });
+    table.addEventListener('click', function(event) {
+        const target = event.target;
 
-    // Prevent row click when "Yes" is clicked
-    document.querySelectorAll('.btn-confirm-yes').forEach(button => {
-        button.addEventListener('click', function(event) {
+        if (target.classList.contains('btn-cancel-initial')) {
             event.stopPropagation();
-        });
+            // Find the confirmation div in the same cell
+            const confirmationDiv = target.nextElementSibling;
+
+            // Check if it's already visible
+            const isVisible = !confirmationDiv.classList.contains('hidden');
+
+            // Hide all confirmations first
+            table.querySelectorAll('.cancel-confirmation').forEach(div => div.classList.add('hidden'));
+            table.querySelectorAll('.btn-cancel-initial').forEach(btn => btn.classList.remove('hidden'));
+
+            if (!isVisible) {
+                // If it wasn't visible, show it
+                target.classList.add('hidden');
+                confirmationDiv.classList.remove('hidden');
+            }
+        } else if (target.classList.contains('btn-confirm-no')) {
+            event.stopPropagation();
+            // Find the parent confirmation div
+            const confirmationDiv = target.closest('.cancel-confirmation');
+            if (confirmationDiv) {
+                confirmationDiv.classList.add('hidden');
+                // Find the initial button and show it
+                const initialButton = confirmationDiv.previousElementSibling;
+                if (initialButton) {
+                    initialButton.classList.remove('hidden');
+                }
+            }
+        } else if (target.classList.contains('btn-confirm-yes')) {
+            event.stopPropagation();
+        }
     });
 });
 </script>
