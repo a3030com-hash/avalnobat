@@ -64,9 +64,17 @@
                     </div>
                     <div>
                         {% if appointment.status == 'BOOKED' and appointment.appointment_datetime.date >= today %}
-                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmCancelModal-{{ appointment.id }}">
+                            <button type="button" class="btn btn-danger btn-sm btn-cancel-initial">
                                 لغو نوبت
                             </button>
+                            <div class="cancel-confirmation" style="display: none;">
+                                <form method="post" action="{% url 'booking:patient_dashboard' %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">بله</button>
+                                </form>
+                                <button type="button" class="btn btn-secondary btn-sm btn-confirm-no">خیر</button>
+                            </div>
                         {% elif appointment.status == 'CANCELED' %}
                             <span class="badge bg-secondary">لغو شده</span>
                         {% elif appointment.status == 'COMPLETED' %}
@@ -97,28 +105,6 @@
                     </div>
                 </div>
 
-                <!-- Modal for each appointment -->
-                <div class="modal fade" id="confirmCancelModal-{{ appointment.id }}" tabindex="-1" aria-labelledby="confirmCancelModalLabel-{{ appointment.id }}" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="confirmCancelModalLabel-{{ appointment.id }}">تایید لغو نوبت</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                آیا مایلید این نوبت لغو شود؟
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">خیر</button>
-                                <form method="post" action="{% url 'booking:patient_dashboard' %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
-                                    <button type="submit" class="btn btn-danger">بله، لغو کن</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             {% endfor %}
         </div>
     {% else %}
@@ -127,4 +113,38 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to close all open confirmations
+    function closeAllConfirmations() {
+        document.querySelectorAll('.cancel-confirmation').forEach(div => {
+            div.style.display = 'none';
+        });
+        document.querySelectorAll('.btn-cancel-initial').forEach(btn => {
+            btn.style.display = 'inline-block';
+        });
+    }
+
+    // Show confirmation on initial cancel click
+    document.querySelectorAll('.btn-cancel-initial').forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.stopPropagation();
+            closeAllConfirmations(); // Close any other open confirmations
+            this.style.display = 'none';
+            this.nextElementSibling.style.display = 'block';
+        });
+    });
+
+    // Hide confirmation on "No" click
+    document.querySelectorAll('.btn-confirm-no').forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.stopPropagation();
+            const confirmationDiv = this.parentElement;
+            confirmationDiv.style.display = 'none';
+            confirmationDiv.previousElementSibling.style.display = 'inline-block';
+        });
+    });
+});
+</script>
+{% endblock %}
