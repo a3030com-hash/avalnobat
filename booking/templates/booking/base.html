@@ -619,7 +619,7 @@
                 <div style="width: 100%;display: flex"  class="icon-links">
                     <div>
                     <a href="{% url 'booking:doctor_list' %}" title="صفحه اصلی">
-                        <img src="/media/avalnobatk.png" style="padding: 0" alt="avalnobat-icon">
+                        <img src="/media/avalnobat.png" style="padding: 0;width: 70%; height: auto;" alt="avalnobat-icon">
                     </a>
                     </div>
                     <div style="margin-right:auto; ">
@@ -657,23 +657,13 @@
                     </a>
                     </div>
                      <div class="dropdown" style="margin-right:auto;margin-left:15px">
-                                <span class="dropbtn nav-item">
-                                    <img src="/media/doctor2.png" style="padding: 0; " alt="avalnobat-icon">
-                                </span>
-                         <div class="dropdown-content">
-                         <a href="{% url 'booking:patient_dashboard' %}" title="نوبت‌های من">
-                                <i class="fas fa-calendar-check icon"></i> نوبت‌های من
-                            </a>
-                          
-                           
-                        </div>
-                      </div>
-
-                      <div class="dropdown" >
-                                <span class="dropbtn nav-item">
+                               <span class="dropbtn nav-item">
                                     <img src="/media/doctor.png" style="padding: 0; " alt="avalnobat-icon">
                                 </span>
                                 <div class="dropdown-content">
+                                     <a href="{% url 'booking:patient_dashboard' %}" title="نوبت‌های من">
+                                <i class="fas fa-calendar-check icon"></i> نوبت‌های من
+                                     </a>
                                     <a href="{% url 'booking:signup' %}">
                                         <span class="fas fa-user-plus"></span> ثبت نام پزشک
                                     </a>
