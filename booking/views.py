@@ -605,7 +605,7 @@ def confirm_payment(request):
     }
     return render(request, 'booking/confirmation_page.html', context)
 
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.http import JsonResponse
 from django.forms import modelformset_factory
 from .forms import AppointmentUpdateForm, DailyExpenseForm, DoctorRegistrationForm, UserUpdateForm, DoctorProfileUpdateForm, SecretarySignUpForm
@@ -1689,6 +1689,11 @@ from django.urls import reverse
 
 class CustomLoginView(LoginView):
     template_name = 'booking/login.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.user_type == 'PATIENT':
+            logout(request)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         user = self.request.user
