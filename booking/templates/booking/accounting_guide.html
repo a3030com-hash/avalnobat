@@ -272,44 +272,4 @@
         <p>ما به نقش حیاتی منشی‌ها در مدیریت یک مطب موفق ایمان داریم. به همین دلیل، برای قدردانی از زحمات ایشان و ایجاد انگیزه‌ی بیشتر، <strong>۵۰٪ از درآمد حاصل از نوبت‌گیری آنلاین</strong> که به حساب ما واریز می‌شود، در پایان ماه به حساب منشی‌ها واریز خواهد شد. این طرح نه تنها به نفع منشی‌هاست، بلکه با افزایش رضایت شغلی آن‌ها، به بهبود خدمات‌رسانی به بیماران و در نهایت موفقیت بیشتر مطب شما کمک می‌کند.</p>
     </div>
 </div>
-
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        if (!sessionStorage.getItem('welcomeAudioPlayed')) {
-            var audio = new Audio("{% static 'audio/1.mp3' %}");
-
-            // Function to play audio, which will be triggered by user interaction.
-            const playAudio = () => {
-                audio.play().then(() => {
-                    console.log("Playback started successfully.");
-                    sessionStorage.setItem('welcomeAudioPlayed', 'true');
-                }).catch(function(error) {
-                    console.log("Autoplay was prevented. Waiting for user interaction.", error);
-                });
-                // Clean up the event listener after the first interaction.
-                document.body.removeEventListener('click', playAudio);
-                document.body.removeEventListener('touchstart', playAudio);
-            };
-
-            // Attempt to play, and if it fails, set up listeners for user interaction.
-            let playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.then(_ => {
-                    // Autoplay started!
-                    sessionStorage.setItem('welcomeAudioPlayed', 'true');
-                    console.log("Autoplay started successfully.");
-                }).catch(error => {
-                    // Autoplay was prevented.
-                    // We'll set up listeners to play on the first user interaction.
-                    console.log("Autoplay was prevented. Setting up listeners for user interaction.");
-                    document.body.addEventListener('click', playAudio, { once: true });
-                    document.body.addEventListener('touchstart', playAudio, { once: true });
-                });
-            }
-        }
-    });
-</script>
 {% endblock %}
