@@ -747,9 +747,10 @@ def daily_patients(request, date=None):
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': True})
             return redirect('booking:daily_patients', date=date)
-        elif request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            # Handle formset errors for AJAX requests
-            return JsonResponse({'success': False, 'errors': formset.errors})
+        else: # Note the 'else' instead of 'elif'
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                # Handle formset errors for AJAX requests
+                return JsonResponse({'success': False, 'errors': formset.errors})
     else:
         # Pre-fill visit fee based on insurance
         insurance_fees = {

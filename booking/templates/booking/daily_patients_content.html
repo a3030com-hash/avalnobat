@@ -51,7 +51,6 @@
             {% endfor %}
         </tbody>
     </table>
-    <button type="submit" name="update_appointments" class="btn-submit">ذخیره تغییرات نوبت‌ها</button>
 </form>
 </div>
 
@@ -98,5 +97,40 @@
                 }
             });
         }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('daily-patients-form');
+        if (!form) return;
+
+        let timeout = null;
+
+        form.addEventListener('input', function(e) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                const formData = new FormData(form);
+                const url = form.action;
+
+                fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Maybe show a subtle success indicator
+                        console.log('Autosaved!');
+                    } else {
+                        console.error('Autosave Error:', data.errors);
+                        // Optionally, display an error message to the user
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }, 500); // Debounce time in ms
+        });
     });
 </script>
