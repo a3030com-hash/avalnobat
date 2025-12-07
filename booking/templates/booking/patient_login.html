@@ -25,7 +25,7 @@
                         {{ appointment.appointment_datetime }}
                     </div>
                     <div>
-                        {% if appointment.status == 'BOOKED' and appointment.appointment_datetime.date >= today %}
+                        {% if appointment.status == 1 and appointment.appointment_datetime.date >= today %}
                             <form method="post" action="{% url 'booking:patient_dashboard' %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="appointment_id" value="{{ appointment.id }}">

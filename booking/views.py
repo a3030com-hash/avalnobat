@@ -91,7 +91,7 @@ def doctor_detail(request, pk):
                 booked_count = Appointment.objects.filter(
                     doctor=doctor,
                     appointment_datetime__date=current_gregorian_date,
-                    status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
+                    status__in=[1, 2, 4]
                 ).count()
 
                 if booked_count < total_capacity:
@@ -199,7 +199,7 @@ def book_appointment(request, pk, date):
     booked_datetimes = list(Appointment.objects.filter(
         doctor=doctor,
         appointment_datetime__date=target_date,
-        status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
+        status__in=[1, 2, 4]
     ).values_list('appointment_datetime', flat=True))
 
     canceled_slots = list(TimeSlotException.objects.filter(
@@ -231,13 +231,13 @@ def book_appointment(request, pk, date):
 
             try:
                 with transaction.atomic():
-                    if Appointment.objects.filter(doctor=doctor, appointment_datetime=appointment_datetime, status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']).exists():
+                    if Appointment.objects.filter(doctor=doctor, appointment_datetime=appointment_datetime, status__in=[1, 2, 4]).exists():
                         raise ValueError("این نوبت لحظاتی پیش رزرو شد.")
 
                     appointment = form.save(commit=False)
                     appointment.doctor = doctor
                     appointment.appointment_datetime = appointment_datetime
-                    appointment.status = 'PENDING_PAYMENT'
+                    appointment.status = 4
                     appointment.save()
 
                     # --- OTP & SMS Sending Logic ---
@@ -508,7 +508,7 @@ def verify_payment(request):
                 # 4. All steps successful. Finalize appointment.
                 # ⭐️ خط ۴۹: استفاده از نسخه عددی برای کوئری دیتابیس
                 appointment = get_object_or_404(Appointment, payment_order_id=sale_order_id_int)
-                appointment.status = 'BOOKED'
+                appointment.status = 1
                 appointment.save()
 
                 # --- Send SMS Confirmation ---
@@ -593,7 +593,7 @@ def confirm_payment(request):
 
     appointment = get_object_or_404(Appointment, pk=pending_appointment_id)
 
-    appointment.status = 'BOOKED'
+    appointment.status = 1
     appointment.save()
 
     # Clear the session variable after successful booking
@@ -636,7 +636,7 @@ def secretary_panel(request, date=None):
     booked_appointments = Appointment.objects.filter(
         doctor=doctor_profile,
         appointment_datetime__date__range=[current_date, end_date],
-        status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
+        status__in=[1, 2, 4]
     ).values('appointment_datetime__date').annotate(count=Count('id'))
 
     booked_counts = {item['appointment_datetime__date']: item['count'] for item in booked_appointments}
@@ -681,7 +681,7 @@ def patient_list(request):
         return redirect('booking:doctor_list')
 
     queryset = Appointment.objects.filter(
-        doctor=doctor_profile, status='BOOKED'
+        doctor=doctor_profile, status=1
     ).order_by('-appointment_datetime')
 
     query = request.GET.get('q')
@@ -721,7 +721,7 @@ def daily_patients(request, date=None):
     AppointmentFormSet = modelformset_factory(Appointment, form=AppointmentUpdateForm, extra=0)
 
     queryset = Appointment.objects.filter(
-        doctor=doctor_profile, appointment_datetime__date=current_date,   status__in=['BOOKED', 'COMPLETED']
+        doctor=doctor_profile, appointment_datetime__date=current_date,   status__in=[1, 2]
     ).order_by('appointment_datetime')
 
     if request.method == 'POST':
@@ -731,9 +731,9 @@ def daily_patients(request, date=None):
             for appointment in appointments:
                 # Update status based on payment method
                 if appointment.payment_method and appointment.payment_method >= 1:
-                    appointment.status = 'COMPLETED'
+                    appointment.status = 2
                 else:
-                    appointment.status = 'BOOKED'
+                    appointment.status = 1
                 appointment.save()
 
                 # Update insurance fee if visit fee was paid
@@ -887,7 +887,7 @@ def manage_day(request, date):
     booked_datetimes = list(Appointment.objects.filter(
         doctor=doctor_profile,
         appointment_datetime__date=target_date,
-        status__in=['BOOKED', 'COMPLETED', 'PENDING_PAYMENT']
+        status__in=[1, 2, 4]
     ).values_list('appointment_datetime', flat=True))
 
     time_slot_exceptions = TimeSlotException.objects.filter(
@@ -963,7 +963,7 @@ def manage_day(request, date):
                         appointment.doctor = doctor_profile
                         appointment.patient = patient_user
                         appointment.appointment_datetime = slot_datetime
-                        appointment.status = 'BOOKED'
+                        appointment.status = 1
                         appointment.save()
                         return redirect('booking:manage_day', date=date)
                 # If form is invalid, we will fall through and re-render the page with errors
@@ -1259,7 +1259,7 @@ def financial_report(request, period='daily', date=None):
             # Redirect to prevent form resubmission
             return redirect('booking:financial_report', period=period, date=current_date.strftime('%Y-%m-%d'))
 
-    total_booked_count = all_appointments_in_period.exclude(status='CANCELED').count()
+    total_booked_count = all_appointments_in_period.exclude(status=3).count()
     total_visited_count = appointments_in_period.count()
 
     context = {
@@ -1449,7 +1449,7 @@ def export_patients_to_excel(request):
 
     doctor_profile = request.user.doctor_profile
     queryset = Appointment.objects.filter(
-        doctor=doctor_profile, status='BOOKED'
+        doctor=doctor_profile, status=1
     ).order_by('-appointment_datetime')
 
     response = HttpResponse(
@@ -1508,7 +1508,7 @@ def reservation_list(request):
     today = datetime.date.today()
     reservations_qs = Appointment.objects.filter(
         doctor=doctor_profile,
-        status='BOOKED',
+        status=1,
         appointment_datetime__gte=today
     ).order_by('appointment_datetime')
 
@@ -1640,11 +1640,14 @@ def patient_logout(request):
     return redirect('booking:patient_login')
 
 
+@login_required
 def patient_dashboard(request):
     """
     Displays the patient's dashboard with their appointments.
     Allows patients to cancel their future appointments.
     """
+    if request.user.user_type != 'PATIENT':
+        return redirect('booking:doctor_list')
     appointments = []
     review_form = ReviewForm()  # Initialize the form
 
@@ -1654,7 +1657,7 @@ def patient_dashboard(request):
                 appointment_id = request.POST.get('appointment_id')
                 appointment_to_cancel = get_object_or_404(Appointment, pk=appointment_id, patient=request.user)
                 if appointment_to_cancel.appointment_datetime.date() >= datetime.date.today():
-                    appointment_to_cancel.status = 'CANCELED'
+                    appointment_to_cancel.status = 3
                     appointment_to_cancel.save()
                     messages.success(request, 'نوبت شما با موفقیت لغو شد.')
                 else:

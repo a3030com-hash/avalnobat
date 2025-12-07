@@ -268,7 +268,7 @@
                         <p class="card-text"><strong>تلفن:</strong> {{ appointment.doctor.phone_number }}</p>
                         <p class="card-text">
                             <strong>وضعیت:</strong> 
-                            {% if appointment.status == 'BOOKED' %}
+                            {% if appointment.status == 1 %}
                                 <span class="badge bg-success">رزرو شده</span>
                             {% elif appointment.status == 'CANCELED' %}
                                 <span class="badge bg-secondary">لغو شده</span>
@@ -279,7 +279,7 @@
                     </div>
                     
                     <div class="card-actions">
-                        {% if appointment.status == 'BOOKED' and appointment.appointment_datetime.date >= today %}
+                        {% if appointment.status == 1 and appointment.appointment_datetime.date >= today %}
                             <button type="button" class="btn-cancel" onclick="openCancelModal({{ appointment.id }}, '{{ appointment.doctor.user.get_full_name|escapejs }}', '{{ appointment.appointment_datetime|to_jalali_datetime|escapejs }}')">
                                 لغو نوبت
                             </button>

@@ -85,8 +85,12 @@ class BookingAppTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'booking/doctor_dashboard.html')
 
-    def test_full_booking_flow_for_guest(self):
+    @patch('booking.views.requests.post')
+    @patch('zeep.Client')
+    def test_full_booking_flow_for_guest(self, mock_client, mock_post):
         """Test the complete booking flow for a guest patient with Jalali date."""
+        mock_post.return_value.status_code = 200
+        mock_client.return_value.service.bpPayRequest.return_value = "0,ref_id"
         today_gregorian = datetime.date.today()
         today_jalali_str = jdatetime.date.fromgregorian(date=today_gregorian).strftime('%Y-%m-%d')
 
@@ -107,7 +111,7 @@ class BookingAppTestCase(TestCase):
 
         self.assertEqual(response.status_code, 302)
         appointment = Appointment.objects.first()
-        self.assertEqual(appointment.status, 'PENDING_PAYMENT')
+        self.assertEqual(int(appointment.status), 4)
 
         # Manually set the OTP in the session for the test
         session = self.client.session
@@ -126,7 +130,7 @@ class BookingAppTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         appointment.refresh_from_db()
-        self.assertEqual(appointment.status, 'BOOKED')
+        self.assertEqual(int(appointment.status), 1)
 
     def test_financial_report(self):
         """Test the financial report for accuracy."""
@@ -139,7 +143,7 @@ class BookingAppTestCase(TestCase):
         Appointment.objects.create(
             doctor=self.doctor_profile, patient=self.patient_user,
             appointment_datetime=timezone.make_aware(datetime.datetime.combine(yesterday, datetime.time(10, 0))),
-            status='COMPLETED', payment_method=2, visit_fee_paid=100000 # Cash
+            status=2, payment_method=2, visit_fee_paid=100000 # Cash
         )
         DailyExpense.objects.create(doctor=self.doctor_profile, date=yesterday, description="هزینه تست دیروز", amount=20000)
 
@@ -147,7 +151,7 @@ class BookingAppTestCase(TestCase):
         Appointment.objects.create(
             doctor=self.doctor_profile, patient=self.patient_user,
             appointment_datetime=timezone.make_aware(datetime.datetime.combine(today, datetime.time(11, 0))),
-            status='COMPLETED', payment_method=2, visit_fee_paid=150000 # Cash
+            status=2, payment_method=2, visit_fee_paid=150000 # Cash
         )
         DailyExpense.objects.create(doctor=self.doctor_profile, date=today, description="هزینه تست امروز", amount=30000)
 
@@ -234,7 +238,7 @@ class BookingAppTestCase(TestCase):
             doctor=self.doctor_profile,
             patient=self.patient_user,
             appointment_datetime=future_date,
-            status='BOOKED'
+            status=1
         )
 
         # Create a past appointment
@@ -243,7 +247,7 @@ class BookingAppTestCase(TestCase):
             doctor=self.doctor_profile,
             patient=self.patient_user,
             appointment_datetime=past_date,
-            status='BOOKED'
+            status=1
         )
 
         # Attempt to cancel the future appointment
@@ -252,11 +256,11 @@ class BookingAppTestCase(TestCase):
         self.assertEqual(response.status_code, 302) # Should redirect
 
         future_appointment.refresh_from_db()
-        self.assertEqual(future_appointment.status, 'CANCELED')
+        self.assertEqual(int(future_appointment.status), 3)
 
         # Attempt to cancel the past appointment
         response = self.client.post(dashboard_url, {'appointment_id': past_appointment.id})
         self.assertEqual(response.status_code, 302)
 
         past_appointment.refresh_from_db()
-        self.assertEqual(past_appointment.status, 'BOOKED') # Status should not change
+        self.assertEqual(int(past_appointment.status), 1)

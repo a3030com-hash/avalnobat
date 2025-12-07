@@ -82,10 +82,10 @@ class DoctorAvailability(models.Model):
 
 class Appointment(models.Model):
     STATUS_CHOICES = (
-        ('BOOKED', 'رزرو شده'),
-        ('COMPLETED', 'تکمیل شده'),
-        ('CANCELED', 'لغو شده'),
-        ('PENDING_PAYMENT', 'در انتظار پرداخت'),
+        (1, 'رزرو شده'),
+        (2, 'تکمیل شده'),
+        (3, 'لغو شده'),
+        (4, 'در انتظار پرداخت'),
     )
     INSURANCE_CHOICES = (
          ("TAMIN", "تامین اجتماعی"),
@@ -102,7 +102,7 @@ class Appointment(models.Model):
     patient_national_id = models.CharField(max_length=10, verbose_name="کد ملی بیمار", null=True, blank=True)
     insurance_type = models.CharField(max_length=10, choices=INSURANCE_CHOICES, verbose_name="نوع بیمه", default='AZAD')
     problem_description = models.TextField(blank=True, verbose_name="شرح مشکل")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING_PAYMENT')
+    status = models.IntegerField(choices=STATUS_CHOICES, default=4)
     created_at = models.DateTimeField(auto_now_add=True)
     payment_order_id = models.BigIntegerField(unique=True, null=True, blank=True, verbose_name="شناسه یکتای پرداخت")
 
