@@ -721,7 +721,7 @@ def daily_patients(request, date=None):
     AppointmentFormSet = modelformset_factory(Appointment, form=AppointmentUpdateForm, extra=0)
 
     queryset = Appointment.objects.filter(
-        doctor=doctor_profile, appointment_datetime__date=current_date, status='BOOKED'
+        doctor=doctor_profile, appointment_datetime__date=current_date,   status__in=['BOOKED', 'COMPLETED']
     ).order_by('appointment_datetime')
 
     if request.method == 'POST':
