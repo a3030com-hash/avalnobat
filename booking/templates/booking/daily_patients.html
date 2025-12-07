@@ -10,6 +10,14 @@
 </div>
 {% endblock %}
 
+{% block extra_styles %}
+<style>
+    .status-completed {
+        background-color: #d4edda !important; /* A light green color */
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
     document.addEventListener('submit', function(e) {

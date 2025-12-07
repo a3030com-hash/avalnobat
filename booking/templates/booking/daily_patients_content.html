@@ -33,7 +33,7 @@
         </thead>
         <tbody>
             {% for form in formset %}
-                <tr>
+                <tr class="{% if form.instance.status == 'COMPLETED' %}status-completed{% endif %}">
                     <td data-label="ساعت">{{ form.instance.appointment_datetime|time:"H:i" }}</td>
                     <td data-label="نام بیمار">{{ form.instance.patient_name }}</td>
                     <td data-label="کد ملی">{{ form.instance.patient_national_id|default:"-" }}</td>
