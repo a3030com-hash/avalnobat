@@ -31,7 +31,7 @@
                                 <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
                                 <button type="submit" class="btn btn-danger btn-sm">لغو نوبت</button>
                             </form>
-                        {% elif appointment.status == 'CANCELED' %}
+                        {% elif appointment.status == 3 %}
                             <span class="badge bg-secondary">لغو شده</span>
                         {% endif %}
                     </div>

@@ -270,9 +270,9 @@
                             <strong>وضعیت:</strong> 
                             {% if appointment.status == 1 %}
                                 <span class="badge bg-success">رزرو شده</span>
-                            {% elif appointment.status == 'CANCELED' %}
+                            {% elif appointment.status == 3 %}
                                 <span class="badge bg-secondary">لغو شده</span>
-                            {% elif appointment.status == 'COMPLETED' %}
+                            {% elif appointment.status == 2 %}
                                 <span class="badge bg-primary">تکمیل شده</span>
                             {% endif %}
                         </p>
@@ -283,7 +283,7 @@
                             <button type="button" class="btn-cancel" onclick="openCancelModal({{ appointment.id }}, '{{ appointment.doctor.user.get_full_name|escapejs }}', '{{ appointment.appointment_datetime|to_jalali_datetime|escapejs }}')">
                                 لغو نوبت
                             </button>
-                        {% elif appointment.status == 'COMPLETED' and not appointment.review %}
+                        {% elif appointment.status == 2 and not appointment.review %}
                             <button type="button" class="btn-primary" onclick="toggleReviewForm({{ appointment.id }})">
                                 ثبت نظر و امتیاز
                             </button>

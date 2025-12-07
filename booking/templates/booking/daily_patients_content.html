@@ -1,4 +1,9 @@
 {% load booking_filters %}
+<style>
+    .status-completed {
+        background-color: rgb(193 233 231) !important;
+    }
+</style>
 <div id="dynamic-content" data-current-date="{{ today|date:"Y-m-d" }}">
 
 <h2 class="elegant-title">{{ page_title }}</h2>
@@ -33,7 +38,7 @@
         </thead>
         <tbody>
             {% for form in formset %}
-                <tr class="{% if form.instance.status == 2 %}status-completed{% endif %}">
+                <tr class="{% if form.instance.status > 1 %}status-completed{% endif %}">
                     <td data-label="ساعت">{{ form.instance.appointment_datetime|time:"H:i" }}</td>
                     <td data-label="نام بیمار">{{ form.instance.patient_name }}</td>
                     <td data-label="کد ملی">{{ form.instance.patient_national_id|default:"-" }}</td>
