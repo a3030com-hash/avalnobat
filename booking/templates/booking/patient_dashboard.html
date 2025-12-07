@@ -1,9 +1,11 @@
 {% extends 'booking/base.html' %}
+{% load static %}
 {% load booking_filters %}
 
 {% block title %}داشبورد بیمار - AvalNobat{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" type="text/css" href="{% static 'booking/css/custom.css' %}">
 <style>
     .appointment-cards .card {
         background: #fff;
@@ -13,7 +15,10 @@
         padding: 1.5rem;
         transition: transform 0.2s;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 20px;
+        position: relative;
     }
     .appointment-cards .card:hover {
         transform: translateY(-5px);
@@ -22,109 +27,446 @@
         width: 80px;
         height: 80px;
         border-radius: 50%;
-        margin-left: 1.5rem;
+        object-fit: cover;
+        border: 2px solid #e0e0e0;
     }
     .card-content {
         flex-grow: 1;
+        min-width: 250px;
+    }
+    .card-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+        min-width: 200px;
+    }
+    
+    /* استایل رتبه‌بندی (ستاره‌ها) */
+    .rating {
+        direction: rtl;
+        unicode-bidi: bidi-override;
+        color: #ddd;
+        font-size: 24px;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+    .rating input {
+        display: none;
+    }
+    .rating label {
+        float: right;
+        cursor: pointer;
+        color: #ddd;
+        transition: color 0.3s;
+    }
+    .rating label:before {
+        content: '★';
+    }
+    .rating input:checked ~ label,
+    .rating:not(:checked) label:hover,
+    .rating:not(:checked) label:hover ~ label {
+        color: #FFD700;
+    }
+    
+    /* استایل فرم نظر */
+    .review-form {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+        border: 1px solid #dee2e6;
+        width: 100%;
+    }
+    .review-form textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        resize: vertical;
+        margin-top: 5px;
+        font-family: inherit;
+    }
+    .review-form .btn {
+        margin-top: 10px;
+        margin-right: 5px;
+    }
+    
+    .badge {
+        padding: 0.5em 0.8em;
+        font-size: 0.9em;
+    }
+    
+    .btn-cancel {
+        background-color: #f44336;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-cancel:hover {
+        background-color: #d32f2f;
+    }
+    
+    /* استایل برای دکمه‌های مختلف */
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0069d9;
+    }
+    
+    /* استایل Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .modal-overlay.active {
+        display: flex;
+    }
+    
+    .modal-dialog {
+        background-color: #fff;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        animation: modalFadeIn 0.3s;
+    }
+    
+    @keyframes modalFadeIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-title {
+        margin: 0;
+        color: #333;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+    }
+    
+    .modal-close:hover {
+        color: #333;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .modal-footer {
+        padding: 20px;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    
+    /* استایل برای نمایش اطلاعات رزرو */
+    .appointment-info {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    
+    .appointment-info p {
+        margin: 5px 0;
+    }
+    
+    /* دکمه‌ها در حالت‌های مختلف */
+    .review-display {
+        background: #e8f5e8;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #c3e6cb;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="form-container">
+<div class="panel-container">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="{% url 'booking:doctor_list' %}" class="btn btn-secondary mb-3">بازگشت به صفحه اصلی</a>
-        <h1>نوبت‌های من</h1>
+        <a href="{% url 'booking:doctor_list' %}" class="btn-submit">بازگشت به صفحه اصلی</a>
+        <h2 class="elegant-title">نوبت‌های من</h2>
     </div>
 
     {% if messages %}
-        <ul class="error-list">
+        <div class="alert-container">
             {% for message in messages %}
-                <li>{{ message }}</li>
+                <div class="alert {% if message.tags %}{{ message.tags }}{% else %}alert-info{% endif %}" role="alert">
+                    {{ message }}
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     {% endif %}
 
     {% if appointments %}
         <div class="appointment-cards">
             {% for appointment in appointments %}
-                <div class="card">
+                <div class="card" id="appointment-card-{{ appointment.id }}">
                     {% if appointment.doctor.photo %}
                         <img src="{{ appointment.doctor.photo.url }}" alt="عکس دکتر {{ appointment.doctor.user.get_full_name }}" class="doctor-photo-small">
+                    {% else %}
+                        <img src="{% static 'booking/images/default-doctor.png' %}" alt="عکس پیش‌فرض" class="doctor-photo-small">
                     {% endif %}
+                    
                     <div class="card-content">
                         <h5 class="card-title">
                             <a href="{% url 'booking:doctor_detail' pk=appointment.doctor.pk %}">
                                 دکتر {{ appointment.doctor.user.get_full_name }}
                             </a>
                         </h5>
-                        <p class="card-text">{{ appointment.appointment_datetime|to_jalali_datetime }}</p>
+                        <p class="card-text"><strong>تاریخ و زمان:</strong> {{ appointment.appointment_datetime|to_jalali_datetime }}</p>
                         <p class="card-text"><strong>آدرس:</strong> {{ appointment.doctor.address }}</p>
                         <p class="card-text"><strong>تلفن:</strong> {{ appointment.doctor.phone_number }}</p>
+                        <p class="card-text">
+                            <strong>وضعیت:</strong> 
+                            {% if appointment.status == 'BOOKED' %}
+                                <span class="badge bg-success">رزرو شده</span>
+                            {% elif appointment.status == 'CANCELED' %}
+                                <span class="badge bg-secondary">لغو شده</span>
+                            {% elif appointment.status == 'COMPLETED' %}
+                                <span class="badge bg-primary">تکمیل شده</span>
+                            {% endif %}
+                        </p>
                     </div>
-                    <div>
+                    
+                    <div class="card-actions">
                         {% if appointment.status == 'BOOKED' and appointment.appointment_datetime.date >= today %}
-                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmCancelModal-{{ appointment.id }}">
+                            <button type="button" class="btn-cancel" onclick="openCancelModal({{ appointment.id }}, '{{ appointment.doctor.user.get_full_name|escapejs }}', '{{ appointment.appointment_datetime|to_jalali_datetime|escapejs }}')">
                                 لغو نوبت
                             </button>
-                        {% elif appointment.status == 'CANCELED' %}
-                            <span class="badge bg-secondary">لغو شده</span>
-                        {% elif appointment.status == 'COMPLETED' %}
-                            {% if not appointment.review %}
+                        {% elif appointment.status == 'COMPLETED' and not appointment.review %}
+                            <button type="button" class="btn-primary" onclick="toggleReviewForm({{ appointment.id }})">
+                                ثبت نظر و امتیاز
+                            </button>
+                            <div class="review-form" id="reviewForm{{ appointment.id }}" style="display: none;">
                                 <form method="post" action="{% url 'booking:patient_dashboard' %}">
                                     {% csrf_token %}
                                     <input type="hidden" name="appointment_id_review" value="{{ appointment.id }}">
-                                    <div class="rating">
-                                        <input type="radio" id="star5-{{ appointment.id }}" name="rating" value="5" /><label for="star5-{{ appointment.id }}" title="5 stars"></label>
-                                        <input type="radio" id="star4-{{ appointment.id }}" name="rating" value="4" /><label for="star4-{{ appointment.id }}" title="4 stars"></label>
-                                        <input type="radio" id="star3-{{ appointment.id }}" name="rating" value="3" /><label for="star3-{{ appointment.id }}" title="3 stars"></label>
-                                        <input type="radio" id="star2-{{ appointment.id }}" name="rating" value="2" /><label for="star2-{{ appointment.id }}" title="2 stars"></label>
-                                        <input type="radio" id="star1-{{ appointment.id }}" name="rating" value="1" /><label for="star1-{{ appointment.id }}" title="1 star"></label>
-                                    </div>
-                                    {{ review_form.comment.label_tag }}
-                                    {{ review_form.comment }}
-                                     {% if review_form.errors %}
-                                        <div class="error-list">
-                                             {{ review_form.errors }}
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">امتیاز شما:</label>
+                                        <div class="rating">
+                                            <input type="radio" id="star5-{{ appointment.id }}" name="rating" value="5" required />
+                                            <label for="star5-{{ appointment.id }}" title="عالی"></label>
+                                            <input type="radio" id="star4-{{ appointment.id }}" name="rating" value="4" />
+                                            <label for="star4-{{ appointment.id }}" title="خوب"></label>
+                                            <input type="radio" id="star3-{{ appointment.id }}" name="rating" value="3" />
+                                            <label for="star3-{{ appointment.id }}" title="متوسط"></label>
+                                            <input type="radio" id="star2-{{ appointment.id }}" name="rating" value="2" />
+                                            <label for="star2-{{ appointment.id }}" title="ضعیف"></label>
+                                            <input type="radio" id="star1-{{ appointment.id }}" name="rating" value="1" />
+                                            <label for="star1-{{ appointment.id }}" title="خیلی ضعیف"></label>
                                         </div>
-                                     {% endif %}
-                                    <button type="submit" class="btn btn-primary btn-sm mt-2">ثبت نظر</button>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="comment-{{ appointment.id }}" class="form-label">نظر شما (اختیاری):</label>
+                                        <textarea name="comment" id="comment-{{ appointment.id }}" rows="3" class="form-control" placeholder="تجربه خود از این ویزیت را بنویسید..."></textarea>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn-submit">ثبت نظر</button>
+                                    <button type="button" class="btn-secondary" onclick="toggleReviewForm({{ appointment.id }})">انصراف</button>
                                 </form>
-                            {% else %}
-                                <p>نظر شما: {{ appointment.review.rating }} ستاره</p>
-                            {% endif %}
+                            </div>
+                        {% elif appointment.review %}
+                            <div class="review-display">
+                                <p><strong>امتیاز شما:</strong> 
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= appointment.review.rating %}
+                                            <span style="color: #FFD700;">★</span>
+                                        {% else %}
+                                            <span style="color: #ddd;">★</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                    ({{ appointment.review.rating }}/5)
+                                </p>
+                                {% if appointment.review.comment %}
+                                    <p><strong>نظر شما:</strong> {{ appointment.review.comment }}</p>
+                                {% endif %}
+                            </div>
                         {% endif %}
-                    </div>
-                </div>
-
-                <!-- Modal for each appointment -->
-                <div class="modal fade" id="confirmCancelModal-{{ appointment.id }}" tabindex="-1" aria-labelledby="confirmCancelModalLabel-{{ appointment.id }}" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="confirmCancelModalLabel-{{ appointment.id }}">تایید لغو نوبت</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                آیا مایلید این نوبت لغو شود؟
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">خیر</button>
-                                <form method="post" action="{% url 'booking:patient_dashboard' %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
-                                    <button type="submit" class="btn btn-danger">بله، لغو کن</button>
-                                </form>
-                            </div>
-                        </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
+        
+        <!-- Modal لغو نوبت (یک Modal برای همه) -->
+        <div class="modal-overlay" id="cancelModalOverlay">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">تأیید لغو نوبت</h5>
+                        <button type="button" class="modal-close" onclick="closeCancelModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="appointment-info">
+                            <p id="modalDoctorName"><strong>دکتر:</strong> </p>
+                            <p id="modalAppointmentDate"><strong>تاریخ:</strong> </p>
+                        </div>
+                        <p>آیا از لغو نوبت خود مطمئن هستید؟ این عمل قابل بازگشت نیست.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <form method="post" action="{% url 'booking:patient_dashboard' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="appointment_id" id="modalAppointmentId" value="">
+                            <button type="button" class="btn-secondary" onclick="closeCancelModal()">انصراف</button>
+                            <button type="submit" class="btn-cancel">بله، لغو نوبت</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
     {% else %}
-        <p>شما تاکنون نوبتی رزرو نکرده‌اید یا از سیستم خارج شده‌اید.</p>
+        <div class="empty-state">
+            <p style="text-align: center; color: #666; font-size: 1.1em;">
+                شما تاکنون نوبتی رزرو نکرده‌اید.
+            </p>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="{% url 'booking:doctor_list' %}" class="btn-submit">مشاهده لیست پزشکان</a>
+            </div>
+        </div>
     {% endif %}
 </div>
 {% endblock %}
 
-{% block extra_js %}{% endblock %}
+{% block extra_js %}
+<script>
+// متغیر برای نگهداری ID نوبت فعلی
+let currentAppointmentId = null;
+
+// تابع باز کردن Modal لغو نوبت
+function openCancelModal(appointmentId, doctorName, appointmentDate) {
+    currentAppointmentId = appointmentId;
+    
+    // پر کردن Modal با اطلاعات
+    document.getElementById('modalDoctorName').innerHTML = '<strong>دکتر:</strong> ' + doctorName;
+    document.getElementById('modalAppointmentDate').innerHTML = '<strong>تاریخ:</strong> ' + appointmentDate;
+    document.getElementById('modalAppointmentId').value = appointmentId;
+    
+    // نمایش Modal
+    const modal = document.getElementById('cancelModalOverlay');
+    modal.classList.add('active');
+    
+    // جلوگیری از اسکرول body
+    document.body.style.overflow = 'hidden';
+}
+
+// تابع بستن Modal لغو نوبت
+function closeCancelModal() {
+    const modal = document.getElementById('cancelModalOverlay');
+    modal.classList.remove('active');
+    
+    // بازگرداندن اسکرول body
+    document.body.style.overflow = 'auto';
+    currentAppointmentId = null;
+}
+
+// تابع نمایش/مخفی کردن فرم نظر
+function toggleReviewForm(appointmentId) {
+    const formDiv = document.getElementById('reviewForm' + appointmentId);
+    if (formDiv.style.display === 'none' || !formDiv.style.display) {
+        formDiv.style.display = 'block';
+    } else {
+        formDiv.style.display = 'none';
+    }
+}
+
+// مقداردهی اولیه هنگام لود صفحه
+document.addEventListener('DOMContentLoaded', function() {
+    // بستن Modal با کلیک روی overlay (خارج از dialog)
+    const modalOverlay = document.getElementById('cancelModalOverlay');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', function(event) {
+            if (event.target === modalOverlay) {
+                closeCancelModal();
+            }
+        });
+    }
+    
+    // بستن Modal با کلید Escape
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeCancelModal();
+        }
+    });
+    
+    // اعتبارسنجی فرم‌های نظر
+    const reviewForms = document.querySelectorAll('form[action*="patient_dashboard"]');
+    reviewForms.forEach(form => {
+        const ratingInputs = form.querySelectorAll('input[name="rating"]');
+        if (ratingInputs.length > 0) {
+            form.addEventListener('submit', function(e) {
+                let ratingSelected = false;
+                ratingInputs.forEach(input => {
+                    if (input.checked) {
+                        ratingSelected = true;
+                    }
+                });
+                
+                if (!ratingSelected) {
+                    e.preventDefault();
+                    alert('لطفاً امتیاز خود را انتخاب کنید.');
+                    return false;
+                }
+                return true;
+            });
+        }
+    });
+    
+    // مخفی کردن تمام فرم‌های نظر در ابتدا
+    document.querySelectorAll('.review-form').forEach(form => {
+        form.style.display = 'none';
+    });
+});
+</script>
+{% endblock %}

@@ -6,6 +6,46 @@
 
 {% block extra_css %}
 <link rel="stylesheet" type="text/css" href="{% static 'booking/css/custom.css' %}">
+<style>
+    /* اضافه کردن استایل hidden در صورت عدم وجود */
+    .hidden {
+        display: none !important;
+    }
+    
+    /* استایل‌های اضافی برای اطمینان */
+    .cancel-confirmation {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .btn-cancel-initial {
+        background-color: #f44336;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    
+    .btn-confirm-yes {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    
+    .btn-confirm-no {
+        background-color: #ff9800;
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -67,11 +107,18 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // اول مطمئن شویم همه confirmations مخفی هستند
+    document.querySelectorAll('.cancel-confirmation').forEach(div => {
+        div.style.display = 'none';
+        div.classList.add('hidden');
+    });
+    
     // Handle clickable rows
     document.querySelectorAll('.clickable-row').forEach(row => {
         row.addEventListener('click', function(event) {
-            // Stop row navigation if the click is on an action button
-            if (event.target.closest('[data-label="عملیات"]')) {
+            if (event.target.closest('td[data-label="عملیات"]') || 
+                event.target.closest('.cancel-confirmation') ||
+                event.target.closest('.btn-cancel-initial')) {
                 return;
             }
             const url = this.dataset.url;
@@ -90,35 +137,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (target.classList.contains('btn-cancel-initial')) {
             event.stopPropagation();
-            // Find the confirmation div in the same cell
+            event.preventDefault();
+            
+            // مخفی کردن همه دکمه‌های دیگر
+            table.querySelectorAll('.cancel-confirmation').forEach(div => {
+                div.style.display = 'none';
+                div.classList.add('hidden');
+            });
+            
+            table.querySelectorAll('.btn-cancel-initial').forEach(btn => {
+                btn.style.display = 'inline-block';
+            });
+
+            // نمایش confirmation مربوطه
             const confirmationDiv = target.nextElementSibling;
-
-            // Check if it's already visible
-            const isVisible = !confirmationDiv.classList.contains('hidden');
-
-            // Hide all confirmations first
-            table.querySelectorAll('.cancel-confirmation').forEach(div => div.classList.add('hidden'));
-            table.querySelectorAll('.btn-cancel-initial').forEach(btn => btn.classList.remove('hidden'));
-
-            if (!isVisible) {
-                // If it wasn't visible, show it
-                target.classList.add('hidden');
+            if (confirmationDiv && confirmationDiv.classList.contains('cancel-confirmation')) {
+                target.style.display = 'none';
+                confirmationDiv.style.display = 'flex';
                 confirmationDiv.classList.remove('hidden');
             }
+            
         } else if (target.classList.contains('btn-confirm-no')) {
             event.stopPropagation();
-            // Find the parent confirmation div
+            event.preventDefault();
+            
             const confirmationDiv = target.closest('.cancel-confirmation');
             if (confirmationDiv) {
+                confirmationDiv.style.display = 'none';
                 confirmationDiv.classList.add('hidden');
-                // Find the initial button and show it
+                
                 const initialButton = confirmationDiv.previousElementSibling;
-                if (initialButton) {
-                    initialButton.classList.remove('hidden');
+                if (initialButton && initialButton.classList.contains('btn-cancel-initial')) {
+                    initialButton.style.display = 'inline-block';
                 }
             }
-        } else if (target.classList.contains('btn-confirm-yes')) {
-            event.stopPropagation();
         }
     });
 });
