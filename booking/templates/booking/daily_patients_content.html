@@ -111,6 +111,16 @@
                 const formData = new FormData(form);
                 const url = form.action;
 
+                // Clean number inputs before sending
+                form.querySelectorAll('.number-input').forEach(input => {
+                    const fieldName = input.name;
+                    const rawValue = input.value;
+                    if (rawValue) {
+                        const cleanedValue = toEnglishNumbers(rawValue).replace(/,/g, '');
+                        formData.set(fieldName, cleanedValue);
+                    }
+                });
+
                 fetch(url, {
                     method: 'POST',
                     body: formData,
