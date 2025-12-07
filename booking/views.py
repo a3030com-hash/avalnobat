@@ -727,14 +727,23 @@ def daily_patients(request, date=None):
     if request.method == 'POST':
         formset = AppointmentFormSet(request.POST, queryset=queryset)
         if formset.is_valid():
-            appointments = formset.save()
+            appointments = formset.save(commit=False)
             for appointment in appointments:
+                # Update status based on payment method
+                if appointment.payment_method and appointment.payment_method >= 1:
+                    appointment.status = 'COMPLETED'
+                else:
+                    appointment.status = 'BOOKED'
+                appointment.save()
+
+                # Update insurance fee if visit fee was paid
                 if appointment.visit_fee_paid is not None:
                     InsuranceFee.objects.update_or_create(
                         doctor=doctor_profile,
                         insurance_type=appointment.insurance_type,
                         defaults={'fee': appointment.visit_fee_paid}
                     )
+
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': True})
             return redirect('booking:daily_patients', date=date)
