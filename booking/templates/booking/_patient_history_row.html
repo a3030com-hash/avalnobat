@@ -1,0 +1,28 @@
+{% load booking_filters %}
+<tr class="history-row" id="history-{{ form.instance.id }}" style="display: none;">
+    <td colspan="7">
+        <div class="history-container">
+            {% if form.instance.history %}
+                <h4>سوابق بیمار</h4>
+                <div class="history-log">
+                    {% for entry in form.instance.history %}
+                        {% with parts=entry.problem_description|split:"---DOCTOR'S NOTE---" %}
+                            <div class="history-entry">
+                                <span class="history-date">{{ entry.appointment_datetime|to_jalali_date }}</span>
+                                <p class="history-text">
+                                    {{ parts.0|default:"شرح حالی ثبت نشده است."|linebreaksbr }}
+                                    {% if parts.1 %}
+                                        <span class="doctor-note">{{ parts.1|linebreaksbr }}</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>سابقه‌ای برای این بیمار یافت نشد.</p>
+            {% endif %}
+            <textarea name="{{ form.prefix }}-problem_description" class="problem-description-textarea" rows="4">{{ form.instance.problem_description }}</textarea>
+        </div>
+    </td>
+</tr>

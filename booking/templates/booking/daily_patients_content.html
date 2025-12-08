@@ -3,6 +3,47 @@
     .status-completed {
         background-color: rgb(193 233 231) !important;
     }
+    .patient-name-toggle {
+        cursor: pointer;
+        color: #007bff;
+        text-decoration: underline;
+    }
+    .history-row {
+        background-color: #f8f9fa;
+    }
+    .history-container {
+        padding: 15px;
+    }
+    .history-log {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: white;
+    }
+    .history-entry {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+        margin-bottom: 5px;
+    }
+    .history-date {
+        font-weight: bold;
+        color: #555;
+    }
+    .history-text {
+        color: #333; /* Patient description color */
+    }
+    .doctor-note {
+        color: #d9534f; /* Doctor note color */
+    }
+    .problem-description-textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        resize: vertical;
+    }
 </style>
 <div id="dynamic-content" data-current-date="{{ today|date:"Y-m-d" }}">
 
@@ -40,7 +81,13 @@
             {% for form in formset %}
                 <tr class="{% if form.instance.status > 1 %}status-completed{% endif %}">
                     <td data-label="ساعت">{{ form.instance.appointment_datetime|time:"H:i" }}</td>
-                    <td data-label="نام بیمار">{{ form.instance.patient_name }}</td>
+                    <td data-label="نام بیمار">
+                        {% if user.user_type == 'DOCTOR' %}
+                            <span class="patient-name-toggle" data-target="#history-{{ form.instance.id }}">{{ form.instance.patient_name }}</span>
+                        {% else %}
+                            {{ form.instance.patient_name }}
+                        {% endif %}
+                    </td>
                     <td data-label="کد ملی">{{ form.instance.patient_national_id|default:"-" }}</td>
                     <td data-label="نوع بیمه">{{ form.insurance_type }}</td>
                     <td data-label="مبلغ دریافتی">{{ form.visit_fee_paid }}</td>
@@ -48,6 +95,9 @@
                     <td data-label="نحوه پرداخت">{{ form.payment_method }}</td>
                     {{ form.id }}
                 </tr>
+                {% if user.user_type == 'DOCTOR' %}
+                    {% include 'booking/_patient_history_row.html' %}
+                {% endif %}
             {% endfor %}
         </tbody>
     </table>
@@ -100,6 +150,34 @@
     });
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Toggle history row
+        document.querySelectorAll('.patient-name-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const targetId = this.dataset.target;
+                const targetRow = document.querySelector(targetId);
+                if (targetRow) {
+                    targetRow.style.display = targetRow.style.display === 'none' ? 'table-row' : 'none';
+                    if (targetRow.style.display !== 'none') {
+                        const historyLog = targetRow.querySelector('.history-log');
+                        const textarea = targetRow.querySelector('.problem-description-textarea');
+                        if (historyLog && textarea) {
+                            const historyHeight = historyLog.offsetHeight;
+                            textarea.style.height = (historyHeight + 50) + 'px';
+                        }
+                    }
+                }
+            });
+        });
+
+        // Add doctor's note separator
+        document.querySelectorAll('.problem-description-textarea').forEach(textarea => {
+            textarea.addEventListener('focus', function() {
+                if (!this.value.includes("---DOCTOR'S NOTE---")) {
+                    this.value += "\n---DOCTOR'S NOTE---\n";
+                }
+            });
+        });
+
         const form = document.getElementById('daily-patients-form');
         if (!form) return;
 

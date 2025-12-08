@@ -96,12 +96,13 @@ class ReviewForm(forms.ModelForm):
 class AppointmentUpdateForm(forms.ModelForm):
     class Meta:
         model = Appointment
-        fields = ['visit_fee_paid', 'service_description', 'payment_method', 'insurance_type']
+        fields = ['visit_fee_paid', 'service_description', 'payment_method', 'insurance_type', 'problem_description']
         labels = {
             'visit_fee_paid': 'مبلغ دریافتی',
             'service_description': 'شرح خدمات',
             'payment_method': 'نحوه پرداخت',
             'insurance_type': 'نوع بیمه',
+            'problem_description': 'شرح حال بیمار',
         }
         widgets = {
             'visit_fee_paid': forms.TextInput(attrs={

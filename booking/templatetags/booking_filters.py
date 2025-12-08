@@ -159,3 +159,12 @@ def to_persian_weekday(gregorian_date):
         return weekdays[jalali_date.weekday()]
     except (ValueError, TypeError):
         return ""
+
+@register.filter(name='split')
+def split(value, arg):
+    """
+    Splits the value by the arg.
+    """
+    if value:
+        return value.split(arg)
+    return []

@@ -761,6 +761,20 @@ def daily_patients(request, date=None):
             if not appointment.visit_fee_paid:
                 appointment.visit_fee_paid = insurance_fees.get(appointment.insurance_type)
 
+            # Fetch history only for doctors
+            if request.user.user_type == 'DOCTOR' and appointment.patient_national_id:
+                appointment.history = Appointment.objects.filter(
+                    doctor=doctor_profile,
+                    patient_national_id=appointment.patient_national_id,
+                    appointment_datetime__lt=appointment.appointment_datetime,
+                    status=2  # Only completed visits
+                ).order_by('-appointment_datetime').values(
+                    'appointment_datetime',
+                    'problem_description'
+                )[:10]
+            else:
+                appointment.history = []
+
         formset = AppointmentFormSet(queryset=queryset)
 
     context = {
