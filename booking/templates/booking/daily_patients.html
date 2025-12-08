@@ -12,12 +12,125 @@
 
 {% block extra_js %}
 <script>
+    // --- Utility Functions ---
+    function toEnglishNumbers(str) {
+        if (typeof str !== 'string') return str;
+        const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        let result = str;
+        for (let i = 0; i < 10; i++) {
+            result = result.replace(new RegExp(persian[i], 'g'), i).replace(new RegExp(arabic[i], 'g'), i);
+        }
+        return result;
+    }
+
+    function formatNumber(input) {
+        let value = toEnglishNumbers(input.value);
+        value = value.replace(/,/g, '').replace(/[^\d.-]/g, '');
+
+        if (isNaN(parseFloat(value)) && value !== '' && value !== '-') {
+            input.value = '';
+            return;
+        }
+
+        let parts = value.split('.');
+        let integerPart = parts[0];
+        let decimalPart = parts.length > 1 ? '.' + parts[1] : '';
+
+        let isNegative = integerPart.startsWith('-');
+        if(isNegative) {
+            integerPart = integerPart.substring(1);
+        }
+
+        let formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        input.value = (isNegative ? '-' : '') + formattedInteger + decimalPart;
+    }
+
+
+    // --- Event Delegation for Dynamic Content ---
+    const container = document.getElementById('daily-patients-container');
+    let autosaveTimeout = null;
+
+    if (container) {
+        // 1. Toggle patient history row
+        container.addEventListener('click', function(e) {
+            if (e.target.matches('.patient-name-toggle')) {
+                const targetId = e.target.dataset.target;
+                const targetRow = container.querySelector(targetId);
+                if (targetRow) {
+                    const isHidden = targetRow.style.display === 'none' || targetRow.style.display === '';
+                    targetRow.style.display = isHidden ? 'table-row' : 'none';
+
+                    if (isHidden) {
+                        const historyLog = targetRow.querySelector('.history-log');
+                        const textarea = targetRow.querySelector('.problem-description-textarea');
+                        if (historyLog && textarea) {
+                            const historyHeight = historyLog.offsetHeight > 0 ? historyLog.offsetHeight : 100;
+                            const newHeight = Math.max(historyHeight + 50, 150);
+                            textarea.style.height = newHeight + 'px';
+                        }
+                    }
+                }
+            }
+        });
+
+        // 2. Add doctor's note separator on focus
+        container.addEventListener('focusin', function(e) {
+            if (e.target.matches('.problem-description-textarea')) {
+                const textarea = e.target;
+                if (!textarea.value.includes("---DOCTOR'S NOTE---")) {
+                    textarea.value += "\n---DOCTOR'S NOTE---\n";
+                    textarea.scrollTop = textarea.scrollHeight;
+                }
+            }
+        });
+
+        // 3. Autosave form on input (debounced)
+        container.addEventListener('input', function(e) {
+            const form = e.target.closest('#daily-patients-form');
+            if (!form) return;
+
+            clearTimeout(autosaveTimeout);
+            autosaveTimeout = setTimeout(() => {
+                const formData = new FormData(form);
+                const url = form.action;
+
+                form.querySelectorAll('.number-input').forEach(input => {
+                    const fieldName = input.name;
+                    const rawValue = input.value;
+                    if (rawValue) {
+                        const cleanedValue = toEnglishNumbers(rawValue).replace(/,/g, '');
+                        formData.set(fieldName, cleanedValue);
+                    }
+                });
+
+                fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Autosaved!');
+                    } else {
+                        console.error('Autosave Error:', data.errors);
+                    }
+                })
+                .catch(error => console.error('Error during autosave:', error));
+            }, 1000);
+        });
+    }
+
+    // 4. Handle form submission for saving final changes
     document.addEventListener('submit', function(e) {
-        const container = document.getElementById('daily-patients-container');
-        if (!container || !e.target.closest('#daily-patients-form')) return;
+        const form = e.target.closest('#daily-patients-form');
+        if (!form) return;
 
         e.preventDefault();
-        const form = e.target;
         const formData = new FormData(form);
 
         fetch(form.action, {
@@ -28,17 +141,20 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                //alert('تغییرات با موفقیت ذخیره شد.');
-                // The global date navigation script will handle the refresh
-                const currentDate = new Date(localStorage.getItem('userDate'));
-                window.updateContentForDate(currentDate, false);
+                if(window.updateContentForDate) {
+                    const currentDateStr = document.getElementById('dynamic-content')?.dataset.currentDate;
+                    if(currentDateStr) {
+                         const currentDate = new Date(currentDateStr + 'T00:00:00');
+                         window.updateContentForDate(currentDate, false);
+                    }
+                }
             } else {
                 console.error('Validation Error:', data.errors);
                 alert('خطا در ذخیره اطلاعات. جزئیات در کنسول ثبت شده است.');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error on submit:', error);
             alert('An error occurred while saving.');
         });
     });
