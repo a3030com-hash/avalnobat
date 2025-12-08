@@ -1208,7 +1208,8 @@ def financial_report(request, period='daily', date=None):
         appointment_datetime__date__range=[start_date, end_date]
     )
     appointments_in_period = all_appointments_in_period.filter(
-        visit_fee_paid__isnull=False
+        visit_fee_paid__isnull=False,
+        status=2  
     )
     expenses_in_period_queryset = DailyExpense.objects.filter(
         doctor=doctor_profile,
