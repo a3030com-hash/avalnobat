@@ -46,6 +46,10 @@
         margin-left: 8px;
         color: #868e96;
     }
+    .star-rating {
+        color: #f8d64e; /* Gold color for stars */
+        margin-bottom: 0.5rem;
+    }
 </style>
 
 <style>
@@ -120,6 +124,14 @@
                 </h2>
                 <p><i class="fas fa-stethoscope icon"></i><strong>تخصص:</strong> {{ doctor.specialty.name|default:"-" }}</p>
                 <p><i class="fas fa-map-marker-alt icon"></i><strong>آدرس:</strong> {{ doctor.address|truncatewords:10 }}</p>
+                {% if doctor.average_rating %}
+                    <div class="star-rating">
+                        {% for i in "12345" %}
+                            <i class="fas fa-star{% if forloop.counter > doctor.average_rating|floatformat:0 %}-half-alt{% endif %}"></i>
+                        {% endfor %}
+                        ({{ doctor.average_rating|floatformat:1 }})
+                    </div>
+                {% endif %}
                 {% if doctor.has_availability %}
                 <div style="margin-top: 1rem; margin-bottom: 1rem;">
                     <a href="{% url 'booking:doctor_detail' pk=doctor.pk %}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; display: inline-block;">
