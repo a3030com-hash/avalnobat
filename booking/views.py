@@ -577,10 +577,10 @@ def initiate_payment(request, appointment_id):
     شروع فرآیند پرداخت و هدایت به درگاه
     """
     appointment = get_object_or_404(Appointment, pk=appointment_id)
-    
+
     # ذخیره appointment_id در session
     request.session['pending_appointment_id'] = appointment_id
-    
+
     return redirect('booking:payment_page')
 
 def confirm_payment(request):
@@ -681,7 +681,7 @@ def patient_list(request):
         return redirect('booking:doctor_list')
 
     queryset = Appointment.objects.filter(
-        doctor=doctor_profile, status=1
+        doctor=doctor_profile, status__in=[1, 2,4]
     ).order_by('-appointment_datetime')
 
     query = request.GET.get('q')
