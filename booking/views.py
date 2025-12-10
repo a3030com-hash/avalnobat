@@ -718,6 +718,8 @@ def daily_patients(request, date=None):
     else:
         current_date = datetime.date.today()
 
+    can_edit = request.user.user_type == 'DOCTOR' or current_date >= datetime.date.today()
+
     AppointmentFormSet = modelformset_factory(Appointment, form=AppointmentUpdateForm, extra=0)
 
     queryset = Appointment.objects.filter(
@@ -725,6 +727,11 @@ def daily_patients(request, date=None):
     ).order_by('appointment_datetime')
 
     if request.method == 'POST':
+        if not can_edit:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': 'Unauthorized'}, status=403)
+            return redirect('booking:daily_patients', date=date)
+
         formset = AppointmentFormSet(request.POST, queryset=queryset)
         if formset.is_valid():
             appointments = formset.save(commit=False)
@@ -776,11 +783,18 @@ def daily_patients(request, date=None):
                 appointment.history = []
 
         formset = AppointmentFormSet(queryset=queryset)
+        if not can_edit:
+            for form in formset:
+                form.fields['insurance_type'].widget.attrs['disabled'] = True
+                form.fields['visit_fee_paid'].widget.attrs['disabled'] = True
+                form.fields['service_description'].widget.attrs['disabled'] = True
+                form.fields['payment_method'].widget.attrs['disabled'] = True
 
     context = {
         'formset': formset,
         'today': current_date,
-        'page_title': 'لیست بیماران امروز'
+        'page_title': 'لیست بیماران امروز',
+        'can_edit': can_edit
     }
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -805,8 +819,14 @@ def secretary_payments(request, date=None):
     else:
         current_date = datetime.date.today()
 
+    can_edit = request.user.user_type == 'DOCTOR' or current_date >= datetime.date.today()
 
     if request.method == 'POST':
+        if not can_edit:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': 'Unauthorized'}, status=403)
+            return redirect('booking:secretary_payments', date=date)
+
         expense_form = DailyExpenseForm(request.POST)
         if expense_form.is_valid():
             expense = expense_form.save(commit=False)
@@ -871,6 +891,7 @@ def secretary_payments(request, date=None):
         'cash_box_balance': cash_box_balance,
         'previous_day_balance': previous_day_balance,
         'todays_cash_income':todays_cash_income,
+        'can_edit': can_edit,
     }
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -1130,7 +1151,7 @@ def edit_expense(request, pk):
 
     expense = get_object_or_404(DailyExpense, pk=pk, doctor=doctor_profile)
 
-    if request.user.user_type == 'SECRETARY' and expense.date != datetime.date.today():
+    if request.user.user_type == 'SECRETARY' and expense.date < datetime.date.today():
         return redirect('booking:secretary_payments')
 
     if request.method == 'POST':
@@ -1160,7 +1181,7 @@ def delete_expense(request, pk):
 
     expense = get_object_or_404(DailyExpense, pk=pk, doctor=doctor_profile)
 
-    if request.user.user_type == 'SECRETARY' and expense.date != datetime.date.today():
+    if request.user.user_type == 'SECRETARY' and expense.date < datetime.date.today():
         return redirect('booking:secretary_payments')
 
     expense_date_str = expense.date.strftime('%Y-%m-%d')
