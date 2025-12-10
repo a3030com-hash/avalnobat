@@ -1,6 +1,7 @@
 from django import template
 import jdatetime
 import pytz
+import math
 
 register = template.Library()
 
@@ -168,3 +169,13 @@ def split(value, arg):
     if value:
         return value.split(arg)
     return []
+
+@register.filter(name='floor')
+def floor(value):
+    """
+    Returns the floor of a number.
+    """
+    try:
+        return math.floor(float(value))
+    except (ValueError, TypeError):
+        return value
