@@ -138,19 +138,7 @@
         input.value = (isNegative ? '-' : '') + formattedInteger + decimalPart;
     }
 
-    document.addEventListener('submit', function(e) {
-        if (e.target && e.target.id === 'daily-patients-form') {
-            const numberInputs = e.target.querySelectorAll('.number-input');
-            numberInputs.forEach(function(input) {
-                if (input.value) {
-                    input.value = toEnglishNumbers(input.value).replace(/,/g, '');
-                }
-            });
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // Toggle history row
+    function initializeDailyPatientsListeners() {
         document.querySelectorAll('.patient-name-toggle').forEach(toggle => {
             toggle.addEventListener('click', function() {
                 const targetId = this.dataset.target;
@@ -169,7 +157,6 @@
             });
         });
 
-        // Add doctor's note separator
         document.querySelectorAll('.problem-description-textarea').forEach(textarea => {
             textarea.addEventListener('focus', function() {
                 if (!this.value.includes("---DOCTOR'S NOTE---")) {
@@ -184,10 +171,10 @@
         let timeout = null;
         let isSaving = false;
 
+        // Ensure the save function is globally accessible but defined within this scope
         window.saveDailyPatientsForm = function() {
             return new Promise((resolve, reject) => {
                 if (isSaving) {
-                    // If a save is already in progress, wait for it to resolve
                     const checkInterval = setInterval(() => {
                         if (!isSaving) {
                             clearInterval(checkInterval);
@@ -196,12 +183,10 @@
                     }, 100);
                     return;
                 }
-
                 clearTimeout(timeout);
                 isSaving = true;
                 const formData = new FormData(form);
                 const url = form.action;
-
                 form.querySelectorAll('.number-input').forEach(input => {
                     const fieldName = input.name;
                     const rawValue = input.value;
@@ -210,7 +195,6 @@
                         formData.set(fieldName, cleanedValue);
                     }
                 });
-
                 fetch(url, {
                     method: 'POST',
                     body: formData,
@@ -237,11 +221,25 @@
                     isSaving = false;
                 });
             });
-        }
+        };
 
         form.addEventListener('input', function(e) {
             clearTimeout(timeout);
-            timeout = setTimeout(window.saveDailyPatientsForm, 500); // Debounce time in ms
+            timeout = setTimeout(window.saveDailyPatientsForm, 500);
         });
-    });
+
+        form.addEventListener('submit', function(e) {
+            const numberInputs = e.target.querySelectorAll('.number-input');
+            numberInputs.forEach(function(input) {
+                if (input.value) {
+                    input.value = toEnglishNumbers(input.value).replace(/,/g, '');
+                }
+            });
+        });
+    }
+
+    // Run the initialization for the initial load.
+    // DOMContentLoaded might be too early if this template is loaded via AJAX.
+    // So we just call it directly.
+    initializeDailyPatientsListeners();
 </script>

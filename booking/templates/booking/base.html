@@ -851,6 +851,9 @@
                         history.pushState({ path: targetUrl }, '', targetUrl);
                     }
                     container.innerHTML = html;
+                    if (activePage.name === 'daily_patients' && typeof initializeDailyPatientsListeners === 'function') {
+                        initializeDailyPatientsListeners();
+                    }
                 } catch (error) {
                     console.error('Fetch error:', error);
                     window.location.href = targetUrl;
@@ -859,16 +862,27 @@
                 }
             }
 
-            document.body.addEventListener('click', function(e) {
+            document.body.addEventListener('click', async function(e) {
                 const activePage = getActivePage();
                 if (!activePage) return;
 
-                if (e.target.closest('#prev-day-btn')) {
-                    userDate.setDate(userDate.getDate() - 1);
-                    updateContentForDate(userDate);
-                }
-                if (e.target.closest('#next-day-btn')) {
-                    userDate.setDate(userDate.getDate() + 1);
+                const isPrev = e.target.closest('#prev-day-btn');
+                const isNext = e.target.closest('#next-day-btn');
+
+                if (isPrev || isNext) {
+                    if (activePage.name === 'daily_patients' && typeof window.saveDailyPatientsForm === 'function') {
+                        try {
+                            await window.saveDailyPatientsForm();
+                        } catch (error) {
+                            console.error("Form save failed, but navigating anyway:", error);
+                        }
+                    }
+
+                    if (isPrev) {
+                        userDate.setDate(userDate.getDate() - 1);
+                    } else {
+                        userDate.setDate(userDate.getDate() + 1);
+                    }
                     updateContentForDate(userDate);
                 }
             });
