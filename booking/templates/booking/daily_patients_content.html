@@ -182,14 +182,26 @@
         if (!form) return;
 
         let timeout = null;
+        let isSaving = false;
 
-        form.addEventListener('input', function(e) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
+        window.saveDailyPatientsForm = function() {
+            return new Promise((resolve, reject) => {
+                if (isSaving) {
+                    // If a save is already in progress, wait for it to resolve
+                    const checkInterval = setInterval(() => {
+                        if (!isSaving) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 100);
+                    return;
+                }
+
+                clearTimeout(timeout);
+                isSaving = true;
                 const formData = new FormData(form);
                 const url = form.action;
 
-                // Clean number inputs before sending
                 form.querySelectorAll('.number-input').forEach(input => {
                     const fieldName = input.name;
                     const rawValue = input.value;
@@ -210,15 +222,26 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Maybe show a subtle success indicator
-                        console.log('Autosaved!');
+                        console.log('Form saved!');
+                        resolve();
                     } else {
-                        console.error('Autosave Error:', data.errors);
-                        // Optionally, display an error message to the user
+                        console.error('Save Error:', data.errors);
+                        reject(data.errors);
                     }
                 })
-                .catch(error => console.error('Error:', error));
-            }, 500); // Debounce time in ms
+                .catch(error => {
+                    console.error('Error:', error);
+                    reject(error);
+                })
+                .finally(() => {
+                    isSaving = false;
+                });
+            });
+        }
+
+        form.addEventListener('input', function(e) {
+            clearTimeout(timeout);
+            timeout = setTimeout(window.saveDailyPatientsForm, 500); // Debounce time in ms
         });
     });
 </script>

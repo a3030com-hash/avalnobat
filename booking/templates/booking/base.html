@@ -816,6 +816,18 @@
                 const activePage = getActivePage();
                 if (!activePage) return;
 
+                if (activePage.name === 'daily_patients' && typeof window.saveDailyPatientsForm === 'function') {
+                    try {
+                        await window.saveDailyPatientsForm();
+                    } catch (error) {
+                        console.error("Failed to save before navigating:", error);
+                        // Optional: ask user for confirmation to navigate without saving
+                        if (!confirm("تغییرات ذخیره نشد. آیا میخواهید ادامه دهید؟")) {
+                            return; // Stop navigation
+                        }
+                    }
+                }
+
                 const urlDate = date.toISOString().split('T')[0];
                 localStorage.setItem('userDate', urlDate);
 
