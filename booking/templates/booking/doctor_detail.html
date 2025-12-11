@@ -95,11 +95,6 @@
     {% endif %}
     <p><strong>نام کامل:</strong> دکتر {{ doctor.user.get_full_name }}</p>
     <p><strong>تخصص:</strong> {{ doctor.specialty.name|default:"-" }}</p>
-    <p><strong>شماره تلفن مطب:</strong> {{ doctor.phone_number }}</p>
-    <p><strong>آدرس:</strong> {{ doctor.address }}</p>
-    <p><strong>بیوگرافی:</strong></p>
-    <p>{{ doctor.biography|linebreaks|default:"بیوگرافی ثبت نشده است." }}</p>
-
     {% if average_rating %}
         <div class="star-rating">
             {% with rating_floor=average_rating|floor %}
@@ -118,11 +113,12 @@
             ({{ average_rating|floatformat:1 }})
         </div>
     {% endif %}
+    <p><strong>شماره تلفن مطب:</strong> {{ doctor.phone_number }}</p>
+    <p><strong>آدرس:</strong> {{ doctor.address }}</p>
+    <p><strong>بیوگرافی:</strong></p>
+    <p>{{ doctor.biography|linebreaks|default:"بیوگرافی ثبت نشده است." }}</p>
 
     <hr>
-
-
-
 
     <h3>تقویم نوبت‌دهی ({{ doctor.booking_days }} روز آینده)</h3>
     <div  class="calendar-grid" style="display: flex; flex-wrap: wrap; gap: 10px;">
