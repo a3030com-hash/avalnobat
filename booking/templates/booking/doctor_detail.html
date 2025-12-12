@@ -17,12 +17,17 @@
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     .profile-container .doctor-photo {
-        max-width: 150px;
+        max-width: 100px;
         border-radius: 50%;
         margin-bottom: 1rem;
         border: 3px solid #fff;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
+    .doctor-photo {
+    max-width: 200px; /* یا اندازه دلخواه */
+    border-radius: 50%; /* اگر می‌خواهید دایره‌ای باشد */
+    margin-bottom: 10px;
+}
     .star-rating {
         color: #f8d64e; /* Gold color for stars */
         margin-bottom: 0.5rem;
@@ -94,23 +99,41 @@
             grid-template-columns: 1fr 2fr;
             gap: 2rem;
         }
-        .profile-sidebar {
-            background-color: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-        }
+       .profile-sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 5px !important;
     }
+    .doctor-name-container {
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.doctor-name {
+    font-family: 'Vazir', 'IRANSans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #d82995;
+    margin-bottom: 0.5rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+ }
 </style>
 
 <div class="profile-container">
     <h2 class="elegant-title">{{ page_title }}</h2>
     <div class="profile-grid">
-        <div class="profile-sidebar">
+        <div  class="profile-sidebar">
             {% if doctor.photo %}
                 <img src="{{ doctor.photo.url }}" alt="عکس دکتر {{ doctor.user.get_full_name }}" class="doctor-photo">
             {% endif %}
-            <p><strong>نام کامل:</strong> دکتر {{ doctor.user.get_full_name }}</p>
+               <div class="doctor-name-container">
+        <h1 class="doctor-name">دکتر {{ doctor.user.get_full_name }}</h1>
+       
+    </div>
             <p><strong>تخصص:</strong> {{ doctor.specialty.name|default:"-" }}</p>
             {% if average_rating %}
                 <div class="star-rating">
@@ -137,7 +160,10 @@
             <p><strong>بیوگرافی:</strong></p>
             <p>{{ doctor.biography|linebreaks|default:"بیوگرافی ثبت نشده است." }}</p>
 
-            <hr>
+          
+        </div>
+    </div>
+      <hr>
 
             <h3>تقویم نوبت‌دهی ({{ doctor.booking_days }} روز آینده)</h3>
             <div  class="calendar-grid" style="display: flex; flex-wrap: wrap; gap: 10px;">
@@ -149,7 +175,5 @@
                     <p>در {{ doctor.booking_days }} روز آینده نوبت خالی وجود ندارد.</p>
                 {% endfor %}
             </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
