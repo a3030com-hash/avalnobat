@@ -39,4 +39,7 @@ urlpatterns = [
     path('patient-dashboard-entry/', views.patient_dashboard_entry, name='patient_dashboard_entry'),
     path('patient-logout/', views.patient_logout, name='patient_logout'),
     path('patient-dashboard/', views.patient_dashboard, name='patient_dashboard'),
+    path('password-reset/', views.password_reset_request, name='password_reset_request'),
+    path('password-reset/verify/', views.password_reset_verify, name='password_reset_verify'),
+    path('password-reset/complete/', views.password_reset_complete, name='password_reset_complete'),
 ]

@@ -4,6 +4,7 @@ import jdatetime
 import random
 import time
 import logging
+import requests
 from django.conf import settings
 from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
@@ -15,7 +16,6 @@ from .models import DoctorProfile, DoctorAvailability, Appointment, TimeSlotExce
 from .forms import DoctorAvailabilityForm, AppointmentBookingForm, ReviewForm
 from django.urls import reverse
 from django.db.models import Q
-import requests
 from django.db.models import Q, Avg
 from django.http import HttpResponse
 import pytz
@@ -1737,6 +1737,85 @@ def patient_dashboard(request):
 from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect
 from django.urls import reverse
+from .forms import PasswordResetRequestForm, PasswordResetVerifyForm
+
+def password_reset_request(request):
+    if request.method == 'POST':
+        form = PasswordResetRequestForm(request.POST)
+        if form.is_valid():
+            mobile_number = form.cleaned_data['mobile_number']
+            try:
+                doctor_profile = DoctorProfile.objects.get(mobile_number=mobile_number)
+                user = doctor_profile.user
+
+                AMOOT_SMS_API_TOKEN = settings.AMOOT_SMS_API_TOKEN
+                AMOOT_SMS_API_URL = settings.AMOOT_SMS_API_URL
+                otp_code = str(random.randint(100000, 999999))
+                request.session['otp_code_reset'] = otp_code
+                request.session['reset_user_id'] = user.id
+                request.session.set_expiry(300)
+
+                payload = {
+                    'token': AMOOT_SMS_API_TOKEN,
+                    'Mobile': mobile_number,
+                    'PatternCodeID': 4018,
+                    'PatternValues': otp_code,
+                }
+                requests.post(AMOOT_SMS_API_URL, data=payload)
+
+                return redirect('booking:password_reset_verify')
+
+            except DoctorProfile.DoesNotExist:
+                form.add_error('mobile_number', 'پزشکی با این شماره موبایل یافت نشد.')
+            except requests.exceptions.RequestException as e:
+                form.add_error(None, f"خطا در ارسال پیامک: {e}")
+
+    else:
+        form = PasswordResetRequestForm()
+
+    return render(request, 'booking/password_reset_request.html', {'form': form, 'page_title': 'فراموشی رمز عبور'})
+
+
+def password_reset_verify(request):
+    reset_user_id = request.session.get('reset_user_id')
+    if not reset_user_id:
+        messages.error(request, 'اعتبار سنجی شما به پایان رسیده است. لطفا مجددا تلاش کنید.')
+        return redirect('booking:password_reset_request')
+
+    try:
+        user = User.objects.get(pk=reset_user_id)
+    except User.DoesNotExist:
+        messages.error(request, 'کاربر مورد نظر یافت نشد.')
+        return redirect('booking:password_reset_request')
+
+    if request.method == 'POST':
+        form = PasswordResetVerifyForm(request.POST)
+        if form.is_valid():
+            otp_from_user = form.cleaned_data.get('otp')
+            otp_from_session = request.session.get('otp_code_reset')
+
+            if otp_from_user == otp_from_session:
+                new_password = form.cleaned_data.get('new_password1')
+                user.set_password(new_password)
+                user.save()
+
+                for key in ['otp_code_reset', 'reset_user_id']:
+                    if key in request.session:
+                        del request.session[key]
+
+                messages.success(request, 'رمز عبور شما با موفقیت تغییر کرد.')
+                return redirect('booking:password_reset_complete')
+            else:
+                form.add_error('otp', 'کد وارد شده صحیح نمی‌باشد.')
+    else:
+        form = PasswordResetVerifyForm()
+
+    return render(request, 'booking/password_reset_verify.html', {'form': form, 'page_title': 'تایید و تغییر رمز عبور'})
+
+
+def password_reset_complete(request):
+    return render(request, 'booking/password_reset_complete.html', {'page_title': 'تغییر رمز موفقیت‌آمیز'})
+
 
 class CustomLoginView(LoginView):
     template_name = 'booking/login.html'

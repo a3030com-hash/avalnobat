@@ -1,17 +1,61 @@
 import datetime
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.conf import settings
 
+
+class CustomUserManager(UserManager):
+    def _create_user(self, username, password, **extra_fields):
+        """
+        Create and save a user with the given username and password.
+        """
+        if not username:
+            raise ValueError("The given username must be set")
+        username = self.model.normalize_username(username)
+        user = self.model(username=username, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+        return self._create_user(username, password, **extra_fields)
+
+    def create_superuser(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+
+        return self._create_user(username, password, **extra_fields)
+
+
 class CustomUser(AbstractUser):
+    email = models.EmailField(blank=True, null=True)
+    REQUIRED_FIELDS = []
+
     USER_TYPE_CHOICES = (
         ("PATIENT", "Patient"),
         ("DOCTOR", "Doctor"),
         ("SECRETARY", "Secretary"),
         ("ADMIN", "Admin"),
     )
-    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default="PATIENT")
-    doctor = models.ForeignKey('DoctorProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='secretaries')
+    user_type = models.CharField(
+        max_length=10, choices=USER_TYPE_CHOICES, default="PATIENT"
+    )
+    doctor = models.ForeignKey(
+        "DoctorProfile",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="secretaries",
+    )
+
+    objects = CustomUserManager()
 
 class Specialty(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="نام تخصص")

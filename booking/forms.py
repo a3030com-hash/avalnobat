@@ -8,7 +8,7 @@ User = get_user_model()
 class DoctorRegistrationForm(UserCreationForm):
     first_name = forms.CharField(max_length=30, required=True, label="نام", widget=forms.TextInput(attrs={'placeholder': 'نام'}))
     last_name = forms.CharField(max_length=30, required=True, label="نام خانوادگی", widget=forms.TextInput(attrs={'placeholder': 'نام خانوادگی'}))
-    email = forms.EmailField(required=True, label="ایمیل", widget=forms.EmailInput(attrs={'placeholder': 'ایمیل'}))
+    email = forms.EmailField(required=False, label="ایمیل", widget=forms.EmailInput(attrs={'placeholder': 'ایمیل (اختیاری)'}))
 
     specialty = forms.ModelChoiceField(queryset=Specialty.objects.all(), required=True, label="تخصص")
     address = forms.CharField(max_length=255, required=True, label="آدرس مطب", widget=forms.TextInput(attrs={'placeholder': 'آدرس مطب'}))
@@ -138,7 +138,7 @@ class UserUpdateForm(forms.ModelForm):
         labels = {
             'first_name': 'نام',
             'last_name': 'نام خانوادگی',
-            'email': 'ایمیل',
+            'email': 'ایمیل (اختیاری)',
         }
 
 class DoctorProfileUpdateForm(forms.ModelForm):
@@ -180,3 +180,32 @@ class SecretarySignUpForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+class PasswordResetRequestForm(forms.Form):
+    mobile_number = forms.CharField(label="شماره موبایل", max_length=11,
+                                    widget=forms.TextInput(attrs={'placeholder': '09...'}))
+
+    def clean_mobile_number(self):
+        mobile = self.cleaned_data.get('mobile_number')
+        if not (mobile.isdigit() and len(mobile) == 11 and mobile.startswith('09')):
+            raise forms.ValidationError("شماره موبایل نامعتبر است.")
+        if not DoctorProfile.objects.filter(mobile_number=mobile).exists():
+            raise forms.ValidationError("پزشکی با این شماره موبایل یافت نشد.")
+        return mobile
+
+
+class PasswordResetVerifyForm(forms.Form):
+    otp = forms.CharField(label="کد تایید", max_length=6,
+                          widget=forms.TextInput(attrs={'placeholder': 'کد ۶ رقمی'}))
+    new_password1 = forms.CharField(label="رمز عبور جدید", widget=forms.PasswordInput)
+    new_password2 = forms.CharField(label="تکرار رمز عبور جدید", widget=forms.PasswordInput)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password1 = cleaned_data.get("new_password1")
+        new_password2 = cleaned_data.get("new_password2")
+
+        if new_password1 and new_password2 and new_password1 != new_password2:
+            raise forms.ValidationError("رمزهای عبور با یکدیگر مطابقت ندارند.")
+        return cleaned_data
