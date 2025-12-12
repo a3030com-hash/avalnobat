@@ -133,8 +133,14 @@
                 {% endif %}
                 {% if doctor.has_availability %}
                 <div style="margin-top: 1rem; margin-bottom: 1rem;">
-                    <a href="{% url 'booking:doctor_detail' pk=doctor.pk %}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; display: inline-block;">
+                    <a href="{% url 'booking:doctor_detail' pk=doctor.pk %}" style="background-color: #09ca70; color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; display: inline-block;">
                         دریافت نوبت اینترنتی
+                    </a>
+                </div>
+                {% else %}
+               <div style="margin-top: 1rem; margin-bottom: 1rem;">
+                    <a href="{% url 'booking:doctor_detail' pk=doctor.pk %}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; display: inline-block;">
+                        دریافت نوبت تلفنی
                     </a>
                 </div>
                 {% endif %}
