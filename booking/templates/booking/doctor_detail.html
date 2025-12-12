@@ -86,49 +86,70 @@
         margin-left: 5px;
         border-radius: 3px;
     }
+
+    /* Two-column layout for desktop */
+    @media (min-width: 992px) {
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+        .profile-sidebar {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+    }
 </style>
 
 <div class="profile-container">
     <h2 class="elegant-title">{{ page_title }}</h2>
-    {% if doctor.photo %}
-        <img src="{{ doctor.photo.url }}" alt="عکس دکتر {{ doctor.user.get_full_name }}" class="doctor-photo">
-    {% endif %}
-    <p><strong>نام کامل:</strong> دکتر {{ doctor.user.get_full_name }}</p>
-    <p><strong>تخصص:</strong> {{ doctor.specialty.name|default:"-" }}</p>
-    {% if average_rating %}
-        <div class="star-rating">
-            {% with rating_floor=average_rating|floor %}
-            {% for i in "12345" %}
-                {% if forloop.counter <= rating_floor %}
-                    <i class="fas fa-star"></i>
-                {% else %}
-                    {% if forloop.counter == rating_floor|add:1 and average_rating > rating_floor %}
-                        <i class="fas fa-star-half-alt"></i>
-                    {% else %}
-                        <i class="far fa-star"></i>
-                    {% endif %}
-                {% endif %}
-            {% endfor %}
-            {% endwith %}
-            ({{ average_rating|floatformat:1 }})
+    <div class="profile-grid">
+        <div class="profile-sidebar">
+            {% if doctor.photo %}
+                <img src="{{ doctor.photo.url }}" alt="عکس دکتر {{ doctor.user.get_full_name }}" class="doctor-photo">
+            {% endif %}
+            <p><strong>نام کامل:</strong> دکتر {{ doctor.user.get_full_name }}</p>
+            <p><strong>تخصص:</strong> {{ doctor.specialty.name|default:"-" }}</p>
+            {% if average_rating %}
+                <div class="star-rating">
+                    {% with rating_floor=average_rating|floor %}
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= rating_floor %}
+                            <i class="fas fa-star"></i>
+                        {% else %}
+                            {% if forloop.counter == rating_floor|add:1 and average_rating > rating_floor %}
+                                <i class="fas fa-star-half-alt"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {% endwith %}
+                    ({{ average_rating|floatformat:1 }})
+                </div>
+            {% endif %}
         </div>
-    {% endif %}
-    <p><strong>شماره تلفن مطب:</strong> {{ doctor.phone_number }}</p>
-    <p><strong>آدرس:</strong> {{ doctor.address }}</p>
-    <p><strong>بیوگرافی:</strong></p>
-    <p>{{ doctor.biography|linebreaks|default:"بیوگرافی ثبت نشده است." }}</p>
+        <div class="profile-main">
+            <p><strong>شماره تلفن مطب:</strong> {{ doctor.phone_number }}</p>
+            <p><strong>آدرس:</strong> {{ doctor.address }}</p>
+            <p><strong>بیوگرافی:</strong></p>
+            <p>{{ doctor.biography|linebreaks|default:"بیوگرافی ثبت نشده است." }}</p>
 
-    <hr>
+            <hr>
 
-    <h3>تقویم نوبت‌دهی ({{ doctor.booking_days }} روز آینده)</h3>
-    <div  class="calendar-grid" style="display: flex; flex-wrap: wrap; gap: 10px;">
-        {% for day in available_days %}
-            <a href="{% url 'booking:book_appointment' pk=doctor.pk date=day.date|to_jalali:'%Y-%m-%d' %}" class="day-cell available" style="background: linear-gradient(to top, #f8d7da {{ day.booked_percentage }}%, white {{ day.booked_percentage }}%); border: 2px solid #007bff; border-radius: 5px; padding: 20px; text-align: center; flex: 1 1 150px; min-width: 150px;"> <!-- استفاده از flex برای تنظیم اندازه باکس -->
-                {{ day.date|to_jalali:"%d %B" }} ({{ day.jalali_day_name }})
-            </a>
-        {% empty %}
-            <p>در {{ doctor.booking_days }} روز آینده نوبت خالی وجود ندارد.</p>
-        {% endfor %}
+            <h3>تقویم نوبت‌دهی ({{ doctor.booking_days }} روز آینده)</h3>
+            <div  class="calendar-grid" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                {% for day in available_days %}
+                    <a href="{% url 'booking:book_appointment' pk=doctor.pk date=day.date|to_jalali:'%Y-%m-%d' %}" class="day-cell available" style="background: linear-gradient(to top, #f8d7da {{ day.booked_percentage }}%, white {{ day.booked_percentage }}%); border: 2px solid #007bff; border-radius: 5px; padding: 20px; text-align: center; flex: 1 1 150px; min-width: 150px;"> <!-- استفاده از flex برای تنظیم اندازه باکس -->
+                        {{ day.date|to_jalali:"%d %B" }} ({{ day.jalali_day_name }})
+                    </a>
+                {% empty %}
+                    <p>در {{ doctor.booking_days }} روز آینده نوبت خالی وجود ندارد.</p>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
