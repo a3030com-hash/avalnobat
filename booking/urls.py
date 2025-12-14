@@ -42,4 +42,5 @@ urlpatterns = [
     path('password-reset/', views.password_reset_request, name='password_reset_request'),
     path('password-reset/verify/', views.password_reset_verify, name='password_reset_verify'),
     path('password-reset/complete/', views.password_reset_complete, name='password_reset_complete'),
+    path('help-guide/', views.help_guide, name='help_guide'),
 ]

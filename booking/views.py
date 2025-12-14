@@ -1817,6 +1817,10 @@ def password_reset_complete(request):
     return render(request, 'booking/password_reset_complete.html', {'page_title': 'تغییر رمز موفقیت‌آمیز'})
 
 
+def help_guide(request):
+    return render(request, 'booking/help_guide.html')
+
+
 class CustomLoginView(LoginView):
     template_name = 'booking/login.html'
 
