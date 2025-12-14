@@ -1754,7 +1754,7 @@ def password_reset_request(request):
                 request.session['otp_code_reset'] = otp_code
                 request.session['reset_user_id'] = user.id
                 request.session.set_expiry(300)
-
+                print(mobile_number)
                 payload = {
                     'token': AMOOT_SMS_API_TOKEN,
                     'Mobile': mobile_number,
