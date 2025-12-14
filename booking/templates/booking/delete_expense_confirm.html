@@ -24,7 +24,12 @@
 </style>
 
 <div class="confirmation-container">
-    <h2 class="elegant-title">{{ page_title }}</h2>
+    <div style="position: relative;">
+        <h2 class="elegant-title">{{ page_title }}</h2>
+        <a href="{% url 'booking:doctor_list' %}" class="home-icon-link" title="صفحه اصلی">
+            <i class="fas fa-home"></i>
+        </a>
+    </div>
     <p>آیا از حذف هزینه/پرداخت زیر مطمئن هستید؟</p>
     <p><strong>{{ expense.description }}</strong> - {{ expense.amount|intcomma }} تومان</p>
 
