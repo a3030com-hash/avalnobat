@@ -42,7 +42,12 @@
     }
 </style>
 <div class="center-container">
-    <h2 class="elegant-title">{{ page_title }}</h2>
+    <div style="position: relative;">
+        <h2 class="elegant-title">{{ page_title }}</h2>
+        <a href="{% url 'booking:doctor_list' %}" class="home-icon-link" title="صفحه اصلی">
+            <i class="fas fa-home"></i>
+        </a>
+    </div>
     <p>یک کد تأیید به شماره همراه شما ارسال شد.</p>
 
     <form method="post">

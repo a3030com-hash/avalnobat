@@ -124,7 +124,12 @@
 </style>
 
 <div class="profile-container">
-    <h2 class="elegant-title">{{ page_title }}</h2>
+    <div style="position: relative;">
+        <h2 class="elegant-title">{{ page_title }}</h2>
+        <a href="{% url 'booking:doctor_list' %}" class="home-icon-link" title="صفحه اصلی">
+            <i class="fas fa-home"></i>
+        </a>
+    </div>
     <div class="profile-grid">
         <div  class="profile-sidebar">
             {% if doctor.photo %}

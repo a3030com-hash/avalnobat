@@ -50,7 +50,12 @@
 
 {% block content %}
 <div class="panel-container">
-    <h2 class="elegant-title">{{ page_title }}</h2>
+    <div style="position: relative;">
+        <h2 class="elegant-title">{{ page_title }}</h2>
+        <a href="{% url 'booking:doctor_list' %}" class="home-icon-link" title="صفحه اصلی">
+            <i class="fas fa-home"></i>
+        </a>
+    </div>
     <div class="alert alert-info" style="text-align: center; margin-bottom: 1rem; background-color: #e7f3fe; color: #089e53; border: 1px solid #bce8f1; padding: 15px; border-radius: 4px;">
          برای  ثبت نوبت جدید به صورت دستی در یک روز خاص، روی ردیف مورد نظر در جدول زیر کلیک کنید.
     </div>

@@ -107,7 +107,12 @@
         <a href="{% url 'booking:reservation_list' %}">بازگشت به لیست رزروها &rarr;</a>
     </div>
     <hr>
-    <h2 class="elegant-title">{{ page_title }}</h2>
+    <div style="position: relative;">
+        <h2 class="elegant-title">{{ page_title }}</h2>
+        <a href="{% url 'booking:doctor_list' %}" class="home-icon-link" title="صفحه اصلی">
+            <i class="fas fa-home"></i>
+        </a>
+    </div>
     <p>برای مدیریت نوبت‌ها، یک ساعت را انتخاب کنید.</p>
 
     <div class="time-slots" id="time-slots-container">
